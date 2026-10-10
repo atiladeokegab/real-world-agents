@@ -1,7 +1,7 @@
 import pytest
 
 from agent.tools import CATALOGUE
-from agent.tools.mock import call, is_bank_system
+from agent.tools.mock import SYSTEM_WORDS, call, is_bank_system
 from tests.tools.conftest import EXAMPLES, practice
 
 
@@ -68,4 +68,23 @@ def test_agent_notes_and_customer_text_never_returned():
             if r.source_event:
                 e = by_id[r.source_event]
                 assert is_bank_system(e) and "agent" not in e.sender.lower()
-                assert e.sender.startswith(("H&V", "Harrow & Vale")) or e.channel == "Internal note"
+                assert (e.sender.startswith(("H&V", "Harrow & Vale")) or e.channel == "Internal note"
+                        or e.sender.split()[-1].lower() in SYSTEM_WORDS) and e.channel != "External message"
+
+
+@pytest.mark.parametrize("sender,channel", [
+    ("Statements service", "Business portal"), ("H&V recovery system", "Secure portal"),
+])
+def test_named_bank_systems_without_the_prefix_count(sender, channel):
+    assert is_bank_system({"sender": sender, "channel": channel})
+
+
+def test_a_customer_firm_named_like_a_service_on_external_email_is_not_a_bank_system():
+    assert not is_bank_system({"sender": "Elm Quay service", "channel": "External message"})
+
+
+@pytest.mark.parametrize("num,tool", [("031", "statements_service"), ("027", "profile_service")])
+def test_031_and_027_first_reads_answer_from_the_bank_system(num, tool):
+    case, later = practice(num)
+    r = call(CATALOGUE[tool], {}, case, later)
+    assert r.status == "ok" and is_bank_system(next(e for e in later if e.id == r.source_event))

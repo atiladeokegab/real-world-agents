@@ -14,7 +14,7 @@ SENDERS: dict[str, list[str]] = {
     "standing_order_journal": ["standing-order", "standing order", "instruction register", "instruction log"],
     "mandate_journal": ["mandate", "direct debit"],
     "card_service": ["card", "access team"],
-    "profile_service": ["profile", "access log", "security team", "data team"],
+    "profile_service": ["profile", "access log", "security team", "data team", "recovery"],
     "statements_service": ["statement", "archive", "data service", "document service"],
     "fees_service": ["tariff", "fee", "request log", "transaction records"],
     "business_service": ["import", "signing", "limit register", "admin process", "acquiring", "business"],
@@ -46,11 +46,14 @@ INTERNAL = "internal note"
 
 def is_bank_system(event: Any) -> bool:
     """Written by a bank system, journal or team on any channel; never the customer or a person handling the case.
-    Outside internal notes the sender must be the bank's own, so a customer firm called "... Services" never counts."""
+    Outside internal notes the sender must be the bank's own or named as one ("Statements service"), never an
+    external message, so a customer firm called "... Services" never counts."""
     sender = _get(event, "sender").strip().lower()
     if "agent" in sender or "support" in sender or not any(w in sender for w in SYSTEM_WORDS):
         return False
-    return sender.startswith(BANK) or _get(event, "channel").strip().lower() == INTERNAL
+    channel = _get(event, "channel").strip().lower()
+    named_system = sender.split()[-1] in SYSTEM_WORDS and channel != "external message"
+    return sender.startswith(BANK) or channel == INTERNAL or named_system
 
 
 def _case_number(case_id: str) -> int | None:
