@@ -118,7 +118,10 @@ def test_cut_hides_later_events_and_strips_answer_sections():
 def test_no_cut_keeps_full_case():
     case = load_case(EXAMPLES / "001")
     assert len(case.events) == 5
-    assert "H&V's journal recorded the transfer as sent" in case.raw_files["index.md"]
+    # #129: raw_files is always the sanitised view — the agreed answer can
+    # never reach the fallback prompt or the trace, cut or no cut
+    assert "H&V's journal recorded the transfer as sent" not in case.raw_files["index.md"]
+    assert "## Outcome" in case.raw_files["index.md"]  # heading kept, body hidden
 
 
 def test_question_stored_on_case():
