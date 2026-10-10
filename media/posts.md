@@ -22,4 +22,4 @@ Code: https://github.com/atiladeokegab/real-world-agents
 
 ## X
 
-Built a bank ops agent at the Real-World Agents Hackathon (Dwelly, London), Banking track. Code checks the evidence, authority comes from code not the model, money never moves twice, and it hands over with a clear note. TODO: real eval number. https://github.com/atiladeokegab/real-world-agents #AIAgents
+Bank ops agent at the Real-World Agents Hackathon (Dwelly, London), Banking track. Code checks the evidence, authority comes from code not the model, money never moves twice, and it hands over with a clear note. TODO: real eval number. https://github.com/atiladeokegab/real-world-agents #AIAgents
