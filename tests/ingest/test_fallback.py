@@ -53,24 +53,91 @@ def test_fallback_fires_once_on_zero_events(tmp_path, monkeypatch):
     assert spy.calls[0]["stage"] == "extraction"
     assert issubclass(spy.calls[0]["model"], BaseModel)
     assert [e.id for e in case.events] == ["event-001"]
-    assert case.authority.identity == "authenticated"  # channel still read in code
 
 
-def test_fallback_fires_once_on_unrecognised_file(tmp_path, monkeypatch):
-    case_dir = tmp_path / "902"
+def test_model_written_events_never_set_authority(tmp_path, monkeypatch):
+    # §4.1: authority comes from channel metadata the code parsed — not from
+    # model-written events, even a "Verified call".
+    events = [
+        Event(id="event-001", at="2025-01-01T09:00:00Z", channel="Verified call",
+              sender="Mara", recipient="H&V agent", body="help"),
+    ]
+    _install(monkeypatch, _SpyLLM(events=events))
+    assert load_case(_empty_case(tmp_path)).authority.identity == "unverified"
+
+
+def _history_case(tmp_path: Path, name="902") -> Path:
+    case_dir = tmp_path / name
     case_dir.mkdir()
     (case_dir / "index.md").write_text("# Case 902: T\n\n## Initial request\n\nhelp\n")
     (case_dir / "history.md").write_text(
         "<a id=\"event-001\"></a>\n## 2025-01-01 09:00:00 UTC — event 001\n\n"
         "- **Channel:** External message\n- **From:** X\n- **To:** H&V agent\n\nhi\n"
     )
+    return case_dir
+
+
+def test_unrecognised_file_falls_back_on_that_file_alone(tmp_path, monkeypatch):
+    case_dir = _history_case(tmp_path)
     (case_dir / "mystery.dat").write_bytes(b"\x00\x01\x02")
 
     spy = _install(monkeypatch, _SpyLLM(events=[]))
     case = load_case(case_dir)
 
     assert len(spy.calls) == 1
+    assert "mystery.dat" in spy.calls[0]["user"]
+    assert "hi" not in spy.calls[0]["user"]  # parsed events are not re-sent
     assert "mystery.dat" in case.raw_files  # unknown files read as text, never crash
+    assert [e.id for e in case.events] == ["event-001"]  # parsed events kept
+
+
+def test_unrecognised_file_appends_model_events(tmp_path, monkeypatch):
+    case_dir = _history_case(tmp_path)
+    (case_dir / "mystery.dat").write_bytes(b"\x00\x01\x02")
+    extra = [Event(id="event-001", at="2025-01-01T10:00:00Z", channel="External message",
+                   sender="Y", recipient="H&V agent", body="from the dat file")]
+    _install(monkeypatch, _SpyLLM(events=extra))
+
+    case = load_case(case_dir)
+
+    # model events appended after the parsed ones, renumbered to avoid id clashes
+    assert [e.id for e in case.events] == ["event-001", "event-002"]
+    assert case.events[1].body == "from the dat file"
+
+
+def test_fallback_error_keeps_parsed_events(tmp_path, monkeypatch):
+    case_dir = _history_case(tmp_path)
+    (case_dir / "mystery.dat").write_bytes(b"\x00\x01\x02")
+    _install(monkeypatch, _SpyLLM(error=RuntimeError("api down")))
+
+    case = load_case(case_dir)
+    assert [e.id for e in case.events] == ["event-001"]
+
+
+def test_dotfiles_do_not_trigger_fallback(tmp_path, monkeypatch):
+    case_dir = _history_case(tmp_path)
+    (case_dir / ".DS_Store").write_bytes(b"\x00\x01\x02")
+
+    spy = _install(monkeypatch, _SpyLLM())
+    case = load_case(case_dir)
+
+    assert spy.calls == []
+    assert ".DS_Store" not in case.raw_files
+    assert [e.id for e in case.events] == ["event-001"]
+
+
+def test_fallback_prompt_strips_answer_sections_in_practice_mode(tmp_path, monkeypatch):
+    case_dir = _empty_case(tmp_path)
+    (case_dir / "index.md").write_text(
+        "# Case 901: T\n\n## Initial request\n\nhelp\n\n"
+        "## Overview\n\nthe agreed answer is XYZ\n\n## Outcome\n\nsecret outcome\n"
+    )
+    spy = _install(monkeypatch, _SpyLLM(events=[]))
+    load_case(case_dir, cut=2)
+
+    assert len(spy.calls) == 1
+    assert "secret outcome" not in spy.calls[0]["user"]
+    assert "the agreed answer is XYZ" not in spy.calls[0]["user"]
 
 
 def test_no_fallback_on_normal_case(monkeypatch):

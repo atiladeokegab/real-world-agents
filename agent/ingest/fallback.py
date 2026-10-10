@@ -1,19 +1,16 @@
 """§4.1 fallback parse — exactly one Claude call when explicit parsing can't.
 
-Triggered when regex parsing yields zero events or the folder contains files we
-don't recognise. The ingestor never crashes on input it can't parse: every
-failure path degrades to an empty event list.
+Called by the ingestor when regex parsing yields zero events (on everything
+received) or when the folder contains files it doesn't recognise (on those files
+alone, appended — never replacing parsed events). Every failure path degrades to
+an empty event list: the ingestor never crashes on input it can't parse.
 """
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from pydantic import BaseModel
 
 from agent.core.contracts import Event
-
-_KNOWN_NAMES = {"index.md", "history.md", "attachments"}
 
 _SYSTEM = (
     "You are structuring a bank case folder into events. Return every message, note "
@@ -25,12 +22,6 @@ _SYSTEM = (
 
 class _EventList(BaseModel):
     events: list[Event] = []
-
-
-def needs_fallback(case_dir: Path, events: list[Event]) -> bool:
-    if not events:
-        return True
-    return any(p.name not in _KNOWN_NAMES for p in Path(case_dir).iterdir())
 
 
 def fallback_events(raw_files: dict[str, str]) -> list[Event]:
