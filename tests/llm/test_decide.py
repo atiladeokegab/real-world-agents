@@ -112,3 +112,27 @@ def test_prompt_acts_after_a_pending_read(fake_llm):
     fake_llm.answers.append(LOOKUP)
     decide(case_006(), CASE_OBJECT, [], [])
     assert "the required read came back pending, propose the matching action next" in fake_llm.calls[0]["system"]
+
+
+NOT_FOUND = [ToolResult(tool="transfer_journal", status="not_found")]
+TIMED_OUT = [ToolResult(tool="transfer_journal", status="timeout")] * 2
+HONEST = {"action": "reply", "reply": {"channel": "Secure chat", "text": "We can't see a record of it yet."},
+          "asks_addressed": ["ask-1"]}
+
+
+def test_not_found_labelled_read_failure_is_retried_into_a_reply(fake_llm):
+    fake_llm.answers += [{"action": "escalate", "exception_type": "read_failure"}, HONEST]
+    out = decide(case_006(), CASE_OBJECT, [], NOT_FOUND)
+    assert out.action == "reply" and len(fake_llm.calls) == 2
+    assert "not_found is a normal answer, not a read_failure" in fake_llm.calls[1]["user"]
+
+
+def test_timeout_still_escalates_as_read_failure(fake_llm):
+    fake_llm.answers.append({"action": "escalate", "exception_type": "read_failure"})
+    assert decide(case_006(), CASE_OBJECT, [], TIMED_OUT).action == "escalate" and len(fake_llm.calls) == 1
+
+
+def test_prompt_says_not_found_is_not_a_read_failure(fake_llm):
+    fake_llm.answers.append(LOOKUP)
+    decide(case_006(), CASE_OBJECT, [], [])
+    assert "A not_found result is a normal answer, not a read_failure" in fake_llm.calls[0]["system"]
