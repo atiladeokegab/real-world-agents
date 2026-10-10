@@ -112,6 +112,36 @@ amounts, dates and limits are compared in code; a money action needs verified id
 mandate, no open conflict and its prior checks in the trace; and no reply may claim "paid",
 "received" or "refunded" unless a tool confirmed it.
 
+### A real run
+
+Practice case 044, cut at the decision point: the portal says the supplier batch is *Processed*,
+and the customer asks whether row SUP-17 was paid. Output of
+`uv run agent run --case examples/044 --cut 2`, unedited apart from the output path:
+
+```text
+ingest    2 events · 0 attachments · cut at event-002
+identity  authenticated Authorised business user · Secure chat
+evidence  1 finding · a collection-level status is asserted while a member line's status is unclear or contradicts it
+extract   1 ask · 8 unknowns · emotional state: calm
+decide    tool_call business_service ({"query": "Line-level status of row SUP-17 in batch 'Alderwick supplier payments…)
+verify    ✓ approved
+execute   business_service → done
+decide    reply · Secure chat
+verify    ✗ claim_linter: name 'I've' in the reply is not in a claim or a tool result
+decide    reply · Secure chat
+verify    ✓ approved
+write     ANSWERS/044/ ANSWER.md REASONING.md trace.log run.json
+● DONE  1 action · 0 escalations · 38.8s
+```
+
+Code flagged that a batch status says nothing about one row *before* the model read the case; the
+model proposed a line-level lookup instead of answering from the batch; the verifier let the
+read through, then rejected the first reply draft and accepted the second. The reply sent:
+
+> Row SUP-17 was not paid. Its status is Rejected, and the reason given is that the beneficiary
+> details did not match the receiving institution's records. The batch shows Processed, but that
+> does not mean every row in it was paid.
+
 ### Research basis
 
 Each safety rule comes from a published finding. Full mapping: [AGENT_SPEC.md §12](AGENT_SPEC.md).
