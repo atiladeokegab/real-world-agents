@@ -99,6 +99,9 @@ def tool_risk(tool: str | None, params: dict | None = None) -> int:
     return 3 if _WRITE_WORDS.search(action.lower()) else risk
 
 
+WORSENING = "frustration is worsening across events, unresolved"
+
+
 def sentiment_escalation(case_object) -> str | None:
     """Why the customer's state calls for an early handover, or None (AGENT_SPEC §4.8)."""
     state = _get(case_object, "emotional_state") or {}
@@ -110,7 +113,7 @@ def sentiment_escalation(case_object) -> str | None:
     if any(_COMPLAINT.search(t or "") for t in texts):
         return "customer has made a complaint"
     if level == "frustrated" and trend == "worsening":
-        return "frustration is worsening across events, unresolved"
+        return WORSENING
     return None
 
 
@@ -153,6 +156,8 @@ def normalise(proposal, case, case_object, findings, results):
             force("escalate", "read failed after one retry")
 
     reason = sentiment_escalation(case_object)
+    if reason == WORSENING and (not results or action == "tool_call"):
+        reason = None
     if reason and action != "escalate":
         force("escalate", f"sentiment: {reason}")
     if reason:
