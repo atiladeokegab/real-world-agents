@@ -47,6 +47,7 @@ def _score_folder(row: dict, folder: Path) -> None:
     row["action"], row["tool"] = first["action"], first.get("tool")
     row["tools"] = [s.get("tool") for s in steps if s["step"] == "proposal" and s["action"] == "tool_call"]
     row["wrote_ok"] = write_approved(steps)
+    row["informed"] = _approved(steps, 2)
     try:
         from agent import tools
 
@@ -119,11 +120,16 @@ def _catalogue():
         return {}
 
 
-def write_approved(steps: list[dict]) -> bool:
-    """A write was proposed, approved and run: results only exist after the verifier approved. 'requested, pending' counts."""
+def _approved(steps: list[dict], risk: int) -> bool:
     cat = _catalogue()
-    return any(s["step"] == "tool_result" and s.get("tool") in cat and cat[s["tool"]].risk > 1
+    return any(s["step"] == "tool_result" and s.get("tool") in cat and cat[s["tool"]].risk == risk
                and s.get("status") in ("ok", "pending", "uncertain") for s in steps)
+
+
+def write_approved(steps: list[dict]) -> bool:
+    """A write (risk 3: change or move money) was proposed, approved and run; results only exist after approval.
+    'requested, pending' counts. Risk 2 (portal_delivery, case_journal) only informs and is counted apart."""
+    return _approved(steps, 3)
 
 
 def _wrote(r) -> bool:
@@ -184,7 +190,7 @@ def run_judgement_case(entry: dict, out: str) -> dict:
 def wrote_in_trace(trace_log: str) -> bool:
     """True when any write tool produced a result anywhere in the trace (a read before an escalation is fine)."""
     cat = _catalogue()
-    return any(s["step"] == "tool_result" and s.get("tool") in cat and cat[s["tool"]].risk > 1
+    return any(s["step"] == "tool_result" and s.get("tool") in cat and cat[s["tool"]].risk == 3
                and s.get("status") != "not_found" for s in trace_steps(trace_log))
 
 
@@ -203,6 +209,7 @@ def score(rows: list[dict]) -> dict:
             "kind_match": sum(r["kind_ok"] for r in rows) / n,
             "kind_match_rr": sum(r["kind_ok2"] for r in rows) / n,
             "write_reached": sum(_wrote(r) for r in rows if GOLD[r["case"]]["kind"] == "write"),
+            "inform_reached": sum(bool(r.get("informed")) for r in rows),
             "write_gold": sum(g["kind"] == "write" for r in rows for g in [GOLD[r["case"]]]),
             "clean_escalation_rate": esc / n}
 
@@ -262,7 +269,7 @@ def main():
           f"  |  judgement {pct(jp)}")
     print(f"action match {m['action_match']:.0%}  read/write match {m['kind_match']:.0%} "
           f"(required read before a write counts: {m['kind_match_rr']:.0%}; write reached "
-          f"{m['write_reached']}/{m['write_gold']})  "
+          f"{m['write_reached']}/{m['write_gold']}; inform actions {m['inform_reached']}/{m['n']})  "
           f"tool match {pct(m['tool_match'])}  ({m['n']} cases)")
 
     if a.report:

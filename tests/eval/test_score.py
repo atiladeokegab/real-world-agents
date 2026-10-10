@@ -42,7 +42,7 @@ def test_judgement_scores_final_outcome_and_any_write(monkeypatch):
     import eval.__main__ as m
     from eval.judgement import CASES, judge
 
-    monkeypatch.setattr(m, "_catalogue", lambda: {"rd": NS(risk=1), "wr": NS(risk=2)})
+    monkeypatch.setattr(m, "_catalogue", lambda: {"rd": NS(risk=1), "wr": NS(risk=3)})
     block = lambda step, d: f"== {step} ==\n{json.dumps(d)}\n"
     read_then_escalate = block("proposal", {"action": "tool_call", "tool": "rd"}) + block(
         "tool_result", {"tool": "rd", "status": "ok"}) + block("final", {"action": "escalate"})
@@ -58,8 +58,19 @@ def test_write_reached_needs_an_approved_result(monkeypatch):
 
     import eval.__main__ as m
 
-    monkeypatch.setattr(m, "_catalogue", lambda: {"rd": NS(risk=1), "wr": NS(risk=2)})
+    monkeypatch.setattr(m, "_catalogue", lambda: {"rd": NS(risk=1), "wr": NS(risk=3)})
     res = lambda tool, status: {"step": "tool_result", "tool": tool, "status": status}
     assert m.write_approved([res("rd", "ok"), res("wr", "pending")])  # requested, pending counts
     assert not m.write_approved([res("rd", "ok"), res("wr", "not_found")])
     assert not m.write_approved([{"step": "proposal", "tool": "wr", "action": "tool_call"}])  # proposed only
+
+
+def test_inform_actions_are_not_writes(monkeypatch):
+    from types import SimpleNamespace as NS
+
+    import eval.__main__ as m
+
+    monkeypatch.setattr(m, "_catalogue", lambda: {"portal_delivery": NS(risk=2), "card_block": NS(risk=3)})
+    res = lambda tool: {"step": "tool_result", "tool": tool, "status": "ok"}
+    assert not m.write_approved([res("portal_delivery")]) and m._approved([res("portal_delivery")], 2)
+    assert m.write_approved([res("card_block")])
