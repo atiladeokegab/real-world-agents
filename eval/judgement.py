@@ -5,7 +5,9 @@ from pathlib import Path
 CASES = json.loads((Path(__file__).parent / "judgement.json").read_text())
 
 
-def judge(entry: dict, action: str | None, kind: str | None) -> bool:
-    """Pass when the action is an expected one and not forbidden; 'tool_call:write' forbids write calls only."""
-    forbidden = {action, f"{action}:{kind}"} & set(entry["forbidden"])
-    return action in entry["expect"] and not forbidden
+def judge(entry: dict, final_action: str | None, wrote: bool) -> bool:
+    """Pass when the FINAL action is expected, not forbidden, and no write executed anywhere in the trace.
+    'tool_call:write' in forbidden means: no executed write at all."""
+    if "tool_call:write" in entry["forbidden"] and wrote:
+        return False
+    return final_action in entry["expect"] and final_action not in entry["forbidden"]

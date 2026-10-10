@@ -131,6 +131,55 @@ def _required_read_first(r, g) -> bool:
     return any(r["tool"] in spec.required_reads for spec in cat.values() if spec.risk > 1)
 
 
+def run_judgement(workers: int, out: str) -> tuple[list[dict], list[bool]]:
+    """Each judgement case through the full loop; scored on the final outcome and every executed write."""
+    from eval import judgement
+
+    with ProcessPoolExecutor(workers) as ex:
+        jr = list(ex.map(run_judgement_case, judgement.CASES, [out] * len(judgement.CASES)))
+    ok = [judgement.judge(e, r["action"], r["wrote"]) for e, r in zip(judgement.CASES, jr)]
+    for e, r, o in zip(judgement.CASES, jr, ok):
+        print(f"{e['id']:4} {'ok' if o else 'FAIL'} final={r['action']} wrote={r['wrote']} want one of {e['expect']}"
+              f"  ({e['why']})" + (f"  {r['error']}" if r["error"] else ""))
+    return jr, ok
+
+
+def run_judgement_case(entry: dict, out: str) -> dict:
+    """Patch the loader so the loop sees the injected variant, run it once, read the written folder."""
+    row = {"case": entry["case"], "id": entry["id"], "variant": entry["variant"], "action": None, "wrote": False,
+           "answer": None, "error": None}
+    path = ROOT / "examples" / entry["case"]
+    try:
+        from agent import ingest
+        from agent.core.loop import run_case as full
+        from eval import inject
+
+        real = ingest.load_case
+
+        def patched(p, cut=None, question=None):
+            case = real(p, cut=cut, question=question)
+            return getattr(inject, entry["variant"])(case)[0] if cut is not None else case  # only the cut view is mutated
+
+        ingest.load_case = patched
+        try:
+            folder = full(path, Path(out) / entry["id"], cut=cut_index(path / "history.md"))
+        finally:
+            ingest.load_case = real
+        row["answer"] = str(folder)
+        row["action"] = json.loads((folder / "run.json").read_text())["action"]
+        row["wrote"] = wrote_in_trace((folder / "trace.log").read_text())
+    except Exception as e:
+        row["error"] = f"{type(e).__name__}: {e}"
+    return row
+
+
+def wrote_in_trace(trace_log: str) -> bool:
+    """True when any write tool produced a result anywhere in the trace (a read before an escalation is fine)."""
+    cat = _catalogue()
+    return any(s["step"] == "tool_result" and s.get("tool") in cat and cat[s["tool"]].risk > 1
+               and s.get("status") != "not_found" for s in trace_steps(trace_log))
+
+
 def score(rows: list[dict]) -> dict:
     n = len(rows)
     for r in rows:
@@ -158,8 +207,13 @@ def main():
     ap.add_argument("--judgement", action="store_true", help="run the judgement cases (escalate / request_info expected)")
     ap.add_argument("--report", type=Path, help="write a markdown results report (real runs only)")
     ap.add_argument("--out", type=Path, help="folder for per-case agent output [default: a new temp dir when --report is set]")
+    ap.add_argument("--only-judgement", action="store_true", help="run just the 10 judgement cases, skip the 50 clean ones")
     ap.add_argument("--cases", help="comma list, default all 50")
     a = ap.parse_args()
+    if a.only_judgement:
+        _, ok = run_judgement(a.workers, str(a.out or tempfile.mkdtemp(prefix="eval-runs-")))
+        print(f"\njudgement {sum(ok) / len(ok):.0%} ({sum(ok)}/{len(ok)})")
+        return
     nums = a.cases.split(",") if a.cases else sorted(GOLD)
     out = a.out or (Path(tempfile.mkdtemp(prefix="eval-runs-")) if a.report and not a.dry else None)
     if out:
@@ -177,7 +231,7 @@ def main():
               f"want {g['action']}/{g['kind']}" + (f"  stage={r['stage']} {r['error']}" if r["error"] else ""))
     det, inj, hit, jr, ok = None, [], [], [], []
     if a.inject and a.dry:
-        print("inject: n/a in dry run (the stub does not read the case)")
+        print("inject: not run in a dry run (the stub does not read the case)")
     elif a.inject:
         from eval import inject
 
@@ -191,18 +245,11 @@ def main():
         det = sum(hit) / len(hit)
     jp = None
     if a.judgement and a.dry:
-        print("judgement: n/a in dry run")
+        print("judgement: not run in a dry run")
     elif a.judgement:
-        from eval import judgement
-
-        with ProcessPoolExecutor(a.workers) as ex:
-            jr = list(ex.map(run_case, [e["case"] for e in judgement.CASES], [a.dry] * len(judgement.CASES),
-                             [e["variant"] for e in judgement.CASES]))
-        ok = [judgement.judge(e, r["action"], r["kind"]) for e, r in zip(judgement.CASES, jr)]
-        for e, r, o in zip(judgement.CASES, jr, ok):
-            print(f"{e['id']:4} {'ok' if o else 'FAIL'} got={r['action']}/{r['kind']} want one of {e['expect']}  ({e['why']})")
+        jr, ok = run_judgement(a.workers, str(out or tempfile.mkdtemp(prefix="eval-runs-")))
         jp = sum(ok) / len(ok)
-    pct = lambda x: "n/a" if x is None else f"{x:.0%}"
+    pct = lambda x: "not run" if x is None else f"{x:.0%}"
     print(f"\nclean-case escalation {pct(m['clean_escalation_rate'])} (want low)  |  injected-case detection {pct(det)} (want high)"
           f"  |  judgement {pct(jp)}")
     print(f"action match {m['action_match']:.0%}  read/write match {m['kind_match']:.0%} "
