@@ -1,13 +1,13 @@
-# <Project name>
+# Dwelly Real-World Agents team
 
-<One paragraph: what we're building and who it's for.>
+Our team's entry for the Real-World Agents Hackathon hosted by Dwelly in London on Saturday 10 October 2026. The track and the agent we build are chosen together at 10:00 on the day; IDEA.md and this page are updated then.
 
 What we're building and who owns which part: [IDEA.md](IDEA.md). Deadlines, rules and
 the team: [HACKATHON.md](HACKATHON.md). Who is doing what, live: the board linked in HACKATHON.md.
 
 ## Quick start
 
-1. `gh repo clone <this repo>`
+1. `gh repo clone atiladeokegab/real-world-agents`
 2. Open your AI tool (Claude Code, Codex, Cursor, Copilot…) in the folder.
 3. Tell it: *"Read AGENTS.md, then pick up my issue."*
 
@@ -257,4 +257,4 @@ Every one of these happened for real while this kit was tested.
 
 ## Architecture
 
-<!-- the lead adds the C4 diagrams here -->
+
