@@ -53,18 +53,19 @@ def test_second_rejection_escalates(tmp_path, monkeypatch):
     fake_areas(monkeypatch, [REPLY, REPLY], [bad, bad])
     r, answer = run(tmp_path)
     assert r["escalated"] and "verifier rejected twice" in answer
+    assert r["exception_type"] == "incomplete_answer"
 
 
 def test_identical_calls_are_capped(tmp_path, monkeypatch):
     fake_areas(monkeypatch, [READ] * 10)
     r, _ = run(tmp_path)
-    assert r["escalated"] and r["tool_calls"] == 2
+    assert r["escalated"] and r["tool_calls"] == 2 and r["exception_type"] == "read_failure"
 
 
 def test_uncertain_write_escalates(tmp_path, monkeypatch):
     fake_areas(monkeypatch, [READ], status="uncertain")
     r, _ = run(tmp_path)
-    assert r["exception_type"] == "Write failure"
+    assert r["exception_type"] == "write_failure"
 
 
 @pytest.mark.parametrize("area", ["agent.ingest", "agent.llm"])
