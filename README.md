@@ -6,6 +6,10 @@ Team Scale's entry for the Real-World Agents Hackathon hosted by Dwelly in Londo
 The rules we build and submit to: [docs/rules/RULES.md](docs/rules/RULES.md). How the team works
 together: [TEAMWORK.md](TEAMWORK.md). The full engineering design: [AGENT_SPEC.md](AGENT_SPEC.md).
 
+> **Technical design:** [AGENT_SPEC.md](AGENT_SPEC.md), the full engineering specification as built:
+> every component, the safety rules, exception handling, idempotency, the research basis, and
+> §13 *As built* with every change made during the build and the eval results by round.
+
 ## What we built
 
 **An autonomous bank operations agent that decides the right next step on each case, and proves
@@ -38,6 +42,9 @@ payments blindly, and report success when they shouldn't. Our agent is built so 
 mistakes are blocked by code, not by hoping the model behaves.
 
 ## Architecture
+
+Full component-level detail: [AGENT_SPEC.md §3–§4](AGENT_SPEC.md#3-architecture); what changed during
+the build: [§13](AGENT_SPEC.md#13-as-built-what-changed-during-the-build-10-oct).
 
 ### Level 1: context
 
@@ -280,7 +287,7 @@ No model training, classifiers, vector database or GPU. Every dependency is pinn
 - A reviewer view that reads `ANSWERS/` live, built from [docs/mockup/](docs/mockup/index.html):
   a case list and a case page with the handover note pinned.
 - Re-extraction on rejection: when the verifier rejects a field that came from extraction,
-  re-extract that field before the retry (AGENT_SPEC.md §4.6).
+  re-extract that field before the retry. Not built; see AGENT_SPEC.md §9.
 - Running each case twice and escalating when the runs disagree.
 - Choosing the model per stage from measured results.
 - A live voice conversation that confirms identity before any change.
