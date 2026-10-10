@@ -38,6 +38,8 @@ def test_registry_has_the_ten_types_of_section_4_8():
 
 @pytest.mark.parametrize("name, proposal, expected", [
     ("ambiguous_request", REPLY, "request_info"),
+    ("ambiguous_request", {"action": "escalate"}, "escalate"),
+    ("ambiguous_reference", {"action": "escalate"}, "escalate"),
     ("ambiguous_reference", WRITE, "request_info"),
     ("conflicting_records", WRITE, "escalate"),
     ("conflicting_records", READ, "tool_call"),
@@ -197,3 +199,16 @@ def test_holding_reply_prefers_the_verified_channel_over_an_external_message():
     case.events = [first.model_copy(update={"sender": "Mira", "channel": "Verified call"}),
                    first.model_copy(update={"id": "event-009", "sender": "Mira", "channel": "External message"})]
     assert _customer_channel(case) == "Verified call"
+
+
+def test_escalation_labelled_ambiguous_keeps_its_handover_and_reply():
+    reply = {"channel": "Verified call", "text": "We've passed your £900 payment to M. Ortega to our payments team."}
+    out = run({"action": "escalate", "exception_type": "ambiguous_request", "reply": reply,
+               "escalation": {"who": "Payments operations", "question": "Set up the £900 payment to M. Ortega?"}})
+    assert out.action == "escalate" and out.reply.text == reply["text"]
+    assert out.escalation["who"] == "Payments operations"
+
+
+def test_prompt_keeps_ambiguous_for_unclear_requests_only():
+    from agent.llm import prompts
+    assert "ambiguous_request and ambiguous_reference are only for when the customer's own words" in prompts.DECISION_SYSTEM
