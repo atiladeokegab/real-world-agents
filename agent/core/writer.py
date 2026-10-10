@@ -67,6 +67,11 @@ def verdict_text(v) -> str:
             + (f": {v.message}" if v.message else ""))
 
 
+def _clause(text) -> str:
+    """Model or error text about to get our own full stop: drop its trailing one, so it never reads '..'."""
+    return str(text).rstrip().rstrip(".").rstrip()
+
+
 def _n(k: int, word: str) -> str:
     return f"{k} {word}{'' if k == 1 else 's'}"
 
@@ -187,7 +192,8 @@ def _decision(state: str, proposal: Proposal, results: list[ToolResult], note: d
     channel = proposal.reply.channel if proposal.reply else None
     if state == "escalated":
         why = (proposal.escalation or {}).get("why") or proposal.exception_type or "the agent must not resolve it alone"
-        return f"Handed to {note['who']}: {why}." if note and note.get("who") else f"Handed to a person: {why}."
+        why = _clause(why)
+        return f"Handed to {_clause(note['who'])}: {why}." if note and note.get("who") else f"Handed to a person: {why}."
     if state == "info":
         return "Asked the customer to confirm what we need before acting."
     if state == "noop":
@@ -195,8 +201,8 @@ def _decision(state: str, proposal: Proposal, results: list[ToolResult], note: d
     if state == "requested":
         return f"Asked {tools} for a result. No result yet."
     if tools:
-        return f"Checked {tools} and replied" + (f" on {channel}." if channel else ".")
-    return f"Replied on {channel}." if channel else "Done."
+        return f"Checked {tools} and replied" + (f" on {_clause(channel)}." if channel else ".")
+    return f"Replied on {_clause(channel)}." if channel else "Done."
 
 
 def summary(state: str, proposal: Proposal | None, results: list[ToolResult], note: dict | None) -> str:
@@ -226,14 +232,14 @@ def write(out: Path, case: Case, case_object: CaseObject, findings: list[Finding
         note = handover(proposal.escalation, ESCALATION_REPLY.format(team=team_phrase(who)))
 
     addressed = set(proposal.asks_addressed)
-    not_done = [f"{a.text} ({a.id}) — because this run did not close it"
+    not_done = [f"{_clause(a.text)} ({a.id}) — because this run did not close it"
                 for a in case_object.asks if a.id not in addressed]
     not_done += [f"{p.action}{' ' + p.tool if p.tool else ''} — because the verifier rejected it "
                  f"({verdict_text(v)})" for p, v in rejected]
     not_done += [f"`{r.tool}` — because it {r.status.replace('_', ' ')}" for r in results
                  if r.status in ("timeout", "error")]
     if note:
-        not_done += [i if "because" in str(i) else f"{i} — because the case was handed to a person"
+        not_done += [i if "because" in str(i) else f"{_clause(i)} — because the case was handed to a person"
                      for i in (note.get("not_done") or [])]
 
     cited = set(proposal.claims_relied_on)
@@ -282,7 +288,7 @@ def write(out: Path, case: Case, case_object: CaseObject, findings: list[Finding
     reasoning = [f"# Reasoning — Case {case.case_id}", "",
                  "## Facts and claims", "", _bullets(facts), "",
                  "## Findings", "", _bullets(
-                     f"**{f.id} · {f.check}** ({f.kind}) — {f.detail} ({', '.join(f.events)}). "
+                     f"**{f.id} · {f.check}** ({f.kind}) — {_clause(f.detail)} ({', '.join(f.events)}). "
                      + ("Addressed." if f.id in fixed else "Not addressed.") for f in findings), "",
                  "## Policy checks", "", _bullets(checks), "",
                  "## Exception and handling", "", _handling(proposal.exception_type), "",
@@ -332,7 +338,7 @@ def write_fallback(out: Path, case_path: Path, error: str, trace: list,
                "## Evidence used", "", NONE, "",
                "## Handover", "", _note(note), "",
                "## What failed", "",
-               f"**{where}**: {last}. "
+               f"**{where}**: {_clause(last)}. "
                + ("No stage completed." if where == "ingest" else "The stages before it completed.")
                + " Their output and the full error are in `trace.log`."]
     reasoning = [f"# Reasoning — Case {case_id}", "",
