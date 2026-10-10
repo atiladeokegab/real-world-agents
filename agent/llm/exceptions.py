@@ -105,8 +105,16 @@ def tool_risk(tool: str | None, params: dict | None = None) -> int:
 WORSENING = "frustration is worsening across events, unresolved"
 
 
-def sentiment_escalation(case_object) -> str | None:
-    """Why the customer's state calls for an early handover, or None (AGENT_SPEC §4.8)."""
+def _customer_messages(case, ids) -> int:
+    """How many of the events (all if none listed) are the customer's own messages, not the bank's."""
+    events = [e for e in _get(case, "events", []) or [] if not ids or _get(e, "id") in ids]
+    return sum(1 for e in events if _get(e, "channel").strip().lower() != "internal note"
+               and not re.match(r"(h&v|harrow & vale)\b", _get(e, "sender").strip().lower()))
+
+
+def sentiment_escalation(case_object, case=None) -> str | None:
+    """Why the customer's state calls for an early handover, or None (AGENT_SPEC §4.8).
+    Worsening frustration needs at least two customer messages showing it, never a single first message."""
     state = _get(case_object, "emotional_state") or {}
     level, trend = _get(state, "level", "calm"), _get(state, "trend", "steady")
     if level in ("distressed", "vulnerable"):
@@ -116,6 +124,8 @@ def sentiment_escalation(case_object) -> str | None:
     if any(_COMPLAINT.search(t or "") for t in texts):
         return "customer has made a complaint"
     if level == "frustrated" and trend == "worsening":
+        if case is not None and _customer_messages(case, set(_get(state, "events", []) or [])) < 2:
+            return None
         return WORSENING
     return None
 
@@ -164,7 +174,7 @@ def normalise(proposal, case, case_object, findings, results):
         elif name == "read_failure" and action == "tool_call" and _failures(results, data.get("tool")) >= 2:
             force("escalate", "read failed after one retry")
 
-    reason = sentiment_escalation(case_object)
+    reason = sentiment_escalation(case_object, case)
     if reason == WORSENING and (not results or action == "tool_call" or _resolves(data, case_object, results)):
         reason = None
     if reason and action != "escalate":
