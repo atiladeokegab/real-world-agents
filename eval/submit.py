@@ -1,10 +1,15 @@
 """Run numbered Reality Test cases concurrently and report their answers."""
 
 import argparse
+import os
+import signal
 import subprocess
+import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+
+from agent.core.writer import write_fallback
 
 
 CASE_TIMEOUT = 150
@@ -12,11 +17,38 @@ CASE_TIMEOUT = 150
 
 def run_case(case: Path, out: Path):
     start = time.monotonic()
-    result = subprocess.run(
-        ["uv", "run", "agent", "run", "--case", str(case), "--out", str(out)],
-        capture_output=True, text=True, timeout=CASE_TIMEOUT,
-    )
-    return case.name, result.returncode, time.monotonic() - start
+    try:
+        process = subprocess.Popen(
+            ["uv", "run", "agent", "run", "--case", str(case), "--out", str(out)],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True,
+        )
+        try:
+            _, stderr = process.communicate(timeout=CASE_TIMEOUT)
+            code, error = process.returncode, stderr.strip()
+        except subprocess.TimeoutExpired as exc:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            process.communicate()
+            code, error = 124, str(exc)
+    except OSError as exc:
+        code, error = 127, str(exc)
+    return case, code, time.monotonic() - start, error
+
+
+def fill_missing(case: Path, out: Path, error: str) -> bool:
+    """Write a system fallback without changing an answer the agent already wrote."""
+    if (out / "ANSWER.md").is_file() and (out / "REASONING.md").is_file():
+        return False
+    with tempfile.TemporaryDirectory(dir=out.parent) as temporary:
+        fallback = Path(temporary)
+        write_fallback(fallback, case, error or "agent exited without both output files", [])
+        out.mkdir(parents=True, exist_ok=True)
+        for name in ("ANSWER.md", "REASONING.md", "trace.log", "run.json"):
+            if not (out / name).exists():
+                os.replace(fallback / name, out / name)
+    return True
 
 
 def decision(answer: Path) -> str:
@@ -48,14 +80,22 @@ def main(argv=None) -> int:
         results = list(pool.map(lambda case: run_case(case, args.out / case.name), cases))
 
     print("case\texit code\tseconds\tdecision\tfallback")
-    missing = 0
-    for name, code, seconds in results:
-        answer = args.out / name / "ANSWER.md"
-        reasoning = args.out / name / "REASONING.md"
+    missing = fallback_count = 0
+    for case, code, seconds, error in results:
+        name = case.name
+        folder = args.out / name
+        try:
+            fallback = fill_missing(case, folder, error)
+        except Exception as exc:
+            fallback = False
+            print(f"{name}: fallback failed: {exc}")
+        fallback_count += fallback
+        answer = folder / "ANSWER.md"
+        reasoning = folder / "REASONING.md"
         if not answer.is_file() or not reasoning.is_file():
             missing += 1
-        print(f"{name}\t{code}\t{seconds:.1f}\t{decision(answer) if answer.is_file() else 'missing'}\tn")
-    print(f"total {len(cases)}; missing {missing}")
+        print(f"{name}\t{code}\t{seconds:.1f}\t{decision(answer) if answer.is_file() else 'missing'}\t{'y' if fallback else 'n'}")
+    print(f"total {len(cases)}; fallback {fallback_count}; missing {missing}")
     head = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True)
     print(f"HEAD {head.stdout.strip()}")
     return 1 if missing else 0
