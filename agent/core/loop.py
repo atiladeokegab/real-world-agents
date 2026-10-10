@@ -1,6 +1,5 @@
 """§3 the bounded loop: ingest -> evidence -> extract -> (decide -> verify -> execute)x -> writer."""
 
-import json
 import tempfile
 import threading
 import traceback
@@ -85,7 +84,7 @@ def _pipeline(path: Path, question: str | None, cut: int | None, trace: list, st
         stage("decide")
         p = brain.decide(case, case_object, findings, results, feedback)
         trace.append(_dump("proposal", p))
-        emit("decide", p.action + (f" {p.tool} ({json.dumps(p.params, default=str)[:80]})" if p.tool else "")
+        emit("decide", p.action + (f" {p.tool} ({writer._short(p.params, 80)})" if p.tool else "")
              + (f" · {p.reply.channel}" if p.reply and p.action != "tool_call" else ""))
         stage("verify")
         v = checks.verify(p, case, case_object, findings, results)
