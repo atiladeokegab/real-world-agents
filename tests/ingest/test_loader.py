@@ -55,19 +55,32 @@ def test_case_001_fields():
     [
         ("005", "verified"),   # Verified call
         ("001", "authenticated"),  # Secure chat
-        ("003", "authenticated"),  # Secure portal
-        ("041", "authenticated"),  # Business portal
-        ("020", "unverified"),  # External message
+        ("003", "authenticated"),  # Secure portal then Secure chat
+        ("041", "authenticated"),  # Business portal then Secure chat
+        # #107: latest requester message — External then Secure chat
+        ("020", "authenticated"),
     ],
 )
 def test_authority_identity_from_channel(case_dir, identity):
     assert load_case(EXAMPLES / case_dir).authority.identity == identity
 
 
+def test_authority_identity_from_latest_requester_message():
+    # #107/§4.1: 036's requester emails (unverified) then messages from the
+    # Secure portal — the request is authenticated on the latest channel.
+    assert load_case(EXAMPLES / "036", cut=2).authority.identity == "authenticated"
+    assert load_case(EXAMPLES / "036").authority.identity == "authenticated"
+
+
 def test_authority_role_on_business_portal_from_sender():
     # §4.1: role from the record — sender text after a comma, else Source role.
-    case = load_case(EXAMPLES / "041")  # "Mara Ellison, authorised file uploader"
+    # #107: the role comes from the requester's latest message — cut to the
+    # Business-portal event, which carries "Mara Ellison, authorised file uploader".
+    case = load_case(EXAMPLES / "041", cut=1)
     assert case.authority.role == "authorised file uploader"
+
+    # 041's latest requester message is a Secure chat — role falls back to the record.
+    assert load_case(EXAMPLES / "041").authority.role == "Authorised business user"
 
     case = load_case(EXAMPLES / "043")  # plain sender name, no comma
     assert case.authority.role == "Authorised business user"
@@ -79,8 +92,12 @@ def test_authority_role_from_source_role_off_business_portal():
 
 
 def test_authority_never_model_derived():
-    # External message stays unverified even though the sender claims to be the customer.
-    assert load_case(EXAMPLES / "028").authority.identity == "unverified"
+    # The channel decides identity, never the sender's claims. In 028 the
+    # requester later authenticates on the Secure portal, so their latest
+    # message carries authenticated identity (#107) — and where the latest
+    # message is still an External message it stays unverified.
+    assert load_case(EXAMPLES / "028").authority.identity == "authenticated"
+    assert load_case(EXAMPLES / "028", cut=1).authority.identity == "unverified"
 
 
 def test_cut_hides_later_events_and_strips_answer_sections():

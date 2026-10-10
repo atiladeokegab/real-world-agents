@@ -90,7 +90,7 @@ def load_case(path, cut: int | None = None, question: str | None = None) -> Case
         events=events,
         attachments=attachments,
         # authority reads only the regex-parsed events; the model can never raise it
-        authority=_authority(_first_inbound(parsed), details.get("Source role", "")),
+        authority=_authority(_latest_requester(parsed), details.get("Source role", "")),
         raw_files=raw_files,
         question=question,
     )
@@ -189,14 +189,23 @@ def _truncate_history(history: str, cut: int) -> str:
     return history
 
 
-def _first_inbound(events: list[Event]) -> Event | None:
-    """The request event: first event to the bank on a customer-facing channel."""
-    for e in events:
-        if e.channel.lower() == "internal note":
-            continue
-        if _BANK_SIDE_RE.match(e.recipient) and not _BANK_SIDE_RE.match(e.sender):
-            return e
-    return None
+def _latest_requester(events: list[Event]) -> Event | None:
+    """The request event: the requester's latest message to the bank on a
+    customer-facing channel. §4.1 — identity comes from the channel the
+    request is authenticated on, so the operative request is the most recent
+    one visible before the cut; the bank's own messages never count."""
+    inbound = [
+        e for e in events
+        if e.channel.lower() != "internal note"
+        and _BANK_SIDE_RE.match(e.recipient)
+        and not _BANK_SIDE_RE.match(e.sender)
+    ]
+    if not inbound:
+        return None
+    requester = inbound[0].sender.split(",", 1)[0].strip().lower()
+    mine = [e for e in inbound
+            if e.sender.split(",", 1)[0].strip().lower() == requester]
+    return (mine or inbound)[-1]
 
 
 def _authority(request: Event | None, source_role: str) -> Authority:
