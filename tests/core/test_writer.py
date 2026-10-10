@@ -135,3 +135,26 @@ def test_voice_can_read_the_customer_reply(tmp_path):
     a, _, _ = run(tmp_path, Proposal(action="reply", reply=REPLY), [ToolResult(tool="t", status="ok")])
     m = re.search(r"## Customer reply\n\n(?:Channel:[^\n]*\n\n)?(.*?)\n*(?:\n## |\Z)", a, re.S)
     assert m.group(1) == "We've checked row SUP-17."
+
+
+def test_no_python_none_reaches_the_files(tmp_path):
+    # A verdict with no field or event, and a handover note with empty values, never print "None"
+    # (the design's empty marker "None." is fine).
+    import re
+    p = Proposal(action="escalate", reply=REPLY, exception_type="incomplete_answer",
+                 escalation={"who": None, "urgency": None, "why": None, "question": None,
+                             "verified": [None, "identity verified"], "not_done": None})
+    v = Verdict(ok=False, rule="fabricated_execution", field="reply.text", event=None, message="claims 'sent'")
+    bare = Verdict(ok=False)
+    a, r, _ = run(tmp_path, p, [], [(p, v), (p, bare)])
+    for text in (a, r):
+        assert not re.search(r"None(?!\.)", text), [l for l in text.splitlines() if re.search(r"None(?!\.)", l)]
+    assert "fabricated_execution on reply.text: claims 'sent'" in r and "Verifier: ✗ rejected" in r
+
+
+def test_loop_escalation_sentence_has_no_none():
+    from agent.core.writer import verdict_text
+    assert verdict_text(Verdict(ok=False, rule="claim_linter", field="reply.text", message="x")) == \
+        "claim_linter on reply.text: x"
+    assert verdict_text(Verdict(ok=False, rule="findings", field="findings_addressed", event="event-002")) == \
+        "findings on findings_addressed (event-002)"
