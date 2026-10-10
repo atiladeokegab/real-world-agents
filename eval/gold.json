@@ -1,0 +1,252 @@
+{
+ "001": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "Check the specific transfer's status in H&V's own journal."
+ },
+ "002": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "Check H&V’s incoming-payment records for Elowen’s account and report the current status through the secure portal."
+ },
+ "003": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "Check the instruction's stage against the identifier already associated with Elise's secure session; do not authorise it on her behalf."
+ },
+ "004": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "Check the transaction journal for the decline code on Mara Ellery’s transfer and confirm the wording H&V is permitted to share."
+ },
+ "005": {
+  "action": "tool_call",
+  "kind": "write",
+  "next": "The agent will submit a request to the payment team to register a return request for the verified transfer."
+ },
+ "006": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "At escalation, compare the number and independent references of Mira’s payment instructions in H&V’s journal before advising or making any change."
+ },
+ "007": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "The agent asked H&V's Payment Team to check the available trace for case HV-007 and report the current stage."
+ },
+ "008": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "Search H&V's payment journal for the purpose field on Elena's transfer instruction."
+ },
+ "009": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "Check the H&V payment journal against the final instruction for the completed transfer."
+ },
+ "010": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "Check H&V's incoming-entry journal for a refund matching the customer's outgoing transfer to Northmere Home Supplies."
+ },
+ "011": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "The agent's first action at escalation is to ask H&V's standing-order journal to verify the next scheduled run date."
+ },
+ "012": {
+  "action": "tool_call",
+  "kind": "write",
+  "next": "Send Mira the standing-order amendment in her secure portal session for her to confirm; do not change the order based on the chat alone."
+ },
+ "013": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "Check that the instruction is within Elodie's mandate and that the next run has not started, then submit her secure-portal cancellation through H&V's protected instruction process."
+ },
+ "014": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "The agent's first action was to request a current status check from H&V's mandate journal, without making any change to the mandate."
+ },
+ "015": {
+  "action": "tool_call",
+  "kind": "write",
+  "next": "After the identification checks, review whether any collection may already be processing, then submit Mara’s cancellation instruction through H&V’s protected process."
+ },
+ "016": {
+  "action": "tool_call",
+  "kind": "write",
+  "next": "The agent’s immediate step was to register a review of the specific £18.40 Direct Debit charge with the Direct Debit team."
+ },
+ "017": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "Check the journal entry for Mara’s specific scheduled standing-order run and establish its recorded status and reason."
+ },
+ "018": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "Check the types and internal references of both instructions in H&V's journal before considering any change."
+ },
+ "019": {
+  "action": "tool_call",
+  "kind": "write",
+  "next": "Send the checked date change to Maeve through the secure portal for her confirmation."
+ },
+ "020": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "The agent’s immediate step at escalation is to reconcile the active recurring instructions in H&V’s register, without making changes."
+ },
+ "021": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "The agent’s immediate step is to check the card journal for a recorded dispatch entry."
+ },
+ "022": {
+  "action": "tool_call",
+  "kind": "write",
+  "next": "Submit the verified block instruction to H&V's card system."
+ },
+ "023": {
+  "action": "tool_call",
+  "kind": "write",
+  "next": "Open a card-team case against the specific posted purchase and provide the registration number in the secure portal."
+ },
+ "024": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "Check the card journal for the permitted restriction category and the limit on what can be disclosed."
+ },
+ "025": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "Search H&V’s card authorisation journal for the North Quay Books attempt for £18.40 identified by Mara, and check its recorded decline reason."
+ },
+ "026": {
+  "action": "tool_call",
+  "kind": "write",
+  "next": "The secure PIN procedure is available in Maren’s portal for her to continue."
+ },
+ "027": {
+  "action": "reply",
+  "kind": "none",
+  "next": "The agent directs Mara to complete recovery through the official secure portal; the agent does not handle her password or verification details."
+ },
+ "028": {
+  "action": "tool_call",
+  "kind": "write",
+  "next": "After completing the prescribed identification checks on the verified call, start H&V’s secure phone-number change process and leave confirmation to the customer."
+ },
+ "029": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "Check the device-linking state in the access log."
+ },
+ "030": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "After identity checks, the agent checked the existing replacement request in the card journal."
+ },
+ "031": {
+  "action": "tool_call",
+  "kind": "write",
+  "next": "Ask the statements service to check the June 2025 period and place the available statement in the account owner's secure portal."
+ },
+ "032": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "Check with the archive service whether the January 2024 statement is available and can be ordered, without promising availability or a fee in advance."
+ },
+ "033": {
+  "action": "tool_call",
+  "kind": "write",
+  "next": "Request the data service to create the permitted CSV export for the verified owner's secure portal, limited to the requested period."
+ },
+ "034": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "Compare the recorded transaction type with the H&V tariff in force on the transaction's processing date."
+ },
+ "035": {
+  "action": "tool_call",
+  "kind": "write",
+  "next": "Register the request with the Tariff Team, identifying the £4.50 fee dated 18 June 2025 and Mara’s reason for disputing its application."
+ },
+ "036": {
+  "action": "tool_call",
+  "kind": "write",
+  "next": "The agent’s immediate step at escalation was to open the profile-change process after completing identity checks and checking the system’s requirements."
+ },
+ "037": {
+  "action": "tool_call",
+  "kind": "write",
+  "next": "The agent opened the protected name review and referred HV-037 to the data team to check the basis for the correction under H&V procedure."
+ },
+ "038": {
+  "action": "tool_call",
+  "kind": "write",
+  "next": "Submit a request to the document service to issue the permitted account confirmation in Mara’s secure portal only."
+ },
+ "039": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "The agent's immediate action is to ask the security team for a permitted session extract for Nerys's profile."
+ },
+ "040": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "The agent’s immediate step was to select payment HV-040 in the document service and request a record for that operation."
+ },
+ "041": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "Check the import journal for the receipt record for batch-041.csv."
+ },
+ "042": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "Request the validation report from the import service for Nadia as an authorised report viewer."
+ },
+ "043": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "Check the package’s signing queue against the business mandate before responding, without approving or releasing anything on either signer’s behalf."
+ },
+ "044": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "Check the payment journal for row SUP-17 specifically, rather than infer its status from the batch status."
+ },
+ "045": {
+  "action": "tool_call",
+  "kind": "write",
+  "next": "The agent sent the access request to the verified company administrator through the secure portal for approval."
+ },
+ "046": {
+  "action": "tool_call",
+  "kind": "write",
+  "next": "Submit Mara’s verified instruction to the H&V admin process to revoke Owen Bell’s Payroll Approver role."
+ },
+ "047": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "Check Maeve’s viewing mandate and the active company payment-limit setting in H&V’s limit register before responding."
+ },
+ "048": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "Check the company's incoming account activity for an identifiable credit matching the payment details available to H&V."
+ },
+ "049": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "The agent’s immediate action was to ask H&V’s acquiring service to prepare and place the report for the selected period for the authorised manager."
+ },
+ "050": {
+  "action": "tool_call",
+  "kind": "read",
+  "next": "I asked H&V’s payment team to check the recorded stage of the specific authorised payment."
+ }
+}
