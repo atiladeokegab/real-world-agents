@@ -1,0 +1,9 @@
+HARROW & VALE BANK PLC — CUSTOMER STATEMENT EXTRACT (FICTIONAL)
+Account holder: Milo Serrin
+Generated: 2026-10-09 13:18 UTC
+
+2026-10-09 12:51  Wrenfield Markets incoming credit  GBP 945.00  PENDING
+Available balance excluding pending credits: GBP 214.62
+Transfer TR-106: NOT RELEASED
+
+Pending is not settled or available money. This extract does not confirm final receipt.
