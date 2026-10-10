@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Harrow &amp; Vale</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green: #0F3D2E;
+  --green-2: #16503D;
+  --green-3: #1F6B52;
+  --cream: #F6F3EC;
+  --paper: #FFFFFF;
+  --ink: #15201B;
+  --ink-2: #56645D;
+  --ink-3: #8C9891;
+  --line: #E4DFD4;
+  --gold: #C8A85B;
+  --ok: #1F8A5B;
+  --wait: #B7791F;
+  --warn: #C0412C;
+  --sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --mono: "Geist Mono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; margin: 0; }
+html, body { height: 100%; }
+body { font: 15px/1.45 var(--sans); color: var(--ink); background: #DCD6CA; -webkit-font-smoothing: antialiased; display: grid; place-items: center; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+.phone { position: relative; width: 390px; height: 844px; border-radius: 48px; background: var(--cream); overflow: hidden; box-shadow: 0 0 0 10px #111, 0 40px 90px -30px rgba(0,0,0,.6); }
+@media (max-width: 500px) { body { display: block; background: var(--cream); } .phone { width: 100%; height: 100dvh; border-radius: 0; box-shadow: none; } }
+.status { height: 50px; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 30px 8px; font: 600 15px var(--sans); color: #fff; position: relative; z-index: 2; }
+.screen { position: absolute; inset: 0; overflow-y: auto; padding-bottom: 110px; scrollbar-width: none; }
+.screen::-webkit-scrollbar { display: none; }
+[hidden] { display: none !important; }
+
+/* home */
+.hero { background: linear-gradient(170deg, var(--green) 0%, var(--green-2) 100%); color: #fff; padding: 0 22px 26px; border-radius: 0 0 28px 28px; }
+.hello { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; }
+.hello .who { display: flex; align-items: center; gap: 10px; }
+.avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--gold); color: var(--green); display: grid; place-items: center; font-weight: 700; }
+.hello small { display: block; color: rgba(255,255,255,.65); font-size: 12.5px; }
+.hello b { font-size: 16px; font-weight: 600; }
+.bell { width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,.12); display: grid; place-items: center; }
+.balance { margin-top: 26px; }
+.balance .lbl { color: rgba(255,255,255,.7); font-size: 13px; display: flex; gap: 8px; align-items: center; }
+.balance .amt { font-size: 42px; font-weight: 700; letter-spacing: -.03em; margin-top: 2px; }
+.balance .amt span { font-size: 24px; opacity: .8; }
+.balance .acct { font: 12.5px var(--mono); color: rgba(255,255,255,.6); margin-top: 2px; }
+.actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 24px; }
+.actions button { display: flex; flex-direction: column; align-items: center; gap: 7px; font-size: 12.5px; color: rgba(255,255,255,.9); }
+.actions i { width: 48px; height: 48px; border-radius: 16px; background: rgba(255,255,255,.12); display: grid; place-items: center; font-style: normal; font-size: 19px; }
+.section { padding: 22px 20px 0; }
+.section h2 { font-size: 15px; font-weight: 600; display: flex; justify-content: space-between; margin-bottom: 10px; }
+.section h2 span { font-weight: 500; font-size: 13px; color: var(--green-3); }
+.card { background: var(--paper); border-radius: 20px; padding: 6px 16px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+.tx { display: grid; grid-template-columns: 42px 1fr auto; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); width: 100%; text-align: left; }
+.tx:first-child { border-top: 0; }
+.tx .ic { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; font-size: 18px; background: var(--cream); }
+.tx .nm { font-weight: 600; font-size: 14.5px; }
+.tx .sub { font-size: 12.5px; color: var(--ink-3); display: flex; gap: 6px; align-items: center; }
+.tx .am { font-weight: 600; font-size: 14.5px; text-align: right; }
+.tx .am.in { color: var(--ok); }
+.pill { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 99px; }
+.pill.sent { background: #E5F2EB; color: var(--ok); }
+.pill.pend { background: #FBEFD8; color: var(--wait); }
+.promo { margin: 18px 20px 0; padding: 16px; border-radius: 20px; background: var(--paper); display: flex; gap: 14px; align-items: center; }
+.promo i { width: 44px; height: 44px; border-radius: 14px; background: var(--green); color: var(--gold); display: grid; place-items: center; font-style: normal; font-size: 20px; flex: none; }
+.promo b { font-size: 14px; } .promo p { font-size: 12.5px; color: var(--ink-2); }
+
+/* payment detail */
+.top { position: sticky; top: 0; background: var(--cream); padding: 6px 16px 10px; display: flex; align-items: center; gap: 10px; z-index: 2; }
+.back { width: 38px; height: 38px; border-radius: 50%; background: var(--paper); display: grid; place-items: center; font-size: 18px; }
+.top b { font-size: 16px; }
+.pay-head { text-align: center; padding: 18px 20px 6px; }
+.pay-head .ic { width: 64px; height: 64px; border-radius: 20px; background: var(--paper); display: grid; place-items: center; font-size: 28px; margin: 0 auto 12px; }
+.pay-head .amt { font-size: 38px; font-weight: 700; letter-spacing: -.03em; }
+.pay-head .to { color: var(--ink-2); margin-top: 2px; }
+.pay-head .pill { display: inline-block; margin-top: 10px; font-size: 12.5px; padding: 3px 11px; }
+.steps { list-style: none; padding: 4px 0; }
+.steps li { display: grid; grid-template-columns: 22px 1fr; gap: 12px; padding: 10px 0; position: relative; }
+.steps li::before { content: ""; position: absolute; left: 10px; top: 32px; bottom: -4px; width: 2px; background: var(--line); }
+.steps li:last-child::before { display: none; }
+.steps .dot { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; color: #fff; background: var(--ok); }
+.steps .dot.unk { background: var(--paper); border: 2px dashed var(--ink-3); color: var(--ink-3); }
+.steps b { font-size: 14.5px; font-weight: 600; } .steps p { font-size: 12.5px; color: var(--ink-3); }
+.rows .r { display: flex; justify-content: space-between; padding: 12px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.rows .r:first-child { border-top: 0; } .rows .r span { color: var(--ink-3); }
+.ask { margin: 18px 20px 0; width: calc(100% - 40px); padding: 15px; border-radius: 16px; background: var(--green); color: #fff; font-weight: 600; display: flex; justify-content: center; gap: 8px; }
+.note { margin: 12px 24px 0; font-size: 12.5px; color: var(--ink-3); text-align: center; }
+
+/* tab bar */
+.tabbar { position: absolute; left: 0; right: 0; bottom: 0; height: 84px; background: rgba(255,255,255,.94); backdrop-filter: blur(12px); border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(4, 1fr); padding: 10px 6px 0; z-index: 3; }
+.tabbar button { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; color: var(--ink-3); }
+.tabbar button.on { color: var(--green); font-weight: 600; }
+.tabbar i { font-style: normal; font-size: 19px; }
+
+/* chat launcher */
+.fab { position: absolute; right: 18px; bottom: 100px; z-index: 4; height: 54px; padding: 0 18px 0 14px; border-radius: 27px; background: var(--green); color: #fff; display: flex; align-items: center; gap: 9px; font-weight: 600; box-shadow: 0 14px 30px -10px rgba(15,61,46,.7); }
+.fab i { width: 28px; height: 28px; border-radius: 50%; background: var(--gold); color: var(--green); display: grid; place-items: center; font-style: normal; font-size: 15px; }
+
+/* chat sheet */
+.sheet { position: absolute; inset: 0; z-index: 10; background: var(--cream); display: flex; flex-direction: column; transform: translateY(100%); transition: transform .35s cubic-bezier(.2,.9,.3,1); }
+.sheet.open { transform: none; }
+.sheet .head { background: var(--green); color: #fff; padding: 50px 16px 14px; display: flex; align-items: center; gap: 12px; }
+.sheet .head .avatar { background: var(--gold); width: 40px; height: 40px; font-size: 18px; }
+.sheet .head b { display: block; font-size: 16px; } .sheet .head small { font-size: 12px; color: rgba(255,255,255,.7); display: flex; align-items: center; gap: 6px; }
+.sheet .head small::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #5BE39A; }
+.sheet .head .x { margin-left: auto; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,.12); color: #fff; font-size: 18px; }
+.msgs { flex: 1; overflow-y: auto; padding: 16px 14px 10px; display: flex; flex-direction: column; gap: 10px; scrollbar-width: none; }
+.msgs::-webkit-scrollbar { display: none; }
+.b { max-width: 82%; padding: 11px 14px; border-radius: 18px; font-size: 14.5px; line-height: 1.45; white-space: pre-wrap; }
+.b.me { align-self: flex-end; background: var(--green); color: #fff; border-bottom-right-radius: 6px; }
+.b.bot { align-self: flex-start; background: var(--paper); border-bottom-left-radius: 6px; }
+.b.err { background: #FBE7E3; color: var(--warn); }
+.ctx { align-self: center; font-size: 12px; color: var(--ink-3); background: var(--paper); padding: 4px 10px; border-radius: 99px; }
+.work { align-self: flex-start; width: 86%; background: var(--paper); border-radius: 18px; padding: 13px 14px; border-bottom-left-radius: 6px; }
+.work .t { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--green); animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.work ul { list-style: none; padding: 0; margin-top: 8px; }
+.work li { font-size: 12.5px; color: var(--ink-2); padding: 3px 0; display: flex; gap: 8px; }
+.work li::before { content: "✓"; color: var(--ok); font-weight: 700; }
+.work li.blocked::before { content: "!"; color: var(--warn); }
+.work li.now::before { content: "•"; color: var(--wait); }
+.status-card { align-self: flex-start; width: 86%; border-radius: 16px; padding: 12px 14px; font-size: 13px; display: flex; gap: 10px; align-items: flex-start; }
+.status-card i { font-style: normal; font-size: 16px; }
+.status-card b { display: block; font-size: 13.5px; }
+.status-card.done { background: #E5F2EB; color: #134D33; }
+.status-card.wait { background: #FBEFD8; color: #6B4510; }
+.status-card.person { background: #E8ECF7; color: #26386E; }
+.why { font-size: 12px; color: var(--ink-3); align-self: flex-start; padding-left: 4px; }
+.chips { display: flex; gap: 8px; overflow-x: auto; padding: 0 14px 10px; scrollbar-width: none; }
+.chips button { white-space: nowrap; padding: 8px 12px; border-radius: 99px; background: var(--paper); border: 1px solid var(--line); font-size: 13px; }
+.composer { display: flex; gap: 8px; padding: 10px 14px 28px; background: var(--paper); border-top: 1px solid var(--line); }
+.composer input { flex: 1; border: 1px solid var(--line); border-radius: 22px; padding: 12px 16px; font: inherit; background: var(--cream); outline: none; }
+.composer input:focus { border-color: var(--green-3); }
+.composer button { width: 46px; height: 46px; border-radius: 50%; background: var(--green); color: #fff; font-size: 18px; }
+.composer button:disabled { opacity: .4; }
+</style>
+</head>
+<body>
+<div class="phone" aria-label="Harrow and Vale mobile banking">
+  <!-- HOME -->
+  <section class="screen" id="home" aria-label="Home">
+    <div class="hero">
+      <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+      <div class="hello">
+        <div class="who"><div class="avatar">EM</div><div><small>Good afternoon</small><b>Elowen Marsh</b></div></div>
+        <button class="bell" aria-label="Notifications">🔔</button>
+      </div>
+      <div class="balance">
+        <div class="lbl">Current account</div>
+        <div class="amt">£2,184<span>.36</span></div>
+        <div class="acct">Harrow &amp; Vale · ···· 4821</div>
+      </div>
+      <div class="actions">
+        <button><i>↗</i>Pay</button><button><i>⇄</i>Transfer</button><button><i>▭</i>Cards</button><button><i>≡</i>Statements</button>
+      </div>
+    </div>
+    <div class="section">
+      <h2>Recent activity <span>See all</span></h2>
+      <div class="card" id="activity"></div>
+    </div>
+    <div class="promo"><i>✦</i><div><b>Questions about a payment?</b><p>Ask our assistant. It checks your records and tells you exactly what we can see.</p></div></div>
+  </section>
+
+  <!-- PAYMENT DETAIL -->
+  <section class="screen" id="detail" aria-label="Payment detail" hidden>
+    <div class="status" style="color:var(--ink)"><span>9:41</span><span>●●● ▮</span></div>
+    <div class="top"><button class="back" data-go="home" aria-label="Back">←</button><b>Payment</b></div>
+    <div id="detail-body"></div>
+  </section>
+
+  <nav class="tabbar">
+    <button class="on" data-go="home"><i>⌂</i>Home</button><button><i>↗</i>Payments</button><button><i>▭</i>Cards</button><button><i>☺</i>Profile</button>
+  </nav>
+
+  <button class="fab" id="fab" aria-label="Open the assistant"><i>✦</i>Ask H&amp;V</button>
+
+  <!-- CHAT -->
+  <section class="sheet" id="sheet" aria-label="Assistant" aria-hidden="true">
+    <div class="head">
+      <div class="avatar">✦</div>
+      <div><b>H&amp;V Assistant</b><small>Checks your records before it answers</small></div>
+      <button class="x" id="close" aria-label="Close the assistant">✕</button>
+    </div>
+    <div class="msgs" id="msgs" aria-live="polite"></div>
+    <div class="chips" id="chips"></div>
+    <form class="composer" id="composer">
+      <input id="input" autocomplete="off" placeholder="Message H&amp;V…" aria-label="Your message" maxlength="1000">
+      <button id="send" aria-label="Send">↑</button>
+    </form>
+  </section>
+</div>
+
+<script>
+const ACTIVITY = [
+  { id: "alder", icon: "🪵", name: "Alder & Reed Workshop", sub: "Transfer · Today, 10:12", amount: -420, status: "sent",
+    ref: "Bookcase", account: "Alder & Reed Workshop · 20-14-77 ···· 3390", detail: true },
+  { id: "tesco", icon: "🛒", name: "Tesco Express", sub: "Card · Today, 08:41", amount: -12.85 },
+  { id: "salary", icon: "💼", name: "Kestrel Loom Ltd", sub: "Salary · Yesterday", amount: 2450, in: true },
+  { id: "pottery", icon: "🏺", name: "Fernlea Pottery Studio", sub: "Standing order · 18 Jul", amount: -65 },
+  { id: "tfl", icon: "🚇", name: "Transport for London", sub: "Card · 18 Jul", amount: -7.6 },
+  { id: "energy", icon: "⚡", name: "Brightwell Energy", sub: "Direct Debit · 17 Jul", amount: -58.2 },
+];
+const CHIPS = [
+  "Has my friend's £150 for the kiln arrived?",
+  "Was my £420 payment to Alder & Reed sent?",
+  "Cancel my Brightwell Energy Direct Debit",
+  "I don't recognise a card payment",
+];
+
+const $ = (s) => document.querySelector(s);
+const money = (n) => (n < 0 ? "−" : "+") + "£" + Math.abs(n).toLocaleString("en-GB", { minimumFractionDigits: 2 });
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function renderActivity() {
+  $("#activity").innerHTML = ACTIVITY.map((t) => `
+    <button class="tx" ${t.detail ? `data-tx="${t.id}"` : ""} aria-label="${esc(t.name)} ${money(t.amount)}">
+      <span class="ic">${t.icon}</span>
+      <span><span class="nm">${esc(t.name)}</span><span class="sub">${esc(t.sub)}${t.status === "sent" ? '<span class="pill sent">Sent</span>' : ""}</span></span>
+      <span class="am ${t.in ? "in" : ""}">${money(t.amount)}</span>
+    </button>`).join("");
+}
+
+function renderDetail(t) {
+  $("#detail-body").innerHTML = `
+    <div class="pay-head"><div class="ic">${t.icon}</div><div class="amt">${money(t.amount)}</div><div class="to">to ${esc(t.name)}</div><span class="pill sent">✓ Sent by H&amp;V</span></div>
+    <div class="section"><h2>Where it is</h2><div class="card"><ol class="steps">
+      <li><span class="dot">✓</span><div><b>You set up the payment</b><p>Today, 10:11 · reference “${esc(t.ref)}”</p></div></li>
+      <li><span class="dot">✓</span><div><b>Sent by Harrow &amp; Vale</b><p>Today, 10:12 · left your account</p></div></li>
+      <li><span class="dot unk">?</span><div><b>Received by their bank</b><p>Not something we can see from here</p></div></li>
+    </ol></div></div>
+    <div class="section"><h2>Details</h2><div class="card rows">
+      <div class="r"><span>To</span>${esc(t.account)}</div>
+      <div class="r"><span>Reference</span>${esc(t.ref)}</div>
+      <div class="r"><span>From</span>Current account ···· 4821</div>
+    </div></div>
+    <button class="ask" data-ask="${t.id}">✦ Ask about this payment</button>
+    <p class="note">The assistant checks our records and tells you exactly what we can see, nothing more.</p>`;
+}
+
+function show(screen) {
+  ["home", "detail"].forEach((s) => ($(`#${s}`).hidden = s !== screen));
+  $(`#${screen}`).scrollTop = 0;
+}
+
+/* ---------- chat ---------- */
+const history = [];
+let context = null;
+let busy = false;
+
+function bubble(cls, html) {
+  const el = document.createElement("div");
+  el.className = cls;
+  el.innerHTML = html;
+  $("#msgs").appendChild(el);
+  $("#msgs").scrollTop = $("#msgs").scrollHeight;
+  return el;
+}
+
+function openChat(ctx, prefill) {
+  context = ctx || null;
+  $("#sheet").classList.add("open");
+  $("#sheet").setAttribute("aria-hidden", "false");
+  if (!$("#msgs").children.length) bubble("b bot", "Hi Elowen 👋 I can check payments, cards, Direct Debits and statements. What can I help with?");
+  if (ctx) bubble("ctx", `About: ${esc(ctx)}`);
+  $("#chips").innerHTML = CHIPS.map((c) => `<button type="button">${esc(c)}</button>`).join("");
+  $("#input").value = prefill || "";
+  setTimeout(() => $("#input").focus(), 350);
+}
+
+function closeChat() {
+  $("#sheet").classList.remove("open");
+  $("#sheet").setAttribute("aria-hidden", "true");
+}
+
+async function send(text) {
+  text = text.trim();
+  if (!text || busy) return;
+  busy = true;
+  $("#send").disabled = true;
+  $("#chips").innerHTML = "";
+  bubble("b me", esc(text));
+  history.push({ role: "user", content: text });
+  try {
+    const res = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: history, context }) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "The assistant is unavailable right now.");
+    bubble("b bot", esc(data.reply));
+    history.push({ role: "assistant", content: data.reply });
+    if (data.job) await follow(data.job);
+  } catch (err) {
+    bubble("b bot err", esc(err.message || "Something went wrong. Please try again."));
+  } finally {
+    busy = false;
+    $("#send").disabled = false;
+  }
+}
+
+async function follow(job) {
+  const card = bubble("work", `<div class="t"><span class="spin"></span>Checking your account</div><ul></ul>`);
+  for (;;) {
+    await new Promise((r) => setTimeout(r, 900));
+    let data;
+    try {
+      data = await (await fetch(`/api/job/${job}`)).json();
+    } catch {
+      continue;
+    }
+    const steps = data.steps || [];
+    card.querySelector("ul").innerHTML = steps.map((s, i) =>
+      `<li class="${s.blocked ? "blocked" : ""} ${!data.done && i === steps.length - 1 ? "now" : ""}">${esc(s.label)}</li>`).join("");
+    $("#msgs").scrollTop = $("#msgs").scrollHeight;
+    if (data.done) {
+      card.querySelector(".t").innerHTML = "✓ Checked";
+      showResult(data.result || {});
+      return;
+    }
+  }
+}
+
+function showResult(r) {
+  bubble("b bot", esc(r.reply));
+  history.push({ role: "assistant", content: r.reply });
+  const person = r.escalated;
+  const pending = !person && /request/i.test(r.state || "");
+  const cls = person ? "person" : pending ? "wait" : "done";
+  const title = person ? "Passed to a person" : pending ? "Requested, waiting on our team" : "Answered";
+  const sub = person ? `${r.team ? esc(r.team) + " · " : ""}they'll reply here` : pending ? "We'll update you here" : "Nothing else needed from you";
+  bubble(`status-card ${cls}`, `<i>${person ? "👤" : pending ? "⏳" : "✓"}</i><div><b>${title}</b>${sub}</div>`);
+  if (r.seconds) bubble("why", `Checked in ${Math.round(r.seconds)}s · every answer passes H&amp;V's safety checks`);
+}
+
+/* ---------- wiring ---------- */
+document.addEventListener("click", (e) => {
+  const tx = e.target.closest("[data-tx]");
+  if (tx) { renderDetail(ACTIVITY.find((t) => t.id === tx.dataset.tx)); show("detail"); return; }
+  const go = e.target.closest("[data-go]");
+  if (go && go.dataset.go) { show(go.dataset.go); return; }
+  const ask = e.target.closest("[data-ask]");
+  if (ask) { const t = ACTIVITY.find((x) => x.id === ask.dataset.ask); openChat(`${t.name} · ${money(t.amount)} · ${t.sub}`, `I can see the ${money(t.amount).replace("−", "")} payment to ${t.name} left my account. Has it been sent?`); return; }
+  const chip = e.target.closest(".chips button");
+  if (chip) { send(chip.textContent); return; }
+});
+$("#fab").addEventListener("click", () => openChat(null));
+$("#close").addEventListener("click", closeChat);
+$("#composer").addEventListener("submit", (e) => { e.preventDefault(); const v = $("#input").value; $("#input").value = ""; send(v); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeChat(); });
+renderActivity();
+</script>
+</body>
+</html>
