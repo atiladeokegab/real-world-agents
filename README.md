@@ -112,6 +112,24 @@ amounts, dates and limits are compared in code; a money action needs verified id
 mandate, no open conflict and its prior checks in the trace; and no reply may claim "paid",
 "received" or "refunded" unless a tool confirmed it.
 
+### Research basis
+
+Each safety rule comes from a published finding. Full mapping: [AGENT_SPEC.md §12](AGENT_SPEC.md).
+
+| Paper | What we took |
+|---|---|
+| Kraishan, [*Loud Failures, Quiet Failures*](https://arxiv.org/abs/2610.10062) | Agents miss wrong values that look right, so evidence is checked in code; false alarms are measured too |
+| Zhou et al., [*SHIELDA*](https://arxiv.org/abs/2508.07935) | Each exception type maps to one fixed handling |
+| Lu, Li and Huo, [*Why agents fail*](https://arxiv.org/abs/2508.13143) | Guards against stopping early, loops and needless confirmations |
+| Tang, Zhou and Chen, [*Agentic workflows in n8n*](https://arxiv.org/abs/2606.29116) | Model output is a proposal; external actions are gated; the trace shows what the model saw |
+| Li, [*Where Does Exactly-Once Live?*](https://arxiv.org/abs/2609.29095) | Idempotency keys at the tool contract, no write retries, "uncertain" escalates |
+| Wang et al., [*Agentic AI and human-in-the-loop*](https://arxiv.org/abs/2605.14830) | Escalate early when distress grows; short, plain replies |
+| Zheng et al., [*E-Bench*](https://arxiv.org/abs/2607.23722) | Gather before changing; limits and thresholds compared in code |
+| Zheng et al., [*ACRFence*](https://arxiv.org/abs/2603.20625) | Keys built from the intent, an effect log, approvals used once |
+| Deng et al., [*DeFA*](https://arxiv.org/abs/2610.01256) | Failures traced back to the stage that caused them |
+| Liao et al., [*Error-propagation modeling*](https://arxiv.org/abs/2610.11600) | The decisive error is the earliest one whose fix recovers the case |
+| Zhu et al., [*AgentDebugX*](https://arxiv.org/abs/2607.18754) | Retries told exactly where the error is; fixed failures kept as regression tests |
+
 ## How to run it
 
 ### Prerequisites
