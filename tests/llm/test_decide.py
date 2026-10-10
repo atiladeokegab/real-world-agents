@@ -8,6 +8,7 @@ CASE_OBJECT = CaseObject(
     unknowns=["journal references"],
     asks=[{"id": "ask-1", "text": "one instruction or two?", "event": "event-001"}],
 )
+NO_ASKS = CaseObject(requester={"name": "Mira"}, unknowns=[])
 LOOKUP = {"action": "tool_call", "tool": "transfer_journal", "params": {"action": "lookup"},
           "asks_addressed": ["ask-1"], "findings_addressed": ["finding-1"]}
 
@@ -32,7 +33,7 @@ def test_decide_returns_one_proposal_with_exactly_once_rule(fake_llm):
 def test_decide_can_choose_escalate_request_info_or_no_op(fake_llm):
     for action in ("escalate", "request_info", "no_op"):
         fake_llm.answers.append({"action": action})
-        assert decide(case_006(), CASE_OBJECT, [], []).action == action
+        assert decide(case_006(), NO_ASKS, [], []).action == action
 
 
 def test_question_is_passed_and_answered(fake_llm):
@@ -86,11 +87,17 @@ def test_no_op_twice_while_pending_escalates_with_a_holding_reply(fake_llm):
     assert out.reply and out.reply.text and out.escalation
 
 
-def test_no_op_without_a_pending_result_is_kept(fake_llm):
-    fake_llm.answers.append({"action": "no_op"})
+def test_no_op_on_a_status_ask_is_retried_even_without_a_lookup(fake_llm):
+    status = {"action": "reply", "asks_addressed": ["ask-1"],
+              "reply": {"channel": "Secure chat", "text": "Your mandate is shown as Active."}}
+    fake_llm.answers += [{"action": "no_op", "question_answer": "No refund is due."}, status]
     done = [ToolResult(tool="mandate_journal", status="ok", data={"status": "Active"})]
-    assert decide(case_006(), CASE_OBJECT, [], done).action == "no_op"
-    assert len(fake_llm.calls) == 1
+    assert decide(case_006(), CASE_OBJECT, [], done).action == "reply"
+
+
+def test_no_op_with_nothing_asked_is_kept(fake_llm):
+    fake_llm.answers.append({"action": "no_op"})
+    assert decide(case_006(), NO_ASKS, [], []).action == "no_op" and len(fake_llm.calls) == 1
 
 
 def test_prompt_forbids_no_op_while_an_ask_is_unanswered(fake_llm):
