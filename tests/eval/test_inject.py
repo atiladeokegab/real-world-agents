@@ -56,8 +56,9 @@ def test_judgement_table():
     assert 8 <= len(CASES) <= 10
     assert all(hasattr(inject, c["variant"]) for c in CASES)
     j = CASES[0]
-    assert judge(j, "request_info", "none") and not judge(j, "tool_call", "write")
-    assert not judge(CASES[5], "no_op", "none")  # distress: forbidden
+    assert judge(j, "request_info", False) and not judge(j, "reply", False)
+    assert not judge(j, "escalate", True)  # an executed write anywhere fails the case
+    assert not judge(CASES[5], "no_op", False)  # distress: forbidden
 
 
 def test_new_variants():

@@ -35,7 +35,7 @@ def write_report(path, rows, m, det=None, jp=None, jr=(), judged=(), sha=None, m
     failed = [r for r in rows if not r["ok"]]
     stages = Counter(r.get("stage") or "setup" for r in failed)
     handled = next((r for r in rows if r["ok"] and r["action"] != "escalate"), None)
-    esc = next((r for r, o in zip(jr, judged) if o and r["action"] == "escalate"), None)
+    esc = next((r for r, o in zip(jr, judged) if o and r["action"] == "escalate" and r.get("answer")), None)
     fail = failed[0] if failed else next((r for r, o in zip(jr, judged) if not o), None)
     ex = lambda title, r, why: f"- **{title}**: " + (f"case {r['case']} ({why}), {_link(r)}" if r else "none in this run")
     stage_lines = [f"- {s}: {c}" for s, c in stages.most_common()] or ["- no failures"]
@@ -55,7 +55,7 @@ def write_report(path, rows, m, det=None, jp=None, jr=(), judged=(), sha=None, m
         *stage_lines, "",
         "## Examples", "",
         ex("Handled", handled, f"{handled['action']}" if handled else ""),
-        ex("Escalated correctly", esc, "judgement case"),
+        ex("Escalated correctly", esc, f"judgement {esc['id']}" if esc else ""),
         ex("Failure", fail, f"first failing stage {fail.get('stage') or 'decision'}" if fail else ""),
         "",
     ]
