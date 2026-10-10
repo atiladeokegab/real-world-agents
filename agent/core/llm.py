@@ -8,12 +8,17 @@ from contextvars import ContextVar
 from typing import Literal, TypeVar
 
 import anthropic
+from dotenv import find_dotenv, load_dotenv
 from pydantic import BaseModel, ValidationError
 
 DEFAULT_MODEL = "claude-opus-5-5"
 # Opus 5.5 defaults to "medium"; set it explicitly. Other stages (ingest's fallback) get medium.
 EFFORT = {"extraction": "medium", "decision": "high"}
 T = TypeVar("T", bound=BaseModel)
+
+# Every entry point (CLI, eval, voice) reaches Claude through here, so the keys load here.
+# Searches up from the working directory; never overrides keys already in the environment.
+load_dotenv(find_dotenv(usecwd=True))
 
 # The loop sets this to the case's trace list; each call appends one record (§4.9 trace.log).
 TRACE: ContextVar[list | None] = ContextVar("TRACE", default=None)
