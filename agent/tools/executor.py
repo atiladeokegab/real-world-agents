@@ -8,14 +8,18 @@ import hashlib
 import json
 import os
 import re
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from agent.tools import mock
 from agent.tools._contracts import ToolResult, ToolSpec
 from agent.tools.catalogue import CATALOGUE, service_of
 
 Backend = Callable[[ToolSpec, dict, Any, list], ToolResult]
+
+_WRITE_WORDS = re.compile(r"cancel|amend|change|block|release|return|revoke|remove|add|dispute|submit|register|"
+                          r"place|send|update|stop|reissue")
 
 
 def _norm(value: Any) -> str:
@@ -97,5 +101,9 @@ def run(proposal, case, ledger_dir, practice_events: list | None = None, backend
     if spec is None:
         return _error(tool, params, f"unknown tool {tool!r}")
     if spec.risk == 1:
+        verb = str(params.get("action") or params.get("operation") or "").lower()
+        if _WRITE_WORDS.search(verb):  # a change asked of a read tool: never let it pass as a lookup
+            writes = sorted(n for n in CATALOGUE if n.startswith(spec.name + "."))
+            return _error(tool, params, f"{tool} only reads; changes use one of {writes}", write_tools=writes)
         return _read(spec, params, case, practice_events or [], backend)
     return _write(spec, params, case, practice_events or [], backend, ledger_dir)

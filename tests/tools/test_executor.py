@@ -85,3 +85,10 @@ def test_unknown_tool_and_non_tool_call_are_errors(tmp_path):
     case, later = practice("048")
     assert execute(tc("teleport"), case, tmp_path, later).status == "error"
     assert execute(Proposal(action="reply"), case, tmp_path, later).status == "error"
+
+
+def test_change_asked_of_a_read_tool_is_refused(tmp_path):
+    case, later = practice("006")
+    r = execute(tc("transfer_journal", action="cancel", reference="T2"), case, tmp_path, later)
+    assert r.status == "error" and "transfer_journal.return_request" in r.data["write_tools"]
+    assert execute(tc("transfer_journal", action="lookup"), case, tmp_path, later).status != "error"

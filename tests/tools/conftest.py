@@ -1,5 +1,5 @@
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -7,14 +7,14 @@ import pytest
 from agent.tools._contracts import Case, Event
 
 EXAMPLES = Path(__file__).parents[2] / "examples"
-BLOCK = re.compile(r'<a id="(event-\d+)"></a>\s*## (.+?) UTC — event \d+\s*\n(.*?)(?=<a id="event-|\Z)', re.S)
+BLOCK = re.compile(r'<a id="(event-\d+)"></a>\s*## (.+?) UTC — event \d+\s*\n(.*?)(?=<a id="event-|\Z)', re.DOTALL)
 
 
 def events_of(num: str) -> list[Event]:
     out = []
     for eid, at, rest in BLOCK.findall((EXAMPLES / num / "history.md").read_text(encoding="utf-8")):
         fields = dict(re.findall(r"- \*\*(.+?):\*\* (.*)", rest))
-        out.append(Event(id=eid, at=datetime.strptime(at, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc),
+        out.append(Event(id=eid, at=datetime.strptime(at, "%Y-%m-%d %H:%M:%S").replace(tzinfo=UTC),
                          channel=fields.get("Channel", ""), sender=fields.get("From", ""),
                          recipient=fields.get("To", ""), body=rest.split("\n\n", 1)[-1].strip()))
     return out
