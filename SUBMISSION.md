@@ -3,7 +3,8 @@
 Fields from [RULES.md](docs/rules/RULES.md) section 7.
 
 - **Event:** Real-World Agents Hackathon, hosted by Dwelly, London, 10 October 2026
-- **Team:** Dwelly Real-World Agents team
+- **Team:** Scale
+- **Team members:** Atilade Oke, Abdussalam Popoola, Faisal Lawan, Jack Marshall
 - **Track:** Banking & Financial Services
 - **Public repository:** https://github.com/atiladeokegab/real-world-agents
 - **Commit at the 17:00 code freeze:** TODO: hash
