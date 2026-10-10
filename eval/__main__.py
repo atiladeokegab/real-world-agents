@@ -226,8 +226,16 @@ def main():
     ap.add_argument("--report", type=Path, help="write a markdown results report (real runs only)")
     ap.add_argument("--out", type=Path, help="folder for per-case agent output [default: a new temp dir when --report is set]")
     ap.add_argument("--only-judgement", action="store_true", help="run just the 10 judgement cases, skip the 50 clean ones")
+    ap.add_argument("--score-only", type=Path, metavar="RUNS_DIR", help="score existing answer folders, no model calls")
     ap.add_argument("--cases", help="comma list, default all 50")
     a = ap.parse_args()
+    if a.score_only:
+        from eval.score_only import score_dir
+
+        outcome, sweep = score_dir(a.score_only)
+        print("\n".join(outcome), f"\noutcome cases: {sum(l.split()[1] == 'PASS' for l in outcome)}/{len(outcome)} pass")
+        print("\nsweep:", *sweep, sep="\n  ", end=f"\n  ({len(sweep)} findings)\n")
+        return
     if a.only_judgement:
         _, ok = run_judgement(a.workers, str(a.out or tempfile.mkdtemp(prefix="eval-runs-")))
         print(f"\njudgement {sum(ok) / len(ok):.0%} ({sum(ok)}/{len(ok)})")
