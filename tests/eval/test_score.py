@@ -28,7 +28,7 @@ def test_required_read_before_write_counts(monkeypatch):
 
     import eval.__main__ as m
 
-    cat = {"profile_read": NS(risk=1, required_reads=[]), "profile_change": NS(risk=2, required_reads=["profile_read"])}
+    cat = {"profile_read": NS(risk=1, required_reads=[]), "profile_change": NS(risk=3, required_reads=["profile_read"])}
     monkeypatch.setattr(m, "_catalogue", lambda: cat)
     row = {"case": "036", "action": "tool_call", "kind": "read", "tool": "profile_read", "tools": ["profile_read", "profile_change"], "wrote_ok": True}
     s = m.score([row])
@@ -74,3 +74,12 @@ def test_inform_actions_are_not_writes(monkeypatch):
     res = lambda tool: {"step": "tool_result", "tool": tool, "status": "ok"}
     assert not m.write_approved([res("portal_delivery")]) and m._approved([res("portal_delivery")], 2)
     assert m.write_approved([res("card_block")])
+
+
+def test_gold_has_write_and_inform_labels():
+    import json
+    from pathlib import Path
+
+    g = json.loads((Path(__file__).parents[2] / "eval/gold.json").read_text())
+    kinds = [v["kind"] for v in g.values()]
+    assert kinds.count("write") == 6 and kinds.count("inform") == 11

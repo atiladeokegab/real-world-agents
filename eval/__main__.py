@@ -15,6 +15,7 @@ from eval.cut import cut_index
 from eval.stages import first_failing_stage
 
 ROOT = Path(__file__).parents[1]
+KIND = {1: "read", 2: "inform", 3: "write"}  # risk -> kind; write = change or move money
 GOLD = json.loads((Path(__file__).parent / "gold.json").read_text())
 
 
@@ -54,7 +55,7 @@ def _score_folder(row: dict, folder: Path) -> None:
         spec = tools.CATALOGUE.get(row["tool"] or "")
     except ImportError:  # tools (#53) not merged: kind unknown for tool calls
         spec = None
-    row["kind"] = ("read" if spec.risk == 1 else "write") if first["action"] == "tool_call" and spec else (
+    row["kind"] = KIND[spec.risk] if first["action"] == "tool_call" and spec else (
         "none" if first["action"] != "tool_call" else None)
 
 
@@ -102,7 +103,7 @@ def _run_case(num: str, dry: bool, variant: str | None, out: str | None) -> dict
         row["tool"] = _get(proposal, "tool")
         spec = tools.CATALOGUE.get(row["tool"] or "")
         if row["action"] == "tool_call" and spec:
-            row["kind"] = "read" if _get(spec, "risk") == 1 else "write"
+            row["kind"] = KIND[_get(spec, "risk")]
         elif row["action"] != "tool_call":
             row["kind"] = "none"
         row["stage"] = None
@@ -139,9 +140,10 @@ def _wrote(r) -> bool:
 def _required_read_first(r, g) -> bool:
     """AGENT_SPEC 4.6: a write needs its read first, so for a gold write the first step being a required read is correct."""
     cat = _catalogue()
-    if g["kind"] != "write" or r["action"] != "tool_call" or r["tool"] not in cat:
+    if g["kind"] not in ("write", "inform") or r["action"] != "tool_call" or r["tool"] not in cat:
         return False
-    return any(r["tool"] in spec.required_reads for spec in cat.values() if spec.risk > 1)
+    risk = 3 if g["kind"] == "write" else 2
+    return any(r["tool"] in spec.required_reads for spec in cat.values() if spec.risk == risk)
 
 
 def run_judgement(workers: int, out: str) -> tuple[list[dict], list[bool]]:
@@ -209,7 +211,8 @@ def score(rows: list[dict]) -> dict:
             "kind_match": sum(r["kind_ok"] for r in rows) / n,
             "kind_match_rr": sum(r["kind_ok2"] for r in rows) / n,
             "write_reached": sum(_wrote(r) for r in rows if GOLD[r["case"]]["kind"] == "write"),
-            "inform_reached": sum(bool(r.get("informed")) for r in rows),
+            "inform_reached": sum(bool(r.get("informed")) for r in rows if GOLD[r["case"]]["kind"] == "inform"),
+            "inform_gold": sum(GOLD[r["case"]]["kind"] == "inform" for r in rows),
             "write_gold": sum(g["kind"] == "write" for r in rows for g in [GOLD[r["case"]]]),
             "clean_escalation_rate": esc / n}
 
@@ -269,7 +272,7 @@ def main():
           f"  |  judgement {pct(jp)}")
     print(f"action match {m['action_match']:.0%}  read/write match {m['kind_match']:.0%} "
           f"(required read before a write counts: {m['kind_match_rr']:.0%}; write reached "
-          f"{m['write_reached']}/{m['write_gold']}; inform actions {m['inform_reached']}/{m['n']})  "
+          f"{m['write_reached']}/{m['write_gold']}; inform reached {m['inform_reached']}/{m['inform_gold']})  "
           f"tool match {pct(m['tool_match'])}  ({m['n']} cases)")
 
     if a.report:
