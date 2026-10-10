@@ -22,7 +22,7 @@ def cases(tmp_path, *names):
     return root
 
 
-def test_numbered_cases_limit_and_summary(tmp_path, monkeypatch, capsys):
+def test_zero_padded_cases_use_unpadded_output_numbers(tmp_path, monkeypatch, capsys):
     root = cases(tmp_path, "003", "001", "002", "notes")
     fake_uv(tmp_path, monkeypatch, """import pathlib, sys
 assert sys.argv[1:4] == ['run', 'agent', 'run']
@@ -39,11 +39,50 @@ out.mkdir(parents=True)
         [str(root), "--out", str(out), "--workers", "2", "--limit", "2"]
     ) == 0
 
-    assert sorted(p.name for p in out.iterdir()) == ["001", "002"]
-    assert all((out / n / "REASONING.md").is_file() for n in ("001", "002"))
+    assert sorted(p.name for p in out.iterdir()) == ["1", "2"]
+    assert all((out / n / "REASONING.md").is_file() for n in ("1", "2"))
     table = capsys.readouterr().out
-    assert "001" in table and "002" in table and "escalate" in table
+    assert "001 -> 1" in table and "002 -> 2" in table and "escalate" in table
     assert "fallback" in table and "HEAD" in table
+
+
+def test_case_prefixed_folder_is_discovered_and_numbered(tmp_path, monkeypatch, capsys):
+    root = cases(tmp_path, "case-1")
+    fake_uv(tmp_path, monkeypatch, """import pathlib, sys
+out = pathlib.Path(sys.argv[7])
+out.mkdir(parents=True)
+(out / 'ANSWER.md').write_text('## Decision\\nrequest_info\\n')
+(out / 'REASONING.md').write_text('# Reasoning\\n')
+""")
+    out = tmp_path / "answers"
+
+    assert import_module("eval.submit").main([str(root), "--out", str(out)]) == 0
+    assert (out / "1" / "ANSWER.md").is_file()
+    assert "case-1 -> 1" in capsys.readouterr().out
+
+
+def test_unnumbered_folders_get_sorted_unused_numbers(tmp_path, monkeypatch, capsys):
+    root = cases(tmp_path, "beta", "case-2", "alpha")
+    fake_uv(tmp_path, monkeypatch, """import pathlib, sys
+out = pathlib.Path(sys.argv[7])
+out.mkdir(parents=True)
+(out / 'ANSWER.md').write_text('## Decision\\nrequest_info\\n')
+(out / 'REASONING.md').write_text('# Reasoning\\n')
+""")
+    out = tmp_path / "answers"
+
+    assert import_module("eval.submit").main([str(root), "--out", str(out)]) == 0
+    assert sorted(p.name for p in out.iterdir()) == ["1", "2", "3"]
+    mapping = capsys.readouterr().out
+    assert "alpha -> 1" in mapping and "case-2 -> 2" in mapping and "beta -> 3" in mapping
+
+
+def test_empty_cases_dir_exits_with_named_error(tmp_path, capsys):
+    root = cases(tmp_path, "notes")
+    (root / "notes" / "index.md").unlink()
+
+    assert import_module("eval.submit").main([str(root)]) == 1
+    assert str(root) in capsys.readouterr().err
 
 
 def test_workers_run_cases_at_the_same_time(tmp_path, monkeypatch):
@@ -68,7 +107,7 @@ out.mkdir(parents=True)
     out = tmp_path / "answers"
 
     assert import_module("eval.submit").main([str(root), "--out", str(out), "--workers", "2"]) == 0
-    assert all((out / n / "ANSWER.md").read_text().endswith("no-op\n") for n in ("001", "002"))
+    assert all((out / n / "ANSWER.md").read_text().endswith("no-op\n") for n in ("1", "2"))
 
 
 def test_malformed_answer_text_does_not_stop_other_cases(tmp_path, monkeypatch, capsys):
@@ -94,16 +133,16 @@ out.mkdir(parents=True, exist_ok=True)
 (out / 'REASONING.md').write_text('# Reasoning\\n')
 """)
     out = tmp_path / "answers"
-    (out / "001").mkdir(parents=True)
+    (out / "1").mkdir(parents=True)
     original = "## Decision\nescalate (needs review)\n"
-    (out / "001" / "ANSWER.md").write_text(original)
+    (out / "1" / "ANSWER.md").write_text(original)
 
     assert import_module("eval.submit").main([str(root), "--out", str(out)]) == 0
 
-    assert (out / "001" / "ANSWER.md").read_text() == original
-    assert "system failure" in (out / "001" / "REASONING.md").read_text()
-    assert (out / "002" / "ANSWER.md").read_text().endswith("changed\n")
-    assert "001\tskipped\t" in capsys.readouterr().out
+    assert (out / "1" / "ANSWER.md").read_text() == original
+    assert "system failure" in (out / "1" / "REASONING.md").read_text()
+    assert (out / "2" / "ANSWER.md").read_text().endswith("changed\n")
+    assert "1\tskipped\t" in capsys.readouterr().out
 
 
 def test_failed_case_gets_fallback_without_stopping_next_case(tmp_path, monkeypatch, capsys):
@@ -121,11 +160,11 @@ out.mkdir(parents=True)
 
     assert import_module("eval.submit").main([str(root), "--out", str(out)]) == 0
 
-    assert "escalate (system failure)" in (out / "001" / "ANSWER.md").read_text()
-    assert "index.md" in (out / "001" / "REASONING.md").read_text()
-    assert (out / "002" / "ANSWER.md").read_text().endswith("no-op\n")
+    assert "escalate (system failure)" in (out / "1" / "ANSWER.md").read_text()
+    assert "index.md" in (out / "1" / "REASONING.md").read_text()
+    assert (out / "2" / "ANSWER.md").read_text().endswith("no-op\n")
     table = capsys.readouterr().out
-    assert "001\t7\t" in table and "002\t0\t" in table
+    assert "1\t7\t" in table and "2\t0\t" in table
     assert "system failure" in table and "total 2; fallback 1; missing 0" in table
 
 
@@ -145,9 +184,9 @@ if case.name == '001':
 
     assert import_module("eval.submit").main([str(root), "--out", str(out), "--workers", "2"]) == 0
 
-    assert (out / "001" / "ANSWER.md").read_text() == "## Decision\nescalate (needs review)\n"
-    assert "system failure" in (out / "001" / "REASONING.md").read_text()
-    assert (out / "002" / "REASONING.md").read_text() == "# Reasoning\n"
+    assert (out / "1" / "ANSWER.md").read_text() == "## Decision\nescalate (needs review)\n"
+    assert "system failure" in (out / "1" / "REASONING.md").read_text()
+    assert (out / "2" / "REASONING.md").read_text() == "# Reasoning\n"
     assert "fallback 1; missing 0" in capsys.readouterr().out
 
 
@@ -167,5 +206,5 @@ time.sleep(1)
     assert import_module("eval.submit").main([str(root), "--out", str(out)]) == 0
     time.sleep(0.4)
 
-    assert "system failure" in (out / "001" / "ANSWER.md").read_text()
-    assert not (out / "001" / "late.txt").exists()
+    assert "system failure" in (out / "1" / "ANSWER.md").read_text()
+    assert not (out / "1" / "late.txt").exists()

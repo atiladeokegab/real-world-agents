@@ -2,8 +2,10 @@
 
 import argparse
 import os
+import re
 import signal
 import subprocess
+import sys
 import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -73,18 +75,42 @@ def main(argv=None) -> int:
     if args.workers < 1 or (args.limit is not None and args.limit < 1):
         parser.error("--workers and --limit must be positive")
 
-    cases = sorted((p for p in args.cases_dir.iterdir() if p.is_dir() and p.name.isdecimal()),
-                   key=lambda p: (int(p.name), p.name))
+    cases = sorted((p for p in args.cases_dir.iterdir()
+                    if p.is_dir() and ((p / "index.md").is_file() or (p / "history.md").is_file())),
+                   key=lambda p: (0, int(p.name), p.name) if p.name.isdecimal() else (1, p.name))
+    if not cases:
+        print(f"ERROR: no case folders found in {args.cases_dir}", file=sys.stderr)
+        return 1
+    numbers = {}
+    used = set()
+    for case in cases:
+        match = re.search(r"[0-9]+", case.name)
+        if match:
+            number = str(int(match.group()))
+            if number in used:
+                print(f"ERROR: duplicate case number {number} in {args.cases_dir}", file=sys.stderr)
+                return 1
+            numbers[case] = number
+            used.add(number)
+    next_number = 1
+    for case in cases:
+        if case not in numbers:
+            while str(next_number) in used:
+                next_number += 1
+            numbers[case] = str(next_number)
+            used.add(numbers[case])
     if args.limit is not None:
         cases = cases[:args.limit]
+    for case in cases:
+        print(f"{case.name} -> {numbers[case]}", flush=True)
     args.out.mkdir(parents=True, exist_ok=True)
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
-        results = list(pool.map(lambda case: run_case(case, args.out / case.name), cases))
+        results = list(pool.map(lambda case: run_case(case, args.out / numbers[case]), cases))
 
     print("case\texit code\tseconds\tdecision\tfallback")
     missing = fallback_count = 0
     for case, code, seconds, error in results:
-        name = case.name
+        name = numbers[case]
         folder = args.out / name
         try:
             fallback = fill_missing(case, folder, error)
