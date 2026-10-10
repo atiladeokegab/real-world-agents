@@ -22,6 +22,7 @@ def test_decide_returns_one_proposal_with_exactly_once_rule(fake_llm):
     assert "Lookups are risk 1 and need no role" in call["system"]
     assert "uses exactly these keys and no others: who" in call["system"]
     assert "When action is escalate, set the exception_type" in call["system"]
+    assert "asks_addressed lists every ask id" in call["system"]
     assert "ambiguous_reference" in call["system"] and "{exception_types}" not in call["system"]
     assert "finding-1" in call["user"] and "identity: authenticated" in call["user"]
 
