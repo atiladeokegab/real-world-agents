@@ -158,3 +158,20 @@ def test_loop_escalation_sentence_has_no_none():
         "claim_linter on reply.text: x"
     assert verdict_text(Verdict(ok=False, rule="findings", field="findings_addressed", event="event-002")) == \
         "findings on findings_addressed (event-002)"
+
+
+def test_no_double_full_stop(tmp_path):
+    # #166: model text that already ends in "." gets exactly one.
+    p = Proposal(action="escalate", reply=REPLY,
+                 escalation={"who": "Payments team.", "why": "We can't tell Mira the amount and date yet. ",
+                             "not_done": ["No change made."]})
+    a, _, _ = run(tmp_path, p)
+    assert "ESCALATED — Handed to Payments team: We can't tell Mira the amount and date yet." in a
+    assert "No change made — because the case was handed to a person" in a
+    assert ".." not in a.replace("…", "")
+
+
+def test_fallback_error_ending_in_a_full_stop(tmp_path):
+    write_fallback(tmp_path, tmp_path / "none", "Traceback...\nRuntimeError: model refused.", [], stage="decide")
+    assert "**decide**: RuntimeError: model refused. " in (tmp_path / "ANSWER.md").read_text()
+    assert ".." not in (tmp_path / "ANSWER.md").read_text()
