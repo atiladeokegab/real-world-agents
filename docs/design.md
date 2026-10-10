@@ -6,7 +6,7 @@ sections of this page it must follow.
 
 The mockup is `docs/mockup/index.html`: every screen and state, clickable, with the exact copy.
 Open it in a browser: the case list shows every case with its one outcome; click a row for the case
-page; `Esc` goes back. It is built for a bank operations reviewer, in dark mode. Type is Geist throughout, with
+page; `Esc` goes back. It is built for a bank operations reviewer, with a dark theme (midnight indigo, `#0F0E1D`) and a light theme (soft lavender-grey, `#EFEEF5`, never pure white), switched in the top bar. Type is Geist throughout, with
 Geist Mono only for the run log, case numbers and file names. Colour appears only in the status
 tags, step icons and tinted log lines (yellow for a warning, red for a rejection, magenta for a
 failure). Escalations appear as a pinned note at the top of the case timeline, with "Take case"
