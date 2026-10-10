@@ -6,7 +6,7 @@ import traceback
 from pathlib import Path
 
 from agent.core import llm, writer
-from agent.core.contracts import Case, Finding, Proposal, Reply, ToolResult
+from agent.core.contracts import Case, CaseObject, Finding, Proposal, Reply, ToolResult
 
 MAX_TOOL_CALLS = 6
 MAX_IDENTICAL = 2
@@ -72,6 +72,10 @@ def _pipeline(path: Path, question: str | None, cut: int | None, trace: list, st
                 break
             retry_used = True
             feedback = v
+            field = (v.field or "").split(".", 1)[0].split("[", 1)[0]
+            if field in CaseObject.model_fields:
+                trace.append({"step": "re_extract", "rule": v.rule, "field": v.field, "event": v.event})
+                case_object = brain.extract(case, findings, feedback=v)
             continue
         feedback = None
         if p.action != "tool_call":

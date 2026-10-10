@@ -13,22 +13,30 @@ READ = Proposal(action="tool_call", tool="business_service", params={"row": "SUP
 REPLY = Proposal(action="reply", reply=Reply(channel="Secure portal", text="Row SUP-17 is pending."))
 
 
-def fake_areas(monkeypatch, proposals, verdicts=None, status="pending", decide_delay=0):
+def fake_areas(monkeypatch, proposals, verdicts=None, status="pending", decide_delay=0,
+               extract_calls=None, decide_calls=None):
     """Stand-ins for agent.ingest/checks/llm/tools, which other teammates build."""
     proposals, verdicts = iter(proposals), iter(verdicts or [])
     case = Case(track="banking", case_id="044", title="t", source_role="r", initial_request="q",
                 raw_files={"index.md": "# Case 044"})
 
     def decide(*a):
+        if decide_calls is not None:
+            decide_calls.append(a)
         time.sleep(decide_delay)
         return next(proposals)
+
+    def extract(*a, **kw):
+        if extract_calls is not None:
+            extract_calls.append((a, kw))
+        return CaseObject(requester={"name": str(len(extract_calls)) if extract_calls is not None else "L"},
+                          unknowns=[])
 
     mods = {
         "agent.ingest": dict(load_case=lambda path, cut=None, question=None: case),
         "agent.checks": dict(find_evidence=lambda c: [],
                              verify=lambda *a: next(verdicts, Verdict(ok=True))),
-        "agent.llm": dict(extract=lambda c, f: CaseObject(requester={"name": "L"}, unknowns=[]),
-                          decide=decide),
+        "agent.llm": dict(extract=extract, decide=decide),
         "agent.tools": dict(CATALOGUE={}, execute=lambda p, c, d, practice_events=[]:
                             ToolResult(tool=p.tool, params=p.params, status=status)),
     }
@@ -55,6 +63,38 @@ def test_second_rejection_escalates(tmp_path, monkeypatch):
     r, answer = run(tmp_path)
     assert r["escalated"] and "verifier rejected twice" in answer
     assert r["exception_type"] == "incomplete_answer"
+
+
+def test_case_object_rejection_reextracts_with_exact_feedback(tmp_path, monkeypatch):
+    bad = Verdict(ok=False, rule="claim_source", field="claims", event="event-009")
+    extracts, decisions = [], []
+    fake_areas(monkeypatch, [REPLY, REPLY], [bad, Verdict(ok=True)],
+               extract_calls=extracts, decide_calls=decisions)
+    r, _ = run(tmp_path)
+    assert (r["action"], r["fallback"], len(extracts), len(decisions)) == ("reply", False, 2, 2)
+    assert decisions[1][1].requester.name == "2"
+    for detail in ("claim_source", "claims", "event-009"):
+        assert detail in repr(extracts[1])
+    assert '"step": "re_extract"' in (tmp_path / "out" / "trace.log").read_text()
+
+
+def test_proposal_field_rejection_keeps_extraction(tmp_path, monkeypatch):
+    bad = Verdict(ok=False, rule="claim_linter", field="reply", event=None)
+    extracts, decisions = [], []
+    fake_areas(monkeypatch, [REPLY, REPLY], [bad, Verdict(ok=True)],
+               extract_calls=extracts, decide_calls=decisions)
+    r, _ = run(tmp_path)
+    assert (r["action"], len(extracts), len(decisions)) == ("reply", 1, 2)
+
+
+def test_second_case_object_rejection_escalates(tmp_path, monkeypatch):
+    bad = Verdict(ok=False, rule="claim_source", field="claims", event="event-009")
+    extracts, decisions = [], []
+    fake_areas(monkeypatch, [REPLY, REPLY], [bad, bad],
+               extract_calls=extracts, decide_calls=decisions)
+    r, _ = run(tmp_path)
+    assert (r["action"], r["exception_type"], len(extracts), len(decisions)) == (
+        "escalate", "incomplete_answer", 2, 2)
 
 
 def test_retry_resets_after_approved_tool_call(tmp_path, monkeypatch):
