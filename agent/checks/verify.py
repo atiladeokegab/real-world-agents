@@ -43,6 +43,8 @@ _CAP_WORD_RE = re.compile(r"[A-Z][\w'&.-]*")
 # a ". " inside a span is a sentence end only after a lower-case word ending
 # in 3+ letters — keeps "St. James" together, splits "was sent. Your" apart
 _SENT_END_IN_SPAN_RE = re.compile(r"(?<=[a-z]{3})\.\s+(?=[A-Z])")
+# a greeting word opening a name span: "Dear Ms Shah" lints as "Ms Shah"
+_GREETING_RE = re.compile(r"(?i)^(?:dear|hello|hi|hey)\b[\s,]*")
 
 _WORD_STOP = {
     # function words that may be capitalised mid-sentence
@@ -189,8 +191,13 @@ def _flatten(obj) -> str:
 
 
 def _haystack(case_object: CaseObject, results: list[ToolResult]) -> str:
-    """The evidence a reply may cite: every claim's text plus every result's data."""
+    """The evidence a reply may cite: the requester's name, every claim's
+    text, plus every result's data."""
     parts = []
+    req = getattr(case_object, "requester", None)
+    if req is not None:
+        parts.append(req.get("name", "") if isinstance(req, dict)
+                     else getattr(req, "name", "") or "")
     for c in case_object.claims:
         parts.extend([c.subject, c.predicate, c.value])
     for r in results:
@@ -216,7 +223,7 @@ def _reply_atoms(text: str) -> list[tuple[str, str]]:
             continue  # the span sits inside a date/amount/reference match
         claimed.append(m.span())
         for frag in _SENT_END_IN_SPAN_RE.split(m.group(0)):
-            frag = frag.strip(" .,;:!?\"'")
+            frag = _GREETING_RE.sub("", frag.strip(" .,;:!?\"'")).strip(" .,;:!?\"'")
             if len(frag.split()) >= 2 and _norm(frag) not in _PHRASE_STOP:
                 atoms.append(("name", frag))
     for m in _CAP_WORD_RE.finditer(text):
@@ -372,12 +379,13 @@ def verify(
             return _fail("catalogue", "tool", None,
                          f"tool '{proposal.tool}' is not in the catalogue")
         spec_name = getattr(spec, "name", proposal.tool)
+        risk = getattr(spec, "risk", 3)
         roles = getattr(spec, "roles", []) or []
-        if roles and case.authority.role not in roles:
+        if risk >= 2 and roles and case.authority.role not in roles:
             return _fail("authority", "action", None,
                          f"role '{case.authority.role}' may not call "
                          f"'{spec_name}' (roles: {', '.join(roles)})")
-        if getattr(spec, "risk", None) == 3:
+        if risk == 3:
             if case.authority.identity != "verified":
                 return _fail("risk", "action", None,
                              f"'{spec_name}' is risk 3 and needs verified "

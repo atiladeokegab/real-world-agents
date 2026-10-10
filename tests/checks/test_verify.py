@@ -44,9 +44,9 @@ def _case(events, question=None, identity="verified", role="Bank customer"):
     )
 
 
-def _object(claims=(), asks=(), constraints=()):
+def _object(claims=(), asks=(), constraints=(), requester="Mara Ellison"):
     return CaseObject(
-        requester=Requester(name="Mara Ellison"),
+        requester=Requester(name=requester),
         claims=list(claims),
         asks=list(asks),
         unknowns=[],
@@ -176,6 +176,15 @@ def test_claim_linter_unseen_name_rejected():
     assert "Elena Marlow" in verdict.message
 
 
+def test_claim_linter_greeting_to_requester_ok():
+    # "Dear Ms Shah" lints as "Ms Shah" against the requester's own name
+    case = _case([_ev(1, "help")])
+    obj = _object(requester="Ms Shah")
+    proposal = _proposal(
+        reply=_reply("Dear Ms Shah, please confirm which transfer you mean."))
+    assert verify(proposal, case, obj, [], []).ok
+
+
 def test_claim_linter_unseen_date_rejected():
     case = _case([_ev(1, "help")])
     obj = _object(claims=[_claim("statement covers 1 July 2025")])
@@ -222,6 +231,16 @@ def test_fabricated_execution_negated_ok():
     case = _case([_ev(1, "where is my payment")])
     proposal = _proposal(
         reply=_reply("We have not sent the payment; it is still pending.")
+    )
+    assert verify(proposal, case, _object(), [], []).ok
+
+
+def test_fabricated_execution_future_and_passive_ok():
+    # "we will send" / "is being processed" / "under review" promise, not done
+    case = _case([_ev(1, "where is my payment")])
+    proposal = _proposal(
+        reply=_reply("We will send it shortly — it is being processed "
+                     "and is under review.")
     )
     assert verify(proposal, case, _object(), [], []).ok
 
@@ -289,8 +308,10 @@ def test_tool_call_unknown_tool_rejected(monkeypatch):
     assert verdict.field == "tool"
 
 
-def test_tool_call_empty_catalogue_rejected():
-    # agent.tools does not exist yet: an empty catalogue rejects every tool_call
+def test_tool_call_empty_catalogue_rejected(monkeypatch):
+    # an empty catalogue rejects every tool_call, whether or not agent.tools exists
+    monkeypatch.setattr(sys.modules["agent.checks.verify"],
+                        "_catalogue", lambda: {})
     case = _case([_ev(1, "help")])
     proposal = _proposal(action="tool_call", tool="transfer_journal")
     verdict = verify(proposal, case, _object(), [], [])
@@ -299,19 +320,37 @@ def test_tool_call_empty_catalogue_rejected():
     assert verdict.field == "tool"
 
 
-def test_authority_role_rejected(monkeypatch):
+def test_authority_role_not_checked_on_read(monkeypatch):
+    # lookups are risk 1 and need no role: an unseen sub-role may still read
     _catalogue(monkeypatch, {
         "business_service": _spec("business_service", risk=1,
                                   roles=["Authorised business user"]),
     })
-    case = _case([_ev(1, "help")], role="Bank customer")
+    case = _case([_ev(1, "help")], role="authorised file uploader")
     proposal = _proposal(action="tool_call", tool="business_service",
                          params={"batch": "SUP-17"})
-    verdict = verify(proposal, case, _object(), [], [])
+    assert verify(proposal, case, _object(), [], []).ok
+
+
+def test_authority_role_rejected(monkeypatch):
+    _catalogue(monkeypatch, {
+        "business_service.release_batch": _spec(
+            "business_service.release_batch", risk=3,
+            roles=["Authorised business user"],
+            required_reads=["business_service"]),
+    })
+    case = _case([_ev(1, "help")], role="authorised file uploader",
+                 identity="verified")
+    results = [_result("business_service")]
+    proposal = _proposal(action="tool_call",
+                         tool="business_service.release_batch",
+                         params={"batch": "SUP-17"},
+                         claims_relied_on=["event-001", "tool:business_service"])
+    verdict = verify(proposal, case, _object(), [], results)
     assert not verdict.ok
     assert verdict.rule == "authority"
     assert verdict.field == "action"
-    assert "Bank customer" in verdict.message
+    assert "authorised file uploader" in verdict.message
 
 
 def test_risk3_verified_with_required_reads_ok(monkeypatch):
