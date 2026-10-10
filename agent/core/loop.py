@@ -4,9 +4,10 @@ import tempfile
 import threading
 import traceback
 from pathlib import Path
+from typing import Callable
 
 from agent.core import llm, writer
-from agent.core.contracts import Case, CaseObject, Finding, Proposal, Reply, ToolResult
+from agent.core.contracts import Case, Finding, Proposal, Reply, ToolResult
 
 MAX_TOOL_CALLS = 6
 MAX_IDENTICAL = 2
@@ -17,11 +18,12 @@ def _escalate(case: Case, why: str, exception_type: str, results: list[ToolResul
               findings: list[Finding]) -> Proposal:
     """The handover the loop itself writes when a budget or an uncertain write stops it (§4.7, §4.8).
     exception_type is a brain EXCEPTIONS key; the note uses brain's handover keys."""
-    channel = case.events[-1].channel if case.events else "Secure message"
+    channel = writer._customer_channel(case)
+    holding = writer.ESCALATION_REPLY.format(team=writer.team_phrase("operations team"))
     return Proposal(
         action="escalate", exception_type=exception_type, uncertainties=[why],
-        reply=Reply(channel=channel, text=writer.HOLDING_REPLY),
-        escalation={"who": "operations team, case handler",
+        reply=Reply(channel=channel, text=holding),
+        escalation={"who": "Operations team",
                     "urgency": "urgent" if exception_type == "write_failure" else "normal",
                     "type": "technical", "why": why,
                     "verified": [f"identity {case.authority.identity} via channel"
@@ -32,26 +34,46 @@ def _escalate(case: Case, why: str, exception_type: str, results: list[ToolResul
                     "did": [f"{r.tool}: {writer.OUTCOME[r.status]}" for r in results] or ["nothing"],
                     "not_done": ["no further lookups or changes after this point"],
                     "question": "Check the results above and decide the next step for the customer.",
-                    "holding_reply": writer.HOLDING_REPLY})
+                    "holding_reply": holding})
 
 
 def _dump(step: str, obj) -> dict:
     return {"step": step, **obj.model_dump(mode="json")}
 
 
-def _pipeline(path: Path, question: str | None, cut: int | None, trace: list, state: dict) -> None:
+def _n(k: int, word: str) -> str:
+    return f"{k} {word}{'' if k == 1 else 's'}"
+
+
+def _pipeline(path: Path, question: str | None, cut: int | None, trace: list, state: dict,
+              emit: Callable[[str, str], None]) -> None:
+    """state["stage"] names the stage running now, so a failure can say where it happened."""
+    def stage(name):
+        state["stage"] = name
+
     llm.TRACE.set(trace)
+    stage("ingest")
     from agent import checks, ingest, tools  # lazy: each area may land after core
     from agent import llm as brain
 
     case = ingest.load_case(path, cut=cut, question=question)
+    state["case"] = case
     practice = []
     if cut is not None:  # practice run: the hidden later events feed the mock journal (§4.3)
         seen = {e.id for e in case.events}
         practice = [e for e in ingest.load_case(path, question=question).events if e.id not in seen]
+    emit("ingest", f"{_n(len(case.events), 'event')} · {_n(len(case.attachments), 'attachment')}"
+         + (f" · cut at {case.events[-1].id}" if cut is not None and case.events else ""))
+    role = f" {case.authority.role}" if case.authority.role else ""
+    emit("identity", f"{case.authority.identity}{role} · {writer._customer_channel(case)}")
+    stage("evidence")
     findings = checks.find_evidence(case)
     trace += [_dump("finding", f) for f in findings]
+    emit("evidence", _n(len(findings), "finding") + (f" · {findings[0].detail}" if findings else ""))
+    stage("extract")
     case_object = brain.extract(case, findings)
+    emit("extract", f"{_n(len(case_object.asks), 'ask')} · {_n(len(case_object.unknowns), 'unknown')}"
+         + f" · emotional state: {case_object.emotional_state.level}")
     # ponytail: fresh ledger per run, so practice re-runs never see a previous run's writes
     ledger_dir = Path(tempfile.mkdtemp(prefix=f"ledger-{case.case_id}-"))
 
@@ -60,10 +82,15 @@ def _pipeline(path: Path, question: str | None, cut: int | None, trace: list, st
     feedback = None
     retry_used = False
     while True:
+        stage("decide")
         p = brain.decide(case, case_object, findings, results, feedback)
         trace.append(_dump("proposal", p))
+        emit("decide", p.action + (f" {p.tool} ({writer._short(p.params, 80)})" if p.tool else "")
+             + (f" · {p.reply.channel}" if p.reply and p.action != "tool_call" else ""))
+        stage("verify")
         v = checks.verify(p, case, case_object, findings, results)
         trace.append(_dump("verdict", v))
+        emit("verify", "✓ approved" if v.ok else f"✗ {v.rule}: {v.message}")
         if not v.ok:
             rejected.append((p, v))
             if retry_used:
@@ -72,10 +99,6 @@ def _pipeline(path: Path, question: str | None, cut: int | None, trace: list, st
                 break
             retry_used = True
             feedback = v
-            field = (v.field or "").split(".", 1)[0].split("[", 1)[0]
-            if field in CaseObject.model_fields:
-                trace.append({"step": "re_extract", "rule": v.rule, "field": v.field, "event": v.event})
-                case_object = brain.extract(case, findings, feedback=v)
             continue
         feedback = None
         if p.action != "tool_call":
@@ -85,9 +108,11 @@ def _pipeline(path: Path, question: str | None, cut: int | None, trace: list, st
             # No registry entry for a budget; read_failure's handling ("escalate with what is known") fits.
             p = _escalate(case, "tool call budget hit", "read_failure", results, findings)
             break
+        stage("execute")
         r = tools.execute(p, case, ledger_dir, practice)
         results.append(r)
         trace.append(_dump("tool_result", r))
+        emit("execute", f"{r.tool} → {writer.OUTCOME[r.status]}")
         retry_used = False
         if r.status == "uncertain":
             p = _escalate(case, f"{r.tool} outcome uncertain; not retried", "write_failure", results, findings)
@@ -97,16 +122,21 @@ def _pipeline(path: Path, question: str | None, cut: int | None, trace: list, st
 
 
 def run_case(path, out=None, question: str | None = None, cut: int | None = None,
-             time_limit: float = TIME_LIMIT) -> Path:
-    """Run one case and write its answer folder. Never raises past the fallback (§4.11)."""
+             time_limit: float = TIME_LIMIT, on_stage: Callable[[str, str], None] | None = None) -> Path:
+    """Run one case and write its answer folder. Never raises past the fallback (§4.11).
+
+    on_stage(stage, text) is called as each stage finishes (the CLI's live lines).
+    """
     path = Path(path)
     out = Path(out) if out else Path("ANSWERS") / path.name
     trace: list = []
     state: dict = {}
+    emit = on_stage or (lambda stage, text: None)
+    files = "ANSWER.md REASONING.md trace.log run.json"
 
     def work():
         try:
-            _pipeline(path, question, cut, trace, state)
+            _pipeline(path, question, cut, trace, state, emit)
         except BaseException:
             state["error"] = traceback.format_exc()
 
@@ -115,10 +145,15 @@ def run_case(path, out=None, question: str | None = None, cut: int | None = None
     t.start()
     t.join(time_limit)
     if "answer" in state:
+        state["stage"] = "write"
         try:
-            writer.write(out, *state["answer"], trace)
+            writer.write(out, *state["answer"], trace, cut=cut)
+            emit("write", f"{out}/ {files}")
             return out
         except Exception:
             state["error"] = traceback.format_exc()
-    writer.write_fallback(out, path, state.get("error") or f"timed out after {time_limit} s", list(trace))
+    error = state.get("error") or f"TimeoutError: no answer within the {time_limit:g} s limit"
+    emit(state.get("stage", "ingest"), "✗ " + error.strip().splitlines()[-1])
+    writer.write_fallback(out, path, error, list(trace), stage=state.get("stage"), case=state.get("case"), cut=cut)
+    emit("write", f"fallback {out}/ {files}")
     return out
