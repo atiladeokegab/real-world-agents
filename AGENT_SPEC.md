@@ -1,10 +1,10 @@
-# Banking Track Agent — Engineering Specification (v6)
+# Banking Track Agent — Engineering Specification (v7, as built)
 
 **Project:** Dwelly AI Hackathon 2026 — Banking & Financial Services track
 **Date:** 10 October 2026
-**Status:** Proposal for team review. Merges Faisal's spec (v1–v4), the additions from eleven
-research papers, Prometheus's review, and the restored must/should fixes. Nothing in it is
-assigned yet.
+**Status:** v7, as built (10 October). Sections 1–12 are the v6 design, corrected where the build
+differed; §13 lists what changed during the build, with PR numbers. Merges Faisal's spec (v1–v4),
+the additions from eleven research papers, Prometheus's review, and the restored must/should fixes.
 
 ---
 
@@ -101,7 +101,7 @@ flowchart TD
 ```
 
 A **bounded loop**: look things up, then at most one verified write, then the write's result feeds
-the final reply. At most 6 tool calls and one verifier retry per case. Two Claude calls start the
+the final reply. At most 6 tool calls and one verifier retry per decision turn (the retry resets after each approved tool call, #95). Two Claude calls start the
 case; each loop turn is one more decision call. (MVP option: extraction and the first decision may
 run as one call, split only if harness numbers justify it — §12 [KR].)
 
@@ -125,7 +125,7 @@ Parses the case format into structured events. **No AI on the fast path.**
 - Attachments → text: PDFs via `pypdf`, CSVs via `csv`, txt as-is, images via Claude vision. The
   pipeline never requires attachments (41 of 50 cases have none).
 - **Decision-point cutoff:** takes an event index; everything after it is hidden.
-- **Authority is set here, from channel metadata, not by the model.** `Verified call` and
+- **Authority is set here, from channel metadata, not by the model.** Taken from the requester's **latest** message (#113). `Verified call` and
   `Secure portal` / `Secure chat` → authenticated; `Business portal` → authenticated business
   user, role from the record; `External message` → unverified. Unknown → unverified. The model
   can never raise these values (Prometheus review).
@@ -263,17 +263,18 @@ Deterministic checks before anything runs. **No AI.**
   1. **read / check** — autonomous;
   2. **inform** (reply, portal message) — autonomous after the claim linter;
   3. **change or move money** (cancel, amend, return request, release, role change) — only with
-     verified or authenticated identity (never unverified), within mandate, no open conflict, and **its required prior reads in the
-     trace** (§12 [EB]). Otherwise escalate.
+     verified or authenticated identity (never unverified; #119, #123), within mandate, no open conflict, and
+     **its required prior reads in the trace, counted when their status is ok or pending** (§12 [EB]; #119). Otherwise escalate.
 - **Boundaries in code:** limits, thresholds, dates and cut-offs are compared here, not by the model.
 - **Completion:** every ask has an action or an explicit "not done, because" (§12 [LU], [SH]).
 - **Conflict rule:** a material unresolved conflict forces escalation; the model can't override.
 - **Disclosure:** no withheld identifiers (device IDs, full account details).
 
-**On rejection:** one retry, with a message naming the **exact rule, field and event** that
-failed, never a generic "try again". When the failing field came from extraction, the retry
-re-extracts that field (§12 [AD]: retries told where the error is repaired 13 of 73 failed tasks,
-against 4–6 for generic self-correction). Second failure → escalate with the handover note.
+**On rejection:** one retry per decision turn, with a message naming the **exact rule, field and
+event** that failed, never a generic "try again" (§12 [AD]: retries told where the error is
+repaired 13 of 73 failed tasks, against 4–6 for generic self-correction). Second failure →
+escalate with the handover note. Re-extracting a field that came from extraction is **not built**
+(change-request #77 declined); it is a next step, see §9.
 
 ### 4.7 Executor — explicit code
 
@@ -293,7 +294,7 @@ Runs approved tool calls, records the trace, enforces exactly-once.
 - **Approvals used once:** an identity check or second-signatory approval (case 043) is bound to
   one action and marked used.
 - **Partial batches** (cases 041–044): re-issue only the missing rows, never the whole batch.
-- **Budget guard:** at most 2 identical calls, 6 tool calls in total, one verifier retry. Hitting
+- **Budget guard:** at most 2 identical calls, 6 tool calls in total, one verifier retry per decision turn. Hitting
   any → escalate with the handover note, never a silent failure (§12 [KR], [LU]).
 - **Untrusted output:** a response from a third-party service (payee, external confirmation) is
   treated like customer text (§12 [AC]).
@@ -379,7 +380,7 @@ uv run agent eval --cases "Banking & Financial Services" --workers 6
 uv run agent collect --out ANSWERS/
 ```
 
-- **Always produce an answer.** Every case runs under a **per-case time limit** and a catch-all
+- **Always produce an answer.** Every case runs under a **per-case time limit of 240 s** (#56, #71; the submit runner's subprocess timeout is 300 s) and a catch-all
   fallback: crash, timeout or API failure → the runner still writes a valid `ANSWER.md` +
   `REASONING.md` reading "escalated — system failure; here is what we received" with the raw
   input listed. A blank case scores zero; the fallback is system-generated, satisfying rules §6D.
@@ -474,6 +475,7 @@ the voice entry point (§11).
   and if it were kept, both runs must only *propose* with the agreed action executed once, or
   money actions would risk double-firing (§4.7's intent keys cover this, but the latency cost
   stands on its own).
+- **Re-extraction on verifier rejection** (§4.6): not built; change-request #77 declined. A next step.
 - **Model choice per stage**: needs numbers we won't have time to gather.
 - **A full fault matrix**: one clean and one injected test per flow instead.
 - **A separate demo UI**: the working CLI and a real trace.
@@ -517,3 +519,77 @@ check for fabricated material).
 | [DF] | Deng et al., *DeFA*, Alibaba Qwen DianJin and Beihang, 2026 (arXiv 2610.01256) | Trace failures back to the stage that caused them | §4.10 |
 | [EM] | Liao et al., *Error-Propagation Modeling*, NUDT, 2026 (arXiv 2610.11600) | The decisive error is the earliest one whose fix recovers the case | §4.10 |
 | [AD] | Zhu et al., *AgentDebugX*, UIUC and Stanford, 2026 (arXiv 2607.18754) | Retries told where the error is; failures kept as regression cases | §4.6, §4.10 |
+
+---
+
+## 13. As built: what changed during the build (10 Oct)
+
+Grouped, with PR numbers. Each item was checked against its PR and the code on `integration`.
+
+**Model calls.** Opus 5.5 rejects a forced `tool_choice`, so calls use `messages.parse` structured
+outputs where the schema has no free-form dicts, and otherwise a tool with `tool_choice` auto plus
+one re-ask (#35). Effort is `medium` for extraction and `high` for the decision. `.env` is loaded
+by `agent.core.llm` (#56).
+
+**Verifier.**
+- Claim linter: name detector (#98); date, amount and reference normalisation and payment-scheme
+  names (#147).
+- `fabricated_execution` fires only on past-tense claims in the reply, and understands "n't"
+  negation (#113, #119).
+- `no_op` is rejected while an ask is open and a lookup is pending (#138).
+- Write authority and prior reads: see §4.6 (#119, #123).
+
+**Brain** (`agent/llm`).
+- The sentiment override never replaces a read; frustration escalates only if the reply does not
+  resolve every ask (#140, #155).
+- After a pending read the agent proposes the change or inform action, recorded as "requested,
+  pending result" (#140).
+- `not_found` is an answer; no "complete" or "done" without an ok result; future and conditional
+  wording is allowed (#145). No account status to unverified requesters (#145).
+- Profile changes go through the secure process, as requested or needs-info, not escalated (#157).
+- Escalations stay labelled ambiguous, and `ambiguous_*` is used only for unclear requests (#136).
+- Customer channel constraints stay channel-only, and replies prefer the verified channel (#117).
+- The catalogue prompt says what each service holds, for routing (#156).
+- Reply and handover copy follow `docs/design.md` (#112).
+
+**Tools.** Risk levels with dotted write names (#78); risk honours write words on read-named tools
+(#76). On practice cases a read is answered from a later event written by the bank's own system on
+any channel; on unseen cases it is `pending`, never a fact. Writes go through an intent-key ledger.
+
+**Ingest.** Attachments to text and the safe fallback parse (#55); answer sections are stripped
+before any fallback parse (#135).
+
+**Writer and CLI.** Output follows `docs/design.md`: "What we received" and "What failed" in every
+answer, six states (#81), and "None" is never printed as a value (#124).
+
+**Runner** (`eval.submit`).
+- Folders are written as `ANSWERS/N` with no padding; a duplicate number takes the next free one;
+  any non-hidden folder holding a file is a case (#51, #128, #132).
+- Supplied questions are passed through with `--question` (#84), and an unreadable question means
+  no question (#93).
+- It refuses to run without API keys, and the fallback count matches the README (#146).
+- It writes an `ANSWERS/README.md` index for judges (#118).
+
+**Voice entry point** (#36, #61, #80).
+
+**Eval.** Harness, outcomes, injection and stage table (#28); results report (#58); a required
+read credits a write (#82); judgement cases scored on the final outcome (#111, #115); injected
+variants including `contradict_amount`; read, inform and write kinds, with the bank's recorded
+outcome counted as reached (#154); `--score-only` scores existing answer folders for final answer
+quality (#152). Practice-mode note: the mock reads surface the bank's later outcome, so the agent
+correctly does not repeat a change that is already recorded.
+
+**Results across rounds** (50 practice cases cut at the decision point, `claude-opus-5-5`; from
+the reports in `/tmp/eval-N/report.md`; the injected-case and tool-match metrics were not run).
+
+| Round | Commit | Action match | Read/write match | Clean-case escalation | Judgement | Mean s/case |
+|---|---|---|---|---|---|---|
+| 1 | no report | | | | | |
+| 2 | `dc66d9f` | 78% | 54% | 16% | 40% | 37.9 |
+| 3 | `66bb393` | 84% | 58% | 14% | 50% | 31.7 |
+| 3b | `c22e300` | 84% | 58% | 14% | 90% | 32.9 |
+| 4 | `46f92ea` | 82% | 56% | 14% | 90% | 28.6 |
+| 5 | `9fcf618` | 98% | 64% | 0% | 90% (9/10) | 29.6 |
+| 6 | TODO: round 6 | | | | | |
+
+Round 5 also had 0 system-failure fallbacks in the 50 practice cases.
