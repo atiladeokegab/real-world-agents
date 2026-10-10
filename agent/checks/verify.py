@@ -30,10 +30,12 @@ _MONTHS = (
     "November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec"
 )
 _DATE_RE = re.compile(
-    rf"\b\d{{1,2}}\s+(?:{_MONTHS})\.?\s+\d{{4}}\b"                      # 19 July 2025
+    rf"\b\d{{1,2}}(?:st|nd|rd|th)?\s+(?:{_MONTHS})\.?\s+\d{{4}}\b"     # 19 July 2025 / 31st July 2025
     rf"|\b(?:{_MONTHS})\.?\s+\d{{1,2}}(?:st|nd|rd|th)?,?\s+\d{{4}}\b"   # July 19, 2025
     r"|\b\d{4}-\d{2}-\d{2}\b"                                          # 2025-07-19
-    r"|\b\d{1,2}/\d{1,2}/\d{2,4}\b",                                   # 19/07/2025
+    r"|\b\d{1,2}/\d{1,2}/\d{2,4}\b"                                    # 19/07/2025
+    r"|\b\d{1,2}-\d{1,2}-\d{4}\b",                                     # 19-07-2025
+    # dash dates need a 4-digit year: \d{2}-\d{2}-\d{2} is a sort code
     re.IGNORECASE,
 )
 # a token mixing letters and digits: SUP-17, REF-2024-081, dev-9F31AB
@@ -103,6 +105,8 @@ _WORD_STOP = {
     "you're", "you've", "you'll", "you'd",
     "he's", "she's", "it's", "they're", "they've", "they'll",
     "profile", "pin",
+    # payment schemes and adverbs seen capitalised at a sentence start
+    "never", "faster", "bacs", "chaps", "sepa",
 }
 _PHRASE_STOP_RAW = {
     "secure chat", "verified call", "external message", "business portal",
@@ -120,6 +124,10 @@ _PHRASE_STOP_RAW = {
     "harrow & vale bank plc", "harrow and vale bank plc",
     "direct debits", "standing orders",
     "secure portal", "pin number", "personal profile",
+    # payment schemes and products named in replies (#141)
+    "faster payment", "faster payments",
+    "bacs payment", "bacs transfer", "chaps payment", "chaps transfer",
+    "sepa payment", "sepa transfer", "sepa credit transfer",
 }
 
 # --- no fabricated execution ---
@@ -200,6 +208,9 @@ def _norm(text: str) -> str:
     s = re.sub(r"[£$€&]", " ", s)
     s = re.sub(r"\band\b", " ", s)
     s = re.sub(r"[^\w\s.-]", " ", s)
+    # a '.' closing a sentence after a digit is not part of the value —
+    # 'paid 36.00.' and 'sent 2025-07-31.' still evidence '£36'/'31 July 2025'
+    s = re.sub(r"(?<=\d)\.(?=\s|$)", " ", s)
     return re.sub(r"\s+", " ", s).strip()
 
 
@@ -248,9 +259,14 @@ def _reply_atoms(text: str) -> list[tuple[str, str]]:
         atoms.append(("amount", m.group(1)))
         claimed.append(m.span())
     for m in _DATE_RE.finditer(text):
+        if text[m.start() - 1:m.start()] == "-" or \
+                text[m.end():m.end() + 1] == "-":
+            continue  # inside a longer ref token — 'REF-2025-07-31'
         atoms.append(("date", m.group(0)))
         claimed.append(m.span())
     for m in _REF_RE.finditer(text):
+        if any(m.start() < e and m.end() > s for s, e in claimed):
+            continue  # inside a date/amount — '31st' in '31st July 2025'
         atoms.append(("reference", m.group(0)))
         claimed.append(m.span())
     for m in _NAME_SPAN_RE.finditer(text):
@@ -297,19 +313,28 @@ def _atom_variants(kind: str, raw: str) -> set[str]:
         variants.add(_norm(_TITLE_RE.sub("", raw)))  # "Ms Ellison" -> "Ellison"
         variants.add(_norm(raw.replace("-", " ").replace("'", " ").replace(".", " ")))
         variants.add(_norm(_POSSESSIVE_RE.sub("", raw)))  # "Ltd's" -> "Ltd"
-    elif kind == "reference":
-        variants.add(base.replace("-", " "))
     return {v for v in variants if v}
 
 
-def _in_hay(atom_norm: str, hay: str, dot_suffix: bool = False) -> bool:
-    """Bounded containment: '420' must not pass on '4200' or '1420'.
-    `dot_suffix` lets a reference be a prefix of a longer one
-    ('batch-041' inside 'batch-041.csv') while still refusing 'batch-0412'."""
-    tail = r"(?![\w-])" if dot_suffix else r"(?![\w.-])"
+def _in_hay(atom_norm: str, hay: str) -> bool:
+    """Bounded containment: '420' must not pass on '4200' or '1420'."""
     if re.fullmatch(r"[\w.-]+", atom_norm):
-        return re.search(rf"(?<![\w.-]){re.escape(atom_norm)}{tail}", hay) is not None
+        return re.search(rf"(?<![\w.-]){re.escape(atom_norm)}(?![\w.-])", hay) is not None
     return re.search(rf"(?<!\w){re.escape(atom_norm)}(?!\w)", hay) is not None
+
+
+def _ref_in_hay(raw: str, hay: str) -> bool:
+    """References compare separator-free (hay is already normed): 'HV-039',
+    'HV039' and 'hv 039' are the same value. A flattened atom matches only a
+    whole token, an adjacent token pair, or the head of a dotted suffix —
+    'batch-041' inside 'batch-041.csv', never inside 'batch-0412'."""
+    flat = re.sub(r"[\s-]", "", _norm(raw))
+    if not flat:
+        return False
+    toks = hay.split()
+    cands = [t.replace("-", "") for t in toks]
+    cands += [(a + b).replace("-", "") for a, b in zip(toks, toks[1:])]
+    return any(c == flat or c.startswith(flat + ".") for c in cands)
 
 
 def _token_in_hay(token: str, hay: str) -> bool:
@@ -321,13 +346,21 @@ def _token_in_hay(token: str, hay: str) -> bool:
 def _atom_ok(kind: str, raw: str, hay: str) -> bool:
     """A reply atom is evidenced: names pass when every token appears anywhere
     in the case text (a name may be reordered or carry a title/possessive);
-    references match as a prefix of a case reference; the rest need bounded
-    containment of a variant."""
+    references compare separator-free; amounts allow a '.0+' tail ('£36' =
+    'GBP 36.00'); the rest need bounded containment of a variant."""
     variants = _atom_variants(kind, raw)
     if kind == "name":
         return any(v and all(_token_in_hay(t, hay) for t in v.split())
                    for v in variants)
-    return any(_in_hay(v, hay, dot_suffix=(kind == "reference")) for v in variants)
+    if kind == "reference":
+        return _ref_in_hay(raw, hay)
+    if kind == "amount":
+        return any(
+            re.search(rf"(?<![\w.-]){re.escape(v)}(?:\.0+)?(?![\w.-])", hay)
+            is not None
+            for v in variants
+        )
+    return any(_in_hay(v, hay) for v in variants)
 
 
 def _claims_execution(text: str) -> str | None:
