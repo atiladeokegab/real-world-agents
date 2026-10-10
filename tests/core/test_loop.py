@@ -45,7 +45,8 @@ def test_read_then_reply(tmp_path, monkeypatch):
     fake_areas(monkeypatch, [READ, REPLY])
     r, answer = run(tmp_path)
     assert (r["action"], r["tool_calls"], r["fallback"]) == ("reply", 1, False)
-    assert "requested, pending result" in answer and "Row SUP-17 is pending." in answer
+    assert "requested — pending result" in answer and "Row SUP-17 is pending." in answer
+    assert r["state"] == "requested"
 
 
 def test_second_rejection_escalates(tmp_path, monkeypatch):
@@ -74,11 +75,12 @@ def test_missing_area_writes_fallback(tmp_path, monkeypatch, area):
     monkeypatch.setitem(sys.modules, area, None)  # import raises ImportError
     monkeypatch.delattr(sys.modules["agent"], area.split(".")[1], raising=False)
     r, answer = run(tmp_path)
-    assert r["fallback"] and "escalate (system failure)" in answer
+    assert r["fallback"] and "SYSTEM FAILURE — The ingest stage failed." in answer
 
 
 def test_timeout_writes_fallback(tmp_path, monkeypatch):
     fake_areas(monkeypatch, [REPLY], decide_delay=2)
     r, _ = run(tmp_path, time_limit=0.2)
     assert r["fallback"]
-    assert "timed out" in (tmp_path / "out" / "REASONING.md").read_text()
+    answer = (tmp_path / "out" / "ANSWER.md").read_text()
+    assert "SYSTEM FAILURE — The decide stage failed." in answer and "0.2 s limit" in answer
