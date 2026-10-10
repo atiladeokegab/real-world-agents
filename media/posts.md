@@ -22,4 +22,4 @@ Code: https://github.com/atiladeokegab/real-world-agents
 
 ## X
 
-Bank ops agent at the Real-World Agents Hackathon (Dwelly, London), Banking track. Code checks the evidence, authority comes from code, money never moves twice, it hands over with a note. 84% first-action match, 9/10 judgement cases safe (50 practice cases). https://github.com/atiladeokegab/real-world-agents
+Bank ops agent, Real-World Agents Hackathon (Dwelly, London), Banking track. Code checks the evidence, authority comes from code, money never moves twice, it hands over with a note. 84% first-action match on 50 practice cases. https://github.com/atiladeokegab/real-world-agents
