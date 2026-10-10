@@ -83,6 +83,21 @@ def test_missing_authority_question_fits_an_authenticated_channel():
     assert "role this request needs" in out.reply.text and "verified call" not in out.reply.text
 
 
+def test_handover_keeps_string_lists_whole_and_maps_invented_keys():
+    out = run({"action": "escalate", "escalation": {
+        "conflicts": "event-001 says one transfer; journal shows two",
+        "claimed_only": ["Mira says she made one transfer"], "actions_taken": ["looked up transfer_journal"],
+        "deliberately_not_done": ["did not cancel the pending transfer"], "question_for_human": "Cancel T2?"}})
+    note = out.escalation
+    assert "event-001 says one transfer; journal shows two" in note["conflicts"]
+    assert all(len(c) > 1 for c in note["conflicts"])
+    assert "Mira says she made one transfer" in note["claimed"]
+    assert "looked up transfer_journal" in note["did"]
+    assert "did not cancel the pending transfer" in note["not_done"]
+    assert note["question"] == "Cancel T2?"
+    assert not {"claimed_only", "actions_taken", "deliberately_not_done", "question_for_human"} & set(note)
+
+
 def test_read_failure_retries_once_then_escalates():
     failed = ToolResult(tool="transfer_journal", status="timeout")
     assert run({**READ, "exception_type": "read_failure"}, results=[failed]).action == "tool_call"

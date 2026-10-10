@@ -50,7 +50,7 @@ Rules:
 - If a question is supplied, question_answer answers it directly in one or two sentences.
 - Pick exception_type only when one of these applies to the situation, not to describe your own answer: {{exception_types}}. Otherwise null.
 - Escalate early when the customer is distressed or vulnerable, makes a complaint, or their frustration worsens unresolved. Mild frustration with a solvable request: solve it and acknowledge it.
-- escalation (only when action is escalate): team, urgency, type (technical or emotional), what is verified, what is only claimed, what conflicts (with event ids), what you did, what you deliberately did not do, the exact question the person must answer, and a holding reply that is safe to send now and claims nothing.
+- escalation (only when action is escalate) uses exactly these keys and no others: who (the team), urgency (low, normal, high or urgent), type (technical or emotional), why, verified, claimed, conflicts (with event ids), did, not_done (what you deliberately did not do), question (the exact question the person must answer), holding_reply (safe to send now, claims nothing). verified, claimed, conflicts, did and not_done are lists of strings.
 - Customer replies are short, plain and specific: what we did, what happens next, and when. No promises the records don't support.
 - If a previous proposal was rejected, fix exactly the rule, field and event named.
 {_DATA_RULE}"""
