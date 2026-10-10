@@ -5,6 +5,7 @@ and scores the proposed action class (exact) against eval/gold.json.
 """
 import argparse
 import json
+import re
 import tempfile
 import time
 from concurrent.futures import ProcessPoolExecutor
@@ -21,6 +22,39 @@ def _get(obj, key):
     return obj.get(key) if isinstance(obj, dict) else getattr(obj, key, None)
 
 
+def trace_steps(trace_log: str) -> list[dict]:
+    """The writer's trace.log holds one '== step ==' block of JSON per loop step."""
+    parts = re.split(r"^== (\w+) ==\n", trace_log, flags=re.M)
+    steps = []
+    for name, body in zip(parts[1::2], parts[2::2]):
+        try:
+            steps.append({"step": name, **json.loads(body)})
+        except ValueError:
+            pass
+    return steps
+
+
+def _score_folder(row: dict, folder: Path) -> None:
+    """action/kind/tool from the first proposal, escalated from run.json, checks from the findings."""
+    run = json.loads((folder / "run.json").read_text())
+    steps = trace_steps((folder / "trace.log").read_text())
+    first = next((s for s in steps if s["step"] == "proposal"), None)
+    row["checks"] = [s.get("check") for s in steps if s["step"] == "finding"]
+    row["escalated"] = run["escalated"]
+    if first is None:  # fallback answer: the loop never reached a decision
+        row.update(action="escalate", kind="none", error="fallback answer: " + str(run.get("exception_type")))
+        return
+    row["action"], row["tool"] = first["action"], first.get("tool")
+    try:
+        from agent import tools
+
+        spec = tools.CATALOGUE.get(row["tool"] or "")
+    except ImportError:  # tools (#53) not merged: kind unknown for tool calls
+        spec = None
+    row["kind"] = ("read" if spec.risk == 1 else "write") if first["action"] == "tool_call" and spec else (
+        "none" if first["action"] != "tool_call" else None)
+
+
 def run_case(num: str, dry: bool = False, variant: str | None = None, out: str | None = None) -> dict:
     t = time.monotonic()
     row = _run_case(num, dry, variant, out)
@@ -35,6 +69,15 @@ def _run_case(num: str, dry: bool, variant: str | None, out: str | None) -> dict
     try:
         if dry:  # stub so the harness runs before core merges
             row.update(action="tool_call", kind="read", tool="stub")
+            return row
+        if out and not variant:  # one full run per clean case: score its first decision, keep its answer folder
+            from agent.core.loop import run_case as full
+
+            row["stage"] = "decision"
+            folder = full(path, Path(out) / num, cut=cut_index(path / "history.md"))
+            row["answer"] = str(folder)
+            _score_folder(row, folder)
+            row["stage"] = None
             return row
         row["stage"] = "cut"
         from agent import checks, ingest, llm, tools  # Contract: #11
@@ -60,10 +103,6 @@ def _run_case(num: str, dry: bool, variant: str | None, out: str | None) -> dict
         elif row["action"] != "tool_call":
             row["kind"] = "none"
         row["stage"] = None
-        if out and not variant:  # full loop once more, only to leave ANSWER.md for the report to link
-            from agent.core.loop import run_case as full
-
-            row["answer"] = str(full(path, Path(out) / num, cut=cut_index(path / "history.md")))
     except Exception as e:  # a crash is a miss at that stage, not a stop
         row["error"] = f"{type(e).__name__}: {e}"
     return row
