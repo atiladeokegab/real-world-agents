@@ -16,21 +16,20 @@ caption: "sped up"), or run it beforehand and show the saved output.
 
 | Time | Shot (screen) | Say |
 |---|---|---|
-| 0:00-0:10 | `examples/044/history.md`, events 001-002 highlighted: "Batch ... status: Processed." and "I can't tell whether row SUP-17 ... was paid." | "A portal says the supplier batch is processed. The customer asks: was row SUP-17 actually paid? The quiet mistake is saying yes because the batch looks fine." |
-| 0:10-0:22 | Terminal: `uv run agent run --case examples/044 --cut 2 --out /tmp/demo/044`. Output, real: `ingest 2 events · 0 attachments · cut at event-002`, `identity authenticated Authorised business user · Secure chat`, then `evidence 1 finding · a collection-level status is asserted while a member line's status is unclear or contradicts it` | "Before the model reasons, code checks the evidence and flags it: a batch status is being used to answer about one row." |
-| 0:22-0:34 | Same output, next lines: `decide tool_call business_service (...Line-level status of row SUP-17 (paid, rejected, pending or returned)...)`, `verify ✓ approved`, `execute business_service → done` | "The model proposes one read-only lookup. Code checks it against authority and rules, approves it, runs it." |
-| 0:34-0:44 | Same output: `decide reply · Secure chat`, `verify ✓ approved`, then `● DONE  1 action · 0 escalations · 28.3s` | "The reply is checked by code before it is sent. It passes, with no escalation." |
-| 0:44-0:52 | `/tmp/demo/044/ANSWER.md`, "Customer reply": "I've checked row SUP-17 ... It was rejected, not paid. The reason given is that the beneficiary details didn't match the receiving bank's records. The 'Processed' status covers the batch as a whole ... I haven't changed or resent anything." Then `trace.log`, the `finding-1` and `== verdict ==` blocks. | "The customer gets the true answer: rejected, and why. Nothing was changed. The trace shows why." |
-| 0:52-0:57 | Terminal: `uv run python -m eval` summary. `TODO: capture from real run` (read only the numbers that print) | "On the practice cases, with faults injected: TODO: real eval number." |
-| 0:57-1:00 | Title card: repo name | "A tricky case in. The agent catches what is wrong, acts safely, and shows why." |
+| 0:00-0:08 | `examples/044/history.md`, events 001-002 highlighted: "Batch ... status: Processed." and "I can't tell whether row SUP-17 ... was paid." | "A portal says the supplier batch is processed. The customer asks: was row SUP-17 paid? The quiet mistake is saying yes because the batch looks fine." |
+| 0:08-0:18 | Terminal: `uv run agent run --case examples/044 --cut 2 --out /tmp/demo/044`. Output, real: `ingest 2 events · 0 attachments · cut at event-002`, `identity authenticated Authorised business user · Secure chat`, then `evidence 1 finding · a collection-level status is asserted while a member line's status is unclear or contradicts it` | "Before the model reasons, code checks the evidence and flags it: a batch status is being used to answer about one row." |
+| 0:18-0:28 | Same output, next lines: `decide tool_call business_service (...Line-level status of row SUP-17 (paid, rejected, pending or returned)...)`, `verify ✓ approved`, `execute business_service → done` | "The model proposes one read-only lookup. Code checks it, approves it, runs it." |
+| 0:28-0:36 | Same output: `decide reply · Secure chat`, `verify ✓ approved`, then `● DONE  1 action · 0 escalations · 28.3s` | "The reply is checked by code before it is sent. It passes, with no escalation." |
+| 0:36-0:42 | `/tmp/demo/044/ANSWER.md`, "Customer reply": "I've checked row SUP-17 ... It was rejected, not paid. The reason given is that the beneficiary details didn't match the receiving bank's records. The 'Processed' status covers the batch as a whole ... I haven't changed or resent anything." Then `trace.log`, the `finding-1` and `== verdict ==` blocks. | "The customer gets the true answer: rejected, and why. Nothing changed." |
+| 0:42-0:50 | Voice, played aloud. Terminal: `uv run python -m agent.voice --out /tmp/voice-demo2 /tmp/voice-demo/in.mp3`, then play `/tmp/voice-demo2/reply.mp3`. Real run (about 40 s, shown sped up): a caller asks whether a £420 transfer to Alder and Reed Workshop was sent; it is treated as an unverified message (voice does not prove identity); `transfer_journal` returns pending; the verifier blocked one draft that said "confirmed" with no result behind it. Decision line: `REQUESTED — Asked transfer_journal for a result. No result yet.` | "The same loop takes a phone call, and won't say a payment was sent without a result." |
+| 0:50-0:55 | Terminal: `uv run python -m eval` summary. `TODO: capture from real run` (read only the numbers that print) | "On the practice cases, with faults injected: TODO: real eval number." |
+| 0:55-1:00 | Title card: repo name | "A tricky case in. The agent catches what is wrong, acts safely, and shows why." |
 
-Spoken length: 124 words (60 s at a calm pace, 140 words or fewer). Confirm with a stopwatch.
+Spoken length: 130 words (60 s at a calm pace, 140 words or fewer). Confirm with a stopwatch.
 
-## Optional 5 s voice moment
+## Voice moment
 
-Swap for the 0:44 shot only if time allows. Terminal: `uv run python -m agent.voice "Was row
-SUP-17 in our supplier batch paid?"`, showing the `Heard:` and `Reply:` lines. `TODO: capture from
-real run` (not run yet; audio needs `ELEVENLABS_API_KEY`, text mode works without).
+The 0:42 row is a real run (audio kept outside the repo; do not commit `reply.mp3`). It needs `ELEVENLABS_API_KEY`.
 
 ## Before recording
 
