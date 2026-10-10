@@ -486,7 +486,15 @@ def verify(
                          f"constraint '{con.rule}' forbids channel "
                          f"'{proposal.reply.channel}'")
 
-    # 7. completion — every ask handled (escalate/request_info counts as handling)
+    # 7. completion — every ask handled (escalate/request_info counts as
+    #    handling); a no_op while a lookup is still pending or uncertain
+    #    answers nothing
+    if proposal.action == "no_op" and case_object.asks and any(
+            r.status in ("pending", "uncertain") for r in results):
+        return _fail("completion", "action", None,
+                     "a tool result is still pending/uncertain — reply in "
+                     "the 'requested, pending result' wording instead of "
+                     "no_op")
     if proposal.action not in {"escalate", "request_info"}:
         done = set(proposal.asks_addressed)
         for ask in case_object.asks:
