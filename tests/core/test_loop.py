@@ -1,4 +1,5 @@
 import json
+import subprocess
 import sys
 import time
 import types
@@ -57,6 +58,15 @@ def test_second_rejection_escalates(tmp_path, monkeypatch):
     assert r["exception_type"] == "incomplete_answer"
 
 
+def test_retry_resets_after_approved_tool_call(tmp_path, monkeypatch):
+    bad_read = Verdict(ok=False, rule="citation", field="claims_relied_on", event="event-009")
+    bad_reply = Verdict(ok=False, rule="claim_linter", field="reply.text", event=None)
+    fake_areas(monkeypatch, [READ, READ, REPLY, REPLY],
+               [bad_read, Verdict(ok=True), bad_reply, Verdict(ok=True)])
+    r, _ = run(tmp_path)
+    assert (r["action"], r["tool_calls"], r["fallback"]) == ("reply", 1, False)
+
+
 def test_identical_calls_are_capped(tmp_path, monkeypatch):
     fake_areas(monkeypatch, [READ] * 10)
     r, _ = run(tmp_path)
@@ -84,3 +94,20 @@ def test_timeout_writes_fallback(tmp_path, monkeypatch):
     assert r["fallback"]
     answer = (tmp_path / "out" / "ANSWER.md").read_text()
     assert "SYSTEM FAILURE — The decide stage failed." in answer and "0.2 s limit" in answer
+
+
+def test_timeout_case_process_exits_after_fallback(tmp_path):
+    case = tmp_path / "044"
+    case.mkdir()
+    (case / "index.md").write_text("# Case 044")
+    out = tmp_path / "out"
+    script = (
+        "import sys, time\n"
+        "from agent.core import loop\n"
+        "loop._pipeline = lambda *args: time.sleep(10)\n"
+        "loop.run_case(sys.argv[1], sys.argv[2], time_limit=0.05)\n"
+    )
+    result = subprocess.run([sys.executable, "-c", script, str(case), str(out)],
+                            capture_output=True, text=True, timeout=5)
+    assert result.returncode == 0, result.stderr
+    assert json.loads((out / "run.json").read_text())["fallback"]

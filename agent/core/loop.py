@@ -80,6 +80,7 @@ def _pipeline(path: Path, question: str | None, cut: int | None, trace: list, st
     results: list[ToolResult] = []
     rejected = []
     feedback = None
+    retry_used = False
     while True:
         stage("decide")
         p = brain.decide(case, case_object, findings, results, feedback)
@@ -92,10 +93,11 @@ def _pipeline(path: Path, question: str | None, cut: int | None, trace: list, st
         emit("verify", "✓ approved" if v.ok else f"✗ {v.rule}: {v.message}")
         if not v.ok:
             rejected.append((p, v))
-            if len(rejected) > 1:
+            if retry_used:
                 p = _escalate(case, f"verifier rejected twice: {v.rule} on {v.field} ({v.event})",
                               "incomplete_answer", results, findings)
                 break
+            retry_used = True
             feedback = v
             continue
         feedback = None
@@ -111,6 +113,7 @@ def _pipeline(path: Path, question: str | None, cut: int | None, trace: list, st
         results.append(r)
         trace.append(_dump("tool_result", r))
         emit("execute", f"{r.tool} → {writer.OUTCOME[r.status]}")
+        retry_used = False
         if r.status == "uncertain":
             p = _escalate(case, f"{r.tool} outcome uncertain; not retried", "write_failure", results, findings)
             break
