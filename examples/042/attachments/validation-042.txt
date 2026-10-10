@@ -1,0 +1,5 @@
+HARROW & VALE BANK PLC | SYNTHETIC VALIDATION REPORT
+Batch HV-042 | 16 July 2025
+Validation status: FAILED
+Row 2: missing required payee label.
+No corrected batch received; no payment execution confirmed.
