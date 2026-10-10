@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bank Ops Agent — Mockup</title>
+<title>Scale — Mockup</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -176,6 +176,36 @@ ul.plain li:first-child { border-top: 0; padding-top: 0; }
 .side ul.plain li { font-size: 13.5px; color: var(--text-2); }
 .side p { color: var(--text-2); font-size: 13.5px; }
 
+/* home panels */
+.panels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; padding-top: 22px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+.panel.wide { grid-column: 1 / -1; }
+.panel > h2 { font: 600 13.5px var(--sans); display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.panel > h2 span { font: 12px var(--mono); font-weight: 400; color: var(--text-3); }
+.handoffs { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+.handoff { border: 1px solid color-mix(in srgb, var(--c) 40%, var(--line)); background: color-mix(in srgb, var(--c) 6%, var(--surface)); border-radius: 9px; padding: 13px 14px; }
+.handoff .top { display: flex; flex-direction: column; gap: 2px; font: 12px var(--mono); color: var(--text-3); }
+.handoff .top .who { font: 500 12.5px var(--sans); color: var(--c); }
+.handoff .q { font-weight: 500; margin: 8px 0 12px; line-height: 1.4; }
+.handoff .actions { display: flex; gap: 8px; }
+.trio { display: flex; gap: 22px; margin-bottom: 12px; }
+.trio .v { font: 500 24px/1.2 var(--sans); letter-spacing: -0.01em; }
+.trio .l { font-size: 12px; color: var(--text-3); }
+.reasons { list-style: none; padding: 0; }
+.reasons li { display: flex; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line-soft); font-size: 13px; color: var(--text-2); }
+.reasons li b { font-family: var(--mono); font-weight: 400; color: var(--escalated); }
+.flags li { display: grid; grid-template-columns: 120px 1fr 22px; gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line-soft); font-size: 13px; }
+.flags li:first-child, .reasons li:first-child { border-top: 0; }
+.flags .bar { height: 6px; border-radius: 3px; background: var(--raise); overflow: hidden; }
+.flags .bar i { display: block; height: 100%; background: var(--requested); border-radius: 3px; }
+.flags .n { font: 12px var(--mono); color: var(--text-2); text-align: right; }
+.score { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 18px; }
+.score .v { font: 500 24px/1.2 var(--sans); letter-spacing: -0.01em; }
+.score .l { font-size: 12px; color: var(--text-3); }
+.panel .foot { margin-top: 12px; font: 11.5px var(--mono); color: var(--text-3); }
+.real-tag { font: 11px var(--mono); color: var(--done); }
+@media (max-width: 900px) { .panels { grid-template-columns: 1fr; } }
+
 /* case view switch */
 .views { display: flex; gap: 22px; border-bottom: 1px solid var(--line); margin-top: 18px; }
 .views button { all: unset; cursor: pointer; padding: 10px 0; margin-bottom: -1px; font-size: 14px; color: var(--text-3); border-bottom: 2px solid transparent; }
@@ -240,8 +270,8 @@ ul.plain li:first-child { border-top: 0; padding-top: 0; }
 <body>
 <header class="bar">
   <div class="wrap">
-    <div class="logo">H&amp;V</div>
-    <b>Ops Agent</b>
+    <div class="logo">S</div>
+    <b>Scale</b>
     <span class="crumb" id="crumb"></span>
     <span class="sample">mockup · sample data, not real results</span>
     <div class="theme" role="group" aria-label="Theme"><button data-theme-set="dark" aria-pressed="true">Dark</button><button data-theme-set="light" aria-pressed="false">Light</button></div>
@@ -257,6 +287,7 @@ ul.plain li:first-child { border-top: 0; padding-top: 0; }
       </div>
     </div>
     <div class="stats" id="stats"></div>
+    <div class="panels" id="panels"></div>
     <div class="filters" id="filters"></div>
     <div id="table"></div>
   </section>
@@ -594,7 +625,55 @@ let open = 0;
 let view = "summary";
 let replayTimer = null;
 
+const plain = (html) => { const d = document.createElement("div"); d.innerHTML = html; return d.textContent.trim(); };
+
+// Real numbers: README.md "Results", eval round 5 on the 50 practice cases.
+const SCORE = [["98%", "action match"], ["0%", "clean-case escalation"], ["9/10", "judgement cases passed"], ["0", "system-failure fallbacks"]];
+
+function renderPanels() {
+  const handoffs = CASES.map((c, i) => ({ c, m: META[i] })).filter(({ c }) => c.handover);
+  const needs = `<div class="panel wide"><h2>Needs a person <span>${handoffs.length} waiting</span></h2><div class="handoffs">` +
+    handoffs.map(({ c, m }) => {
+      const h = Object.fromEntries(c.handover);
+      return `<div class="handoff" style="--c:${C[c.id]}">
+        <div class="top"><span class="who">${h["Take it"]} · ${h["Urgency"]}</span>Case ${m.n} · ${m.short}</div>
+        <div class="q">${h["Question for you"]}</div>
+        <div class="actions"><button class="btn primary">Take case</button><button class="btn" data-open="${m.n}">Open case</button></div>
+      </div>`;
+    }).join("") + `</div></div>`;
+
+  const verify = CASES.flatMap((c) => c.term.filter(([lab]) => lab === "verify").map(([, t]) => t));
+  const blocked = verify.filter((t) => t.includes("class='bad'"));
+  const approved = verify.length - blocked.length;
+  const reconsidered = CASES.filter((c) => {
+    const v = c.term.filter(([lab]) => lab === "verify").map(([, t]) => t.includes("class='bad'"));
+    return v.includes(true) && v[v.length - 1] === false;
+  }).length;
+  const reasons = blocked.flatMap((t) => plain(t).split("·")).map((x) => x.replace("✗", "").trim()).filter(Boolean);
+  const safety = `<div class="panel"><h2>Safety checks <span>before anything runs</span></h2>
+    <div class="trio"><div><div class="v">${approved}</div><div class="l">approved</div></div>
+    <div><div class="v" style="color:var(--escalated)">${blocked.length}</div><div class="l">blocked</div></div>
+    <div><div class="v">${reconsidered}</div><div class="l">reconsidered after a block</div></div></div>
+    <ul class="reasons">${reasons.map((r) => `<li><b>✗</b>${r}</li>`).join("")}</ul></div>`;
+
+  const counts = {};
+  THINK.forEach((t) => t.steps.forEach((st) => (st.flags || []).forEach(([k]) => { counts[k] = (counts[k] || 0) + 1; })));
+  const max = Math.max(1, ...Object.values(counts));
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  const flags = `<div class="panel"><h2>Evidence flags <span>before the AI reads</span></h2>
+    <ul class="reasons flags">${Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([k, n]) =>
+      `<li><span>${k}</span><span class="bar"><i style="width:${(n / max) * 100}%"></i></span><span class="n">${n}</span></li>`).join("")}</ul>
+    <div class="foot">${total} flags across ${CASES.length} cases</div></div>`;
+
+  const score = `<div class="panel"><h2>Practice scorecard <span class="real-tag">● real results</span></h2>
+    <div class="score">${SCORE.map(([v, l]) => `<div><div class="v">${v}</div><div class="l">${l}</div></div>`).join("")}</div>
+    <div class="foot">50 practice cases · eval round 5 · claude-opus-5-5</div></div>`;
+
+  $("#panels").innerHTML = needs + safety + flags + score;
+}
+
 function renderOverview() {
+  renderPanels();
   const human = CASES.filter((c) => c.handover).length;
   $("#stats").innerHTML = [
     ["Cases", CASES.length],
@@ -792,6 +871,8 @@ document.addEventListener("click", (e) => {
   const th = e.target.closest("[data-theme-set]");
   if (th) { setTheme(th.dataset.themeSet); return; }
   if (e.target.closest("[data-home]")) { e.preventDefault(); go(0); return; }
+  const oc = e.target.closest("[data-open]");
+  if (oc) { go(Number(oc.dataset.open)); return; }
   const f = e.target.closest(".filter");
   if (f) { filter = f.dataset.f; renderOverview(); return; }
   const r = e.target.closest(".row.case");
