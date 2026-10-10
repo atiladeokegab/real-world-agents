@@ -18,9 +18,9 @@ def _get(obj, key):
     return obj.get(key) if isinstance(obj, dict) else getattr(obj, key, None)
 
 
-def run_case(num: str, dry: bool = False) -> dict:
+def run_case(num: str, dry: bool = False, variant: str | None = None) -> dict:
     """One case through the Contract's loop up to the first proposal. Never raises."""
-    row = {"case": num, "stage": None, "action": None, "kind": None, "error": None}
+    row = {"case": num, "variant": variant, "expect": None, "checks": [], "stage": None, "action": None, "kind": None, "error": None}
     path = ROOT / "examples" / num
     try:
         if dry:  # stub so the harness runs before core merges
@@ -30,9 +30,13 @@ def run_case(num: str, dry: bool = False) -> dict:
         from agent import checks, ingest, llm, tools  # Contract: #11
 
         case = ingest.load_case(path, cut=cut_index(path / "history.md"))
+        if variant:
+            from eval import inject
+
+            case, row["expect"] = getattr(inject, variant)(case)
         row["stage"] = "findings"
         findings = checks.find_evidence(case)
-        row["findings"] = len(findings)
+        row["checks"] = [_get(f, "check") for f in findings]
         row["stage"] = "extraction"
         case_object = llm.extract(case, findings)
         row["stage"] = "decision"
@@ -66,6 +70,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry", action="store_true")
     ap.add_argument("--workers", type=int, default=6)
+    ap.add_argument("--inject", action="store_true", help="also run each fault variant on every case")
     ap.add_argument("--cases", help="comma list, default all 50")
     a = ap.parse_args()
     nums = a.cases.split(",") if a.cases else sorted(GOLD)
@@ -76,6 +81,17 @@ def main():
         print(f"{r['case']} {'ok  ' if r['ok'] else 'FAIL'} got={r['action']}/{r['kind']} "
               f"want={GOLD[r['case']]['action']}/{GOLD[r['case']]['kind']}"
               + (f" stage={r['stage']} {r['error']}" if r["error"] else ""))
+    if a.inject:
+        from eval import inject
+
+        jobs = [(n, v.__name__) for n in nums for v in inject.VARIANTS]
+        with ProcessPoolExecutor(a.workers) as ex:
+            inj = list(ex.map(run_case, [j[0] for j in jobs], [a.dry] * len(jobs), [j[1] for j in jobs]))
+        hit = [inject.detected(r["expect"], [{"check": c} for c in r["checks"]], r["action"]) for r in inj]
+        for v in inject.VARIANTS:
+            h = [x for x, r in zip(hit, inj) if r["variant"] == v.__name__]
+            print(f"inject {v.__name__}: detected {sum(h)}/{len(h)}")
+        print(f"injected-case detection {sum(hit) / len(hit):.0%}")
     print(f"\naction match {m['action_match']:.0%}  read/write match {m['kind_match']:.0%}  "
           f"clean-case escalation {m['clean_escalation_rate']:.0%}  ({m['n']} cases)")
 
