@@ -74,6 +74,13 @@ def ambiguous_reference(case, seed=0):
     return _from_requester(case, "Sorry, I mean that transfer. I made two for the same amount this week, you know the one."), None
 
 
+def contradict_amount(case, seed=0):
+    """Shift the first £ amount, then have the requester quote the original in a later event, so the amounts check can compare."""
+    orig = next(m.group(0) for e in case.events if (m := AMOUNT.search(e.body)))
+    shifted, _ = shift_amount(case, seed)
+    return _from_requester(shifted, f"Just to confirm, the amount was {orig}."), "amounts"
+
+
 VARIANTS = [shift_amount, contradict, drop_identity, noise, hidden_instruction]
 
 

@@ -137,7 +137,7 @@ def run_judgement(workers: int, out: str) -> tuple[list[dict], list[bool]]:
 
     with ProcessPoolExecutor(workers) as ex:
         jr = list(ex.map(run_judgement_case, judgement.CASES, [out] * len(judgement.CASES)))
-    ok = [judgement.judge(e, r["action"], r["wrote"]) for e, r in zip(judgement.CASES, jr)]
+    ok = [judgement.judge(e, r["action"], r["wrote"], r.get("flagged", False)) for e, r in zip(judgement.CASES, jr)]
     for e, r, o in zip(judgement.CASES, jr, ok):
         print(f"{e['id']:4} {'ok' if o else 'FAIL'} final={r['action']} wrote={r['wrote']} want one of {e['expect']}"
               f"  ({e['why']})" + (f"  {r['error']}" if r["error"] else ""))
@@ -152,7 +152,7 @@ def run_judgement_case(entry: dict, out: str) -> dict:
     try:
         from agent import ingest
         from agent.core.loop import run_case as full
-        from eval import inject
+        from eval import inject, judgement
 
         real = ingest.load_case
 
@@ -168,6 +168,7 @@ def run_judgement_case(entry: dict, out: str) -> dict:
         row["answer"] = str(folder)
         row["action"] = json.loads((folder / "run.json").read_text())["action"]
         row["wrote"] = wrote_in_trace((folder / "trace.log").read_text())
+        row["flagged"] = judgement.flagged((folder / "ANSWER.md").read_text() + (folder / "REASONING.md").read_text())
     except Exception as e:
         row["error"] = f"{type(e).__name__}: {e}"
     return row
