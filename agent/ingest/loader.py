@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from agent.core.contracts import Authority, Case, Event
+from agent.ingest.attachments import read_attachments
+from agent.ingest.fallback import fallback_events, needs_fallback
 
 _ANCHOR_RE = re.compile(r'<a id="(event-\d+)"></a>')
 _HEADER_RE = re.compile(r"\s*##\s*(?P<at>.+?)\s*—\s*event\s*\d+\s*\n")
@@ -42,11 +44,20 @@ def load_case(path, cut: int | None = None, question: str | None = None) -> Case
     history = _read(path / "history.md")
 
     events = _parse_events(history)
-    if cut is not None:
-        events = [e for e in events if _event_number(e.id) <= cut]
+    attachments = read_attachments(path)
 
     raw_files = {"index.md": index, "history.md": history}
+    for entry in sorted(path.iterdir()):
+        if entry.is_file() and entry.name not in raw_files:
+            raw_files[entry.name] = _read(entry)  # unknown files read as text
+    for a in attachments:
+        raw_files[f"attachments/{a.name}"] = a.text
+
+    if needs_fallback(path, events):
+        events = fallback_events(raw_files)
+
     if cut is not None:
+        events = [e for e in events if _event_number(e.id) <= cut]
         raw_files["index.md"] = _strip_sections(index)
         raw_files["history.md"] = _truncate_history(history, cut)
 
@@ -59,7 +70,7 @@ def load_case(path, cut: int | None = None, question: str | None = None) -> Case
         created=_parse_ts(details.get("Created")),
         initial_request=_section(index, "Initial request"),
         events=events,
-        attachments=[],
+        attachments=attachments,
         authority=_authority(events, details.get("Source role", "")),
         raw_files=raw_files,
         question=question,

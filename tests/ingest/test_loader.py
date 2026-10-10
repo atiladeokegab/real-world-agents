@@ -34,7 +34,7 @@ def test_parses_every_practice_case(case_dir):
         assert event.recipient
         assert event.body
 
-    assert set(case.raw_files) == {"index.md", "history.md"}
+    assert {"index.md", "history.md"} <= set(case.raw_files)  # + attachments/* when present
 
 
 def test_case_001_fields():
