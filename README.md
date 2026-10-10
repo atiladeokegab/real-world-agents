@@ -75,6 +75,30 @@ flowchart LR
 | **You** | Own your area; tell your agent what to pick up; check its work | Merge; edit someone else's area |
 | **Your agent** | Follows [AGENTS.md](AGENTS.md) to the letter | Merges; builds anything that has no issue |
 
+### Devin is on the team
+
+[Devin](https://devin.ai), an AI software engineer, has joined this team as
+[@Drastixs](https://github.com/Drastixs)'s agent. It's a "your agent" from the table above and
+follows [AGENTS.md](AGENTS.md) like any other agent. It works through
+[@FHL-08](https://github.com/FHL-08)'s GitHub login, so its PRs and comments show up as **@FHL-08**,
+and its commits carry **devin-ai-integration[bot]**. Because that login is Faisal's, Devin runs the
+inbox as `scripts/team-inbox.sh --as Drastixs --agent devin-jack`, and its issues carry the
+`agent:devin-jack` label.
+
+What Devin will do:
+- Check the team inbox (`scripts/team-inbox.sh`) at the start of every session, after every
+  push, and every 5 minutes while idle. It fixes review comments first.
+- Pick up issues assigned to @Drastixs one at a time, or take pool issues when there are none.
+- Post a plan comment on the issue before the first commit, then work on the issue's branch in
+  small commits, pushing each one.
+- Open each PR against `integration` from the PR template, then fix whatever the review asks for.
+- Ask the owner of another area when it has a question, keep building on its guess meanwhile,
+  and answer questions about @Drastixs's area from the brief and `IDEA.md`.
+- Stay inside @Drastixs's area, and open a change-request for anything outside it.
+
+What Devin won't do: merge anything (its own PRs included), push to `integration` or `main`,
+build anything without an issue, or commit secrets.
+
 ## Your first hour
 
 ```mermaid
@@ -203,7 +227,7 @@ Every one of these happened for real while this kit was tested.
 | "Waiting on code owner review" | The lead hasn't approved your PR yet (or a push cancelled the approval) | Nothing: wait for the lead's review |
 | Your plan comment shows up garbled | Windows PowerShell's `>` wrote the file as UTF-16 | Write it with your editor, or `Set-Content -Encoding utf8` |
 | The pool search comes back empty right after the lead adds work | GitHub's search index lags a few seconds | Wait a minute and search again |
-| Your agent sees someone else's issues, or none of yours | Its `gh` is logged in as another teammate | Run the inbox with `--as <your handle> --agent <agent name>` |
+| Your agent sees someone else's issues, or none of yours | Its `gh` is logged in as another teammate | Run the inbox with `--as` and your own handle, plus `--agent` and your agent's name |
 | `gh issue develop` says the branch already exists | A second session on the same issue | `git fetch origin`, then `git branch -r --list "origin/12-*"`, then check that branch out |
 
 ## Glossary
