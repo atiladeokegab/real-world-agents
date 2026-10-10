@@ -61,13 +61,13 @@ contracts; only the lead changes it. Full design: `AGENT_SPEC.md`.
 
 | Area | Directories | Owner | Issues |
 |---|---|---|---|
-| core | `agent/__init__.py`, `agent/core/`, `pyproject.toml`, `uv.lock`, `.env.example`, `.gitignore`, `tests/__init__.py`, `tests/conftest.py`, `tests/core/` | — | — |
-| ingest | `agent/ingest/`, `tests/ingest/` | — | — |
-| checks | `agent/checks/`, `tests/checks/` | — | — |
-| brain | `agent/llm/`, `tests/llm/` | — | — |
-| tools | `agent/tools/`, `tests/tools/` | — | — |
-| eval | `eval/`, `tests/eval/` | — | — |
-| voice | `agent/voice/`, `tests/voice/` | — | — |
-| design | `docs/design.md`, `docs/mockup/` | — | — |
-| submission | `README.md`, `ANSWERS/`, `media/` | — | — |
+| core | `agent/__init__.py`, `agent/core/`, `pyproject.toml`, `uv.lock`, `.env.example`, `.gitignore`, `tests/__init__.py`, `tests/conftest.py`, `tests/core/` | @atiladeokegab [Zeus] | #11, #12 |
+| ingest | `agent/ingest/`, `tests/ingest/` | @FHL-08 | #13 |
+| checks | `agent/checks/`, `tests/checks/` | @FHL-08 | #14 |
+| brain | `agent/llm/`, `tests/llm/` | @Drastixs | #15 |
+| tools | `agent/tools/`, `tests/tools/` | @Drastixs | #16 |
+| eval | `eval/`, `tests/eval/` | @atiladeokegab [Zeus] | #17 |
+| voice | `agent/voice/`, `tests/voice/` | @atiladeokegab [Zeus] | #5 |
+| design | `docs/design.md`, `docs/mockup/` | @Abdussalam-popsy | #10 |
+| submission | `README.md`, `ANSWERS/`, `media/` | @Abdussalam-popsy, @atiladeokegab [Zeus], @atiladeokegab | #6, #7, #8, #18 |
 | examples (shared data) | `examples/` | — | — |
