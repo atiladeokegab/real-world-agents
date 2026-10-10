@@ -8,18 +8,49 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root {
+:root, [data-theme="dark"] {
   color-scheme: dark;
-  --bg: #0A0A0B;
-  --surface: #111113;
-  --raise: #17171A;
-  --line: #232327;
-  --line-soft: #1A1A1D;
-  --text: #EDEDEF;
-  --text-2: #A1A1A8;
-  --text-3: #6B6B73;
+  --bg: #0F0E1D;
+  --surface: #16152A;
+  --raise: #1D1C36;
+  --line: #2A2946;
+  --line-soft: #1F1E37;
+  --text: #ECEBF6;
+  --text-2: #A7A5C2;
+  --text-3: #6F6D90;
+  --log-bg: #0A0917;
+  --log-text: #CFCDE4;
+  --on-text: #0F0E1D;
+  --done: #42C08A;
+  --requested: #E6A847;
+  --info: #7D95FF;
+  --escalated: #F2735F;
+  --noop: #9593AE;
+  --failure: #D77BC0;
+  --skip: #3F3D5E;
   --sans: "Geist", ui-sans-serif, system-ui, sans-serif;
   --mono: "Geist Mono", ui-monospace, Menlo, monospace;
+}
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #EFEEF5;
+  --surface: #F7F6FB;
+  --raise: #E7E5F0;
+  --line: #D9D7E6;
+  --line-soft: #E3E1EC;
+  --text: #191830;
+  --text-2: #55536F;
+  --text-3: #8B89A6;
+  --log-bg: #E8E6F1;
+  --log-text: #2C2A45;
+  --on-text: #F7F6FB;
+  --done: #17845A;
+  --requested: #A86A10;
+  --info: #3B5BE0;
+  --escalated: #C9402B;
+  --noop: #6E6C86;
+  --failure: #9B2F7C;
+  --skip: #C4C2D4;
 }
 * { box-sizing: border-box; margin: 0; }
 body { background: var(--bg); color: var(--text); font: 14px/1.55 var(--sans); -webkit-font-smoothing: antialiased; }
@@ -31,20 +62,23 @@ code { font: 12.5px var(--mono); background: var(--raise); border: 1px solid var
 /* app bar */
 .bar { border-bottom: 1px solid var(--line); }
 .bar .wrap { display: flex; align-items: center; gap: 12px; height: 52px; padding-bottom: 0; }
-.logo { width: 22px; height: 22px; border-radius: 6px; background: var(--text); color: var(--bg); display: grid; place-items: center; font: 600 10px var(--mono); }
+.logo { width: 22px; height: 22px; border-radius: 6px; background: var(--text); color: var(--on-text); display: grid; place-items: center; font: 600 10px var(--mono); }
 .bar b { font-weight: 600; }
 .crumb { color: var(--text-3); }
 .crumb a { color: var(--text-2); text-decoration: none; }
 .crumb a:hover { color: var(--text); }
 .sample { margin-left: auto; font: 12px var(--mono); color: var(--text-3); }
+.theme { display: inline-flex; padding: 3px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.theme button { all: unset; cursor: pointer; padding: 3px 10px; border-radius: 5px; font-size: 12.5px; color: var(--text-3); }
+.theme button[aria-pressed="true"] { background: var(--raise); color: var(--text); }
 
 /* status tag (Stripe) */
 .tag { display: inline-flex; align-items: center; gap: 5px; padding: 1px 7px; border-radius: 5px; font: 500 12px/1.6 var(--sans); color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); white-space: nowrap; vertical-align: middle; }
 .tag b { font: 500 11px var(--mono); }
 
 .btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; font-size: 13px; }
-.btn:hover { border-color: #34343a; }
-.btn.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+.btn:hover { border-color: var(--text-3); }
+.btn.primary { background: var(--text); color: var(--on-text); border-color: var(--text); }
 
 /* overview (Mercury) */
 .page-head { display: flex; align-items: flex-end; justify-content: space-between; padding: 30px 0 22px; gap: 16px; flex-wrap: wrap; }
@@ -56,7 +90,7 @@ code { font: 12.5px var(--mono); background: var(--raise); border: 1px solid var
 .filters { display: flex; gap: 6px; flex-wrap: wrap; padding: 16px 0 10px; }
 .filter { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 7px; border: 1px solid var(--line); background: transparent; color: var(--text-2); cursor: pointer; font-size: 13px; }
 .filter:hover { color: var(--text); }
-.filter[aria-pressed="true"] { color: var(--text); background: var(--raise); border-color: #34343a; }
+.filter[aria-pressed="true"] { color: var(--text); background: var(--raise); border-color: var(--text-3); }
 .filter .count { font: 12px var(--mono); color: var(--text-3); }
 .row { display: grid; grid-template-columns: 52px minmax(0, 2.6fr) minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.4fr) 70px; gap: 14px; align-items: center; padding: 11px 4px; border-bottom: 1px solid var(--line-soft); }
 .row.head { font-size: 12.5px; color: var(--text-3); padding-top: 8px; padding-bottom: 8px; border-bottom-color: var(--line); }
@@ -108,13 +142,13 @@ code { font: 12.5px var(--mono); background: var(--raise); border: 1px solid var
 .steps summary .name { font: 13px var(--mono); color: var(--text-2); }
 .steps summary .val { font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .steps summary .st { font: 12px var(--mono); color: var(--s); text-align: right; }
-.log { background: #070708; border-top: 1px solid var(--line); font: 12.5px/1.75 var(--mono); padding: 8px 0; color: #C9C9CE; }
+.log { background: var(--log-bg); border-top: 1px solid var(--line); font: 12.5px/1.75 var(--mono); padding: 8px 0; color: var(--log-text); }
 .log .l { display: block; padding: 0 14px; white-space: pre-wrap; word-break: break-word; }
 .log .l .lab { color: var(--text-3); display: inline-block; width: 10ch; }
-.log .l.is-warn { background: rgba(224, 163, 59, 0.10); }
-.log .l.is-bad { background: rgba(240, 106, 85, 0.12); }
-.log .l.is-fail { background: rgba(208, 107, 176, 0.12); }
-.log .ok { color: #3FB984; } .log .warn { color: #E0A33B; } .log .bad { color: #F06A55; } .log .fail { color: #D06BB0; } .log .dim { color: #5B5B63; }
+.log .l.is-warn { background: color-mix(in srgb, var(--requested) 12%, transparent); }
+.log .l.is-bad { background: color-mix(in srgb, var(--escalated) 14%, transparent); }
+.log .l.is-fail { background: color-mix(in srgb, var(--failure) 14%, transparent); }
+.log .ok { color: var(--done); } .log .warn { color: var(--requested); } .log .bad { color: var(--escalated); } .log .fail { color: var(--failure); } .log .dim { color: var(--text-3); }
 .log .out { display: block; padding: 8px 14px 2px; margin-top: 6px; border-top: 1px dashed var(--line); color: var(--text); }
 
 ul.plain { list-style: none; padding: 0; }
@@ -165,6 +199,7 @@ ul.plain li:first-child { border-top: 0; padding-top: 0; }
     <b>Ops Agent</b>
     <span class="crumb" id="crumb"></span>
     <span class="sample">mockup · sample data, not real results</span>
+    <div class="theme" role="group" aria-label="Theme"><button data-theme-set="dark" aria-pressed="true">Dark</button><button data-theme-set="light" aria-pressed="false">Light</button></div>
   </div>
 </header>
 
@@ -185,10 +220,10 @@ ul.plain li:first-child { border-top: 0; padding-top: 0; }
 </main>
 
 <script>
-const C = { done: "#3FB984", requested: "#E0A33B", info: "#6B8CFF", escalated: "#F06A55", noop: "#8E929A", failure: "#D06BB0" };
+const C = { done: "var(--done)", requested: "var(--requested)", info: "var(--info)", escalated: "var(--escalated)", noop: "var(--noop)", failure: "var(--failure)" };
 const ICON = { done: "✓", requested: "◐", info: "?", escalated: "▲", noop: "○", failure: "■" };
 const STAGES = ["ingest", "identity", "evidence", "extract", "decide", "verify", "execute", "write"];
-const TONE = { ok: C.done, warn: C.requested, bad: C.escalated, fail: C.failure, skip: "#4A4A52", info: C.info };
+const TONE = { ok: C.done, warn: C.requested, bad: C.escalated, fail: C.failure, skip: "var(--skip)", info: C.info };
 const TONE_ICON = { ok: "✓", warn: "!", bad: "✗", fail: "✗", skip: "–", info: "?" };
 const RECEIVED = "<p><code>index.md</code>, <code>history.md</code> · 0 attachments · 5 events · cut at <code>event-002</code> · identity: authenticated business user (secure chat)</p>";
 const LABEL = { done: "Done", requested: "Requested", info: "Needs info", escalated: "Escalated", noop: "No action", failure: "System failure" };
@@ -574,7 +609,18 @@ function route() {
   window.scrollTo(0, 0);
 }
 
+function setTheme(t) {
+  document.documentElement.dataset.theme = t;
+  document.querySelectorAll("[data-theme-set]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.themeSet === t)));
+  try { localStorage.setItem("theme", t); } catch (e) { /* storage blocked: theme just isn't remembered */ }
+}
+let saved = null;
+try { saved = localStorage.getItem("theme"); } catch (e) { /* storage blocked */ }
+setTheme(saved === "light" ? "light" : "dark");
+
 document.addEventListener("click", (e) => {
+  const th = e.target.closest("[data-theme-set]");
+  if (th) { setTheme(th.dataset.themeSet); return; }
   if (e.target.closest("[data-home]")) { e.preventDefault(); go(0); return; }
   const f = e.target.closest(".filter");
   if (f) { filter = f.dataset.f; renderOverview(); return; }

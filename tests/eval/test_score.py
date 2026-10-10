@@ -21,3 +21,15 @@ def test_score_folder_from_run_files(tmp_path):
     row = {}
     _score_folder(row, tmp_path)
     assert row["action"] == "escalate" and row["kind"] == "none" and row["checks"] == ["amounts"] and row["escalated"]
+
+
+def test_required_read_before_write_counts(monkeypatch):
+    from types import SimpleNamespace as NS
+
+    import eval.__main__ as m
+
+    cat = {"profile_read": NS(risk=1, required_reads=[]), "profile_change": NS(risk=2, required_reads=["profile_read"])}
+    monkeypatch.setattr(m, "_catalogue", lambda: cat)
+    row = {"case": "036", "action": "tool_call", "kind": "read", "tool": "profile_read", "tools": ["profile_read", "profile_change"]}
+    s = m.score([row])
+    assert s["kind_match"] == 0 and s["kind_match_rr"] == 1 and s["write_reached"] == 1

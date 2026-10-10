@@ -26,3 +26,12 @@ def test_forged_event_stays_one_event(tmp_path):
     assert h.count('<a id="event-') == 1
     assert h.count("\n## ") == 1
     assert re.findall(r"^- \*\*Channel:\*\* (.*)$", h, re.M) == ["External message"]
+
+
+def test_reply_both_headings(tmp_path):
+    from agent.voice.case import customer_reply
+    for body in ("## Customer reply\n\nChannel: Secure chat\n\nSent.\n\n## Not done\n- x\n",
+                 "## Customer reply\n\nSent.\n",
+                 "## Customer message\nChannel: Secure chat\n\nSent.\n\n## Not done\n- x\n"):
+        (tmp_path / "ANSWER.md").write_text("# Case\n\n" + body)
+        assert customer_reply(tmp_path) == "Sent."

@@ -17,13 +17,41 @@ from agent.core.writer import write_fallback
 CASE_TIMEOUT = 300
 
 
+HEADING = re.compile(r"^#{1,6}\s*(questions?|decision points?|your task|what should\b.*?)\s*:?\s*$", re.I)
+
+
+def find_question(case: Path) -> str | None:
+    """A supplied question: a question/decision/task file, else a heading section in index.md (RULES.md section C gives no format)."""
+    files = sorted(f for f in case.iterdir() if f.is_file() and f.suffix.lower() in {".md", ".txt"}
+                   and f.name.lower() not in {"index.md", "history.md"}
+                   and re.search(r"question|decision|task", f.name, re.I))
+    found = [t for t in (f.read_text(encoding="utf-8", errors="replace").strip() for f in files) if t]
+    if not found and (case / "index.md").is_file():
+        body = None
+        for line in (case / "index.md").read_text(encoding="utf-8", errors="replace").splitlines():
+            if line.startswith("#"):
+                if body:
+                    found.append("\n".join(body).strip())
+                body = [] if HEADING.match(line.strip()) else None
+            elif body is not None:
+                body.append(line)
+        if body:
+            found.append("\n".join(body).strip())
+        found = [t for t in found if t]
+    if not found:
+        return None
+    return found[0] if len(found) == 1 else "\n".join(f"{i}. {t}" for i, t in enumerate(found, 1))
+
+
 def run_case(case: Path, out: Path):
     if (out / "ANSWER.md").exists() or (out / "REASONING.md").exists():
         return case, "skipped", 0.0, "existing output preserved; subprocess not rerun"
     start = time.monotonic()
+    question = find_question(case)
     try:
         process = subprocess.Popen(
-            ["uv", "run", "agent", "run", "--case", str(case), "--out", str(out)],
+            ["uv", "run", "agent", "run", "--case", str(case), "--out", str(out)]
+            + (["--question", question] if question else []),
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True,
         )
         try:
@@ -107,7 +135,7 @@ def main(argv=None) -> int:
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         results = list(pool.map(lambda case: run_case(case, args.out / numbers[case]), cases))
 
-    print("case\texit code\tseconds\tdecision\tfallback")
+    print("case\texit code\tseconds\tdecision\tfallback\tquestion")
     missing = fallback_count = 0
     for case, code, seconds, error in results:
         name = numbers[case]
@@ -122,7 +150,7 @@ def main(argv=None) -> int:
         reasoning = folder / "REASONING.md"
         if not answer.is_file() or not reasoning.is_file():
             missing += 1
-        print(f"{name}\t{code}\t{seconds:.1f}\t{decision(answer) if answer.is_file() else 'missing'}\t{'y' if fallback else 'n'}")
+        print(f"{name}\t{code}\t{seconds:.1f}\t{decision(answer) if answer.is_file() else 'missing'}\t{'y' if fallback else 'n'}\t{'y' if find_question(case) else 'n'}")
     print(f"total {len(cases)}; fallback {fallback_count}; missing {missing}")
     head = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True)
     print(f"HEAD {head.stdout.strip()}")
