@@ -5,6 +5,7 @@ and scores the proposed action class (exact) against eval/gold.json.
 """
 import argparse
 import json
+import time
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
@@ -20,6 +21,13 @@ def _get(obj, key):
 
 
 def run_case(num: str, dry: bool = False, variant: str | None = None) -> dict:
+    t = time.monotonic()
+    row = _run_case(num, dry, variant)
+    row["secs"] = time.monotonic() - t
+    return row
+
+
+def _run_case(num: str, dry: bool, variant: str | None) -> dict:
     """One case through the Contract's loop up to the first proposal. Never raises."""
     row = {"case": num, "variant": variant, "expect": None, "checks": [], "stage": None, "action": None, "kind": None, "tool": None, "error": None}
     path = ROOT / "examples" / num
@@ -77,6 +85,7 @@ def main():
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--inject", action="store_true", help="also run each fault variant on every case")
     ap.add_argument("--judgement", action="store_true", help="run the judgement cases (escalate / request_info expected)")
+    ap.add_argument("--report", type=Path, help="write a markdown results report (real runs only)")
     ap.add_argument("--cases", help="comma list, default all 50")
     a = ap.parse_args()
     nums = a.cases.split(",") if a.cases else sorted(GOLD)
@@ -91,7 +100,7 @@ def main():
         print(f"{r['case']:5} {'ok' if r['ok'] else 'FAIL':4} {str(r['action']):9} "
               f"{'ok' if r['kind_ok'] else 'FAIL':4} {str(r['kind']):6} {str(r['tool']):22} "
               f"want {g['action']}/{g['kind']}" + (f"  stage={r['stage']} {r['error']}" if r["error"] else ""))
-    det = None
+    det, inj, hit, jr, ok = None, [], [], [], []
     if a.inject and a.dry:
         print("inject: n/a in dry run (the stub does not read the case)")
     elif a.inject:
@@ -123,6 +132,13 @@ def main():
           f"  |  judgement {pct(jp)}")
     print(f"action match {m['action_match']:.0%}  read/write match {m['kind_match']:.0%}  "
           f"tool match {pct(m['tool_match'])}  ({m['n']} cases)")
+
+    if a.report:
+        if a.dry:
+            raise SystemExit("--report needs a real run, not --dry: the report never carries invented numbers")
+        from eval.report import write_report
+
+        write_report(a.report, rows, m, det, jp, jr=jr, judged=ok)
 
 
 if __name__ == "__main__":
