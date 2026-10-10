@@ -91,3 +91,11 @@ def test_no_op_without_a_pending_result_is_kept(fake_llm):
     done = [ToolResult(tool="mandate_journal", status="ok", data={"status": "Active"})]
     assert decide(case_006(), CASE_OBJECT, [], done).action == "no_op"
     assert len(fake_llm.calls) == 1
+
+
+def test_prompt_forbids_no_op_while_an_ask_is_unanswered(fake_llm):
+    fake_llm.answers.append(LOOKUP)
+    decide(case_006(), CASE_OBJECT, [], [])
+    system = fake_llm.calls[0]["system"]
+    assert "Never no_op while an ask is unanswered" in system
+    assert 'A pending result is not a finished check: never write "checked"' in system
