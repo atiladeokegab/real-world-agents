@@ -330,11 +330,12 @@ def write_fallback(out: Path, case_path: Path, error: str, trace: list,
                + ("No stage completed." if where == "ingest" else "The stages before it completed.")
                + " Their output and the full error are in `trace.log`."]
     reasoning = [f"# Reasoning — Case {case_id}", "",
-                 "## Facts and claims", "", "Not reached: the run failed before a decision.", "",
+                 "## Facts and claims", "", "Not reached: the run failed before a decision. Received: "
+                 + (", ".join(f"`{n}`" for n in raw) or "no readable files") + ".", "",
                  "## Findings", "", "Not reached.", "",
                  "## Policy checks", "", "Not reached.", "",
                  "## Exception and handling", "",
-                 f"System failure in {where} → escalate with what was received (§4.11).", "",
+                 f"system failure in {where} → escalate with what was received (§4.11).", "",
                  "## Alternatives rejected", "", "- Leave the case blank — a blank answer helps nobody.", "",
                  "## Uncertainties", "", "- Everything the decision would have settled."]
     run = {"track": case.track if case else None, "case_id": case_id, "action": "escalate", "escalated": True,
