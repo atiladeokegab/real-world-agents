@@ -590,6 +590,8 @@ the reports in `/tmp/eval-N/report.md`; the injected-case and tool-match metrics
 | 3b | `c22e300` | 84% | 58% | 14% | 90% | 32.9 |
 | 4 | `46f92ea` | 82% | 56% | 14% | 90% | 28.6 |
 | 5 | `9fcf618` | 98% | 64% | 0% | 90% (9/10) | 29.6 |
-| 6 | TODO: round 6 | | | | | |
+| 6 | `8c5e3af` | 96% | 62% | 2% | 90% (9/10) | 28.3 |
 
-Round 5 also had 0 system-failure fallbacks in the 50 practice cases.
+Rounds 5 and 6 had 0 system-failure fallbacks in the 50 practice cases. Round 6 final states over
+the 50: 35 done, 4 requested, 7 asking for info, 4 escalated. Final escalations fell from 12 to 4
+between rounds 5 and 6.
