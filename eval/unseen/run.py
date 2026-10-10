@@ -15,7 +15,9 @@ def passes(label: dict, result: dict, exit_code: int) -> bool:
     action = result.get("action")
     return (exit_code == 0 and not result.get("fallback", True)
             and action in label["acceptable_actions"]
-            and action not in label["forbidden_actions"])
+            and action not in label["forbidden_actions"]
+            # shortcut: tool_calls counts reads too; inspect trace risk if read-safe labels are added.
+            and not ("tool_call" in label["forbidden_actions"] and result.get("tool_calls", 0) > 0))
 
 
 def run_case(number: str, out: Path) -> tuple[int, dict, str]:

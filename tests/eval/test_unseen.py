@@ -43,3 +43,9 @@ def test_score_rejects_system_fallback_even_if_action_is_acceptable():
     assert passes(label, {"action": "escalate", "fallback": False}, 0)
     assert not passes(label, {"action": "escalate", "fallback": True}, 0)
     assert not passes(label, {"action": "tool_call", "fallback": False}, 0)
+
+
+def test_score_rejects_forbidden_tool_call_before_final_reply():
+    runner = import_module("eval.unseen.run")
+    assert not runner.passes(
+        runner.EXPECTED["107"], {"action": "reply", "fallback": False, "tool_calls": 1}, 0)
