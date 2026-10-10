@@ -300,6 +300,8 @@ system and not edited by hand, are in [ANSWERS/](ANSWERS/): one folder per case,
 
 ## Demo video
 
+[video.mp4](video.mp4): the product demo, 58 seconds, showing Scale in the customer app.
+
 [media/demo.mp4](media/demo.mp4): 57 seconds, narrated, with subtitles. The problem, what Scale is,
 how it works, a real run of practice case 044, shown in our design mockup (docs/mockup/; the live reviewer view
 is listed under next steps), with the reply it actually sent,
