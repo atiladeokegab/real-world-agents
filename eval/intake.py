@@ -178,6 +178,27 @@ def _split_into_cases(f: Path, out: Path) -> list[Path]:
     return cases
 
 
+DATA_WORDS = re.compile(r"tool|api|record|journal|data|schema", re.I)
+DOC_NAMES = re.compile(r"^(readme|licen[cs]e|index|changelog|contributing|notice|authors)\b", re.I)
+DOC_WORDS = re.compile(r"doc|guide|about|instruction|overview|notes|description|rules", re.I)
+
+
+def _is_doc(f: Path) -> bool:
+    """Dataset documentation (README, LICENSE, a guide): never shared into cases as evidence.
+    The practice README even describes outcomes. Data and tool files are always shared."""
+    if DATA_WORDS.search(f.name):
+        return False
+    return bool(DOC_NAMES.match(f.name)) or (f.suffix.lower() in (".md", ".rst", ".html", ".htm")
+                                            and bool(DOC_WORDS.search(f.stem)))
+
+
+def _shareable(files: list[Path]) -> list[Path]:
+    docs = [f.name for f in files if _is_doc(f)]
+    if docs:
+        print(f"intake: not shared into cases (dataset documentation): {', '.join(docs)}")
+    return [f for f in files if not _is_doc(f)]
+
+
 def _add_shared(cases: list[Path], shared: list[Path]) -> None:
     for case in cases:
         (case / "attachments").mkdir(exist_ok=True)
@@ -192,12 +213,13 @@ def _from_dir(src: Path, out: Path) -> tuple[str, list[Path]]:
     kids = _visible(src)
     folders = [k for k in kids if k.is_dir() and any(f.is_file() for f in k.rglob("*"))]
     files = [k for k in kids if k.is_file()]
-    if folders:  # shape 1, with any loose top-level files shared into every case
-        if not files:
+    if folders:  # shape 1, with any loose top-level data/tool files shared into every case
+        shared = _shareable(files)
+        if not shared:
             return "folder of case folders", folders
         cases = [Path(shutil.copytree(k, out / k.name)) for k in folders]
-        _add_shared(cases, files)
-        return f"folder of case folders + {len(files)} shared file(s)", cases
+        _add_shared(cases, shared)
+        return f"folder of case folders + {len(shared)} shared file(s)", cases
     archives = [f for f in files if _is_archive(f)]
     if archives:
         inner = Path(tempfile.mkdtemp(prefix="intake-x-"))
@@ -210,8 +232,8 @@ def _from_dir(src: Path, out: Path) -> tuple[str, list[Path]]:
     if len(files) == 1:  # shape 4
         return "one file", _split_into_cases(files[0], out)
     numbered = [f for f in files if _digits(f.stem)]
-    shared = [f for f in files if not _digits(f.stem)] if numbered else []
-    per_case = numbered or files  # shape 3
+    shared = _shareable([f for f in files if not _digits(f.stem)]) if numbered else []
+    per_case = numbered or [f for f in files if not _is_doc(f)] or files  # shape 3; a README is not a case
     cases = [_whole_file_case(f, out, n) for n, f in _numbered([(_digits(f.stem), f) for f in per_case])]
     _add_shared(cases, shared)
     return f"folder of {len(per_case)} loose file(s)" + (f" + {len(shared)} shared" if shared else ""), cases

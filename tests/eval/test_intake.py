@@ -164,7 +164,35 @@ def test_submit_runs_a_single_file(tmp_path, monkeypatch):
 def test_track_name_survives_the_copy(tmp_path):
     src = tmp_path / "Banking & Financial Services"
     practice_case(src, "1")
-    (src / "README.md").write_text("Rules for these cases.")
+    (src / "tool_definitions.json").write_text("[]")
     out = normalise_input(src)
     assert out.name == "Banking & Financial Services"  # ingest reads the track from the parent's name
-    assert (out / "1" / "attachments" / "README.md").read_text() == "Rules for these cases."
+    assert (out / "1" / "attachments" / "tool_definitions.json").read_text() == "[]"
+
+
+def test_dataset_docs_are_never_shared_but_data_is(tmp_path, capsys):
+    src = tmp_path / "cases"
+    for n in ("1", "2"):
+        practice_case(src, n)
+    for name in ("README.md", "LICENSE", "CHANGELOG.md", "index.md", "Guide.md", "readme.txt"):
+        (src / name).write_text("the dataset, with outcomes")
+    for name in ("tools.json", "records.csv", "api.yaml", "journal_notes.md", "limits.txt"):
+        (src / name).write_text("data")
+    out = normalise_input(src)
+    shared = sorted(p.name for p in (out / "1" / "attachments").iterdir())
+    assert shared == ["api.yaml", "journal_notes.md", "limits.txt", "records.csv", "tools.json"]
+    assert "not shared into cases (dataset documentation)" in capsys.readouterr().out
+
+
+def test_only_docs_at_top_level_leaves_the_folder_unchanged(tmp_path):
+    practice_case(tmp_path, "1")
+    (tmp_path / "README.md").write_text("Practice cases; outcomes in each index.md")
+    assert normalise_input(tmp_path) == tmp_path
+
+
+def test_readme_among_unnumbered_loose_files_is_not_a_case(tmp_path):
+    (tmp_path / "alpha.txt").write_text("Block my card.")
+    (tmp_path / "beta.txt").write_text("Refund please.")
+    (tmp_path / "README.md").write_text("About this dataset.")
+    cases = case_dirs(normalise_input(tmp_path))
+    assert len(cases) == 2 and not any("About this dataset" in (c / "index.md").read_text() for c in cases.values())
