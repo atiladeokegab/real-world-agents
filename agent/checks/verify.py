@@ -12,10 +12,12 @@ import re
 
 import dateutil.parser
 
+from agent.checks.evidence import _bank_side, _SERVICE_RE
 from agent.core.contracts import (
     Case,
     CaseObject,
     Constraint,
+    Event,
     Finding,
     Proposal,
     ToolResult,
@@ -363,8 +365,9 @@ def _atom_ok(kind: str, raw: str, hay: str) -> bool:
     return any(_in_hay(v, hay) for v in variants)
 
 
-def _claims_execution(text: str) -> str | None:
-    """A done-word asserting a check/change happened, outside negated clauses."""
+def _claims_execution(text: str) -> list[str]:
+    """Every done-word asserting a check/change happened, outside negated clauses."""
+    out = []
     for m in _DONE_RE.finditer(text):
         boundary = max(text.rfind(c, 0, m.start()) for c in ".!?\n,;") + 1
         window = text[boundary:m.start()]
@@ -375,8 +378,49 @@ def _claims_execution(text: str) -> str | None:
             continue
         if _AFTER_HEDGE_RE.match(text[m.end():]):
             continue
-        return m.group(1)
-    return None
+        out.append(m.group(1))
+    return out
+
+
+def _done_stems(word: str) -> set[str]:
+    """Prefixes that evidence a done-word inside a bank record: 'verified' is
+    recorded by 'verify'/'verification', 'cancelled' by 'cancelled'/'cancel'."""
+    w = word.lower()
+    stems = {w}
+    if w.endswith("ied"):
+        stems.add(w[:-3])                    # verified -> verif
+    elif w.endswith("ed"):
+        stem = w[:-2]                        # blocked -> block
+        if len(stem) >= 2 and stem[-1] == stem[-2] and stem[-1] not in "aeiou":
+            stem = stem[:-1]                 # stopped -> stop, transferred -> transfer
+        stems.add(stem)
+    return {s for s in stems if len(s) >= 4}
+
+
+def _bank_record(e: Event) -> bool:
+    """An event that can record bank-side truth: from H&V itself, or from a
+    service/journal/system sender on a non-external channel — a customer or
+    a third-party '…Services' message cannot confirm a done-word."""
+    s = (e.sender or "").strip()
+    if _bank_side(s):
+        return True
+    return bool(_SERVICE_RE.search(s)) and (e.channel or "").lower() != "external message"
+
+
+def _confirmed_by_history(claimed: str, cites: list[str], case: Case) -> bool:
+    """The claim is restated by a bank-side/system event the proposal cites —
+    'Card journal status: BLOCKED' in the history is a confirmation to rely
+    on, not a fresh execution the tool trace must prove."""
+    cited = {c for c in cites if not c.startswith("tool:")}
+    for e in case.events:
+        if e.id not in cited or not _bank_record(e):
+            continue
+        body = e.body or ""
+        for stem in _done_stems(claimed):
+            for m in re.finditer(rf"(?i)\b{re.escape(stem)}", body):
+                if not _NEGATION_RE.search(body[max(0, m.start() - 30):m.start()]):
+                    return True
+    return False
 
 
 def _channel_violation(constraints: list[Constraint], channel: str) -> Constraint | None:
@@ -457,17 +501,23 @@ def verify(
                              f"{kind} '{raw}' in the reply is not in a claim "
                              "or a tool result")
 
-    # 3. no fabricated execution — a reported check/change needs an ok result;
-    #    "requested — pending result" never becomes "done" (§4.3). Only the
+    # 3. no fabricated execution — a reported check/change needs an ok result
+    #    or a bank-side record already in the cited history (§4.3):
+    #    "requested — pending result" never becomes "done". Only the
     #    reply action's text is a completion claim: an escalate or
     #    request_info reply is holding text that asserts nothing was done.
     if proposal.action == "reply" and reply_text:
-        claimed = _claims_execution(reply_text)
-        if claimed and not any(r.status == "ok" for r in results):
+        confirmed = any(r.status == "ok" for r in results)
+        claimed = next(
+            (w for w in _claims_execution(reply_text)
+             if not (confirmed or _confirmed_by_history(w, proposal.claims_relied_on, case))),
+            None,
+        )
+        if claimed:
             event = next((r.source_event for r in results if r.source_event), None)
             return _fail("fabricated_execution", "reply.text", event,
-                         f"the reply claims '{claimed}' but no tool result has "
-                         "status 'ok'")
+                         f"the reply claims '{claimed}' but no tool result or "
+                         "cited bank-side record confirms it")
 
     # 4. question answered — a supplied --question gets a non-empty answer
     if case.question and not (proposal.question_answer or "").strip():
