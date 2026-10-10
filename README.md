@@ -1,6 +1,6 @@
-# Dwelly Real-World Agents team
+# Scale: bank operations agent
 
-Our entry for the Real-World Agents Hackathon hosted by Dwelly in London on Saturday 10 October
+Team Scale's entry for the Real-World Agents Hackathon hosted by Dwelly in London on Saturday 10 October
 2026, **Banking & Financial Services** track.
 
 The rules we build and submit to: [docs/rules/RULES.md](docs/rules/RULES.md). How the team works
