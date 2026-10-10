@@ -90,9 +90,13 @@ def tool_risk(tool: str | None, params: dict | None = None) -> int:
         CATALOGUE = {}
     spec = CATALOGUE.get(tool)
     if spec is not None:
-        return int(_get(spec, "risk", 3))
+        risk = int(_get(spec, "risk", 3))
+        if risk >= 3:
+            return risk
+    else:
+        risk = 1
     action = str((params or {}).get("action", "") or (params or {}).get("operation", ""))
-    return 3 if _WRITE_WORDS.search(action.lower()) else 1
+    return 3 if _WRITE_WORDS.search(action.lower()) else risk
 
 
 def sentiment_escalation(case_object) -> str | None:
