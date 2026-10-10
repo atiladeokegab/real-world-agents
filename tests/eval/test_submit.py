@@ -85,6 +85,27 @@ out.mkdir(parents=True)
     assert "total 2; fallback 0; missing 0" in capsys.readouterr().out
 
 
+def test_rerun_preserves_existing_answer_and_fills_partial_case(tmp_path, monkeypatch, capsys):
+    root = cases(tmp_path, "001", "002")
+    fake_uv(tmp_path, monkeypatch, """import pathlib, sys
+out = pathlib.Path(sys.argv[7])
+out.mkdir(parents=True, exist_ok=True)
+(out / 'ANSWER.md').write_text('## Decision\\nchanged\\n')
+(out / 'REASONING.md').write_text('# Reasoning\\n')
+""")
+    out = tmp_path / "answers"
+    (out / "001").mkdir(parents=True)
+    original = "## Decision\nescalate (needs review)\n"
+    (out / "001" / "ANSWER.md").write_text(original)
+
+    assert import_module("eval.submit").main([str(root), "--out", str(out)]) == 0
+
+    assert (out / "001" / "ANSWER.md").read_text() == original
+    assert "system failure" in (out / "001" / "REASONING.md").read_text()
+    assert (out / "002" / "ANSWER.md").read_text().endswith("changed\n")
+    assert "001\tskipped\t" in capsys.readouterr().out
+
+
 def test_failed_case_gets_fallback_without_stopping_next_case(tmp_path, monkeypatch, capsys):
     root = cases(tmp_path, "001", "002")
     fake_uv(tmp_path, monkeypatch, """import pathlib, sys

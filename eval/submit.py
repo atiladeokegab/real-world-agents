@@ -16,6 +16,8 @@ CASE_TIMEOUT = 150
 
 
 def run_case(case: Path, out: Path):
+    if (out / "ANSWER.md").exists() or (out / "REASONING.md").exists():
+        return case, "skipped", 0.0, "existing output preserved; subprocess not rerun"
     start = time.monotonic()
     try:
         process = subprocess.Popen(
