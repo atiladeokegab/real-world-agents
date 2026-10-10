@@ -188,6 +188,6 @@ def _request_question(exception_type: str | None, case=None) -> str:
 
 def _customer_channel(case) -> str:
     for e in reversed(case.events):
-        if e.channel and "internal" not in e.channel.lower() and e.sender not in ("H&V", "H&V agent"):
+        if e.channel and "internal" not in e.channel.lower() and not e.sender.startswith(("H&V", "Harrow & Vale")):
             return e.channel
-    return ""
+    return next((e.channel for e in case.events if e.channel), "")

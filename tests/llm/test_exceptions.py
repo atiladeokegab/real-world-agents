@@ -103,6 +103,13 @@ def test_untyped_escalation_gives_a_specific_why():
     assert out.escalation["why"] == "journal shows two references; customer says one"
 
 
+def test_holding_reply_channel_falls_back_when_only_the_bank_wrote():
+    case = case_006()
+    case.events = [e.model_copy(update={"sender": "H&V service agent"}) for e in case.events]
+    out = normalise(Proposal.model_validate({"action": "escalate"}), case, obj(), [], [])
+    assert out.reply.channel == case.events[0].channel
+
+
 def test_read_failure_retries_once_then_escalates():
     failed = ToolResult(tool="transfer_journal", status="timeout")
     assert run({**READ, "exception_type": "read_failure"}, results=[failed]).action == "tool_call"
