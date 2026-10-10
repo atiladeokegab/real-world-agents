@@ -10,7 +10,7 @@ from agent.core.contracts import Case, Finding, Proposal, Reply, ToolResult
 
 MAX_TOOL_CALLS = 6
 MAX_IDENTICAL = 2
-TIME_LIMIT = 120  # seconds per case (§4.11)
+TIME_LIMIT = 240  # seconds per case; §4.11 said 120, raised: a slow correct answer beats the fallback
 
 
 def _escalate(case: Case, why: str, exception_type: str, results: list[ToolResult],
