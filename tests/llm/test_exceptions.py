@@ -54,6 +54,7 @@ def test_each_exception_type_maps_to_its_handling(name, proposal, expected):
     assert out.action == expected
     if expected == "request_info":
         assert out.reply.text.startswith("To make sure we act on the right request")
+        assert "uncert" not in out.reply.text and out.reply.text.endswith(".")
         assert out.tool is None
 
 

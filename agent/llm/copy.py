@@ -8,7 +8,7 @@ HOLDING_REPLY = (
     "and reply to you here. We haven't made any changes to your account while this is reviewed."
 )
 
-REQUEST_INFO_REPLY = "To make sure we act on the right request, please confirm: {question}"
+REQUEST_INFO_REPLY = "To make sure we act on the right request, please confirm {question}."
 
 DEFAULT_TEAM = "the operations team"
 

@@ -154,9 +154,8 @@ def normalise(proposal, case, case_object, findings, results):
         kind = "emotional"
 
     if action == "request_info" and not (data.get("reply") or {}).get("text"):
-        question = (data.get("uncertainties") or _get(case_object, "unknowns", []) or ["the details of your request"])[0]
         data["reply"] = {"channel": (data.get("reply") or {}).get("channel") or _customer_channel(case),
-                         "text": handover.request_info_reply(question)}
+                         "text": handover.request_info_reply(_request_question(name))}
 
     if action != "tool_call":
         data["tool"], data["params"] = None, {}
@@ -167,6 +166,17 @@ def normalise(proposal, case, case_object, findings, results):
         if not (data.get("reply") or {}).get("text"):
             data["reply"] = {"channel": _customer_channel(case), "text": data["escalation"]["holding_reply"]}
     return type(proposal).model_validate(data)
+
+
+_REQUEST_QUESTIONS = {
+    "ambiguous_request": "which payment or request you mean, with its date and amount",
+    "ambiguous_reference": "which transaction you mean, with its date, amount and payee",
+    "missing_authority": "your request through your secure portal or a verified call, so we can confirm it's you",
+}
+
+
+def _request_question(exception_type: str | None) -> str:
+    return _REQUEST_QUESTIONS.get(exception_type or "", "the details of your request, so we act on the right one")
 
 
 def _customer_channel(case) -> str:

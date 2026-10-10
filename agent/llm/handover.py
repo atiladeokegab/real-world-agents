@@ -29,7 +29,7 @@ def _get(obj: Any, key: str, default: Any = None) -> Any:
 
 
 def request_info_reply(question: str) -> str:
-    return copy.REQUEST_INFO_REPLY.format(question=question.rstrip("?.") + "?")
+    return copy.REQUEST_INFO_REPLY.format(question=question.rstrip("?."))
 
 
 def _team(data: dict, results) -> str:

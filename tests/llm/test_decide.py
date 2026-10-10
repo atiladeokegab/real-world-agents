@@ -19,6 +19,7 @@ def test_decide_returns_one_proposal_with_exactly_once_rule(fake_llm):
     call = fake_llm.calls[0]
     assert call["stage"] == "decision"
     assert "Every action must happen exactly once." in call["system"]
+    assert "Lookups are risk 1 and need no role" in call["system"]
     assert "ambiguous_reference" in call["system"] and "{exception_types}" not in call["system"]
     assert "finding-1" in call["user"] and "identity: authenticated" in call["user"]
 
