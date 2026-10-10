@@ -1,9 +1,10 @@
 from agent.llm import decide
-from agent.llm._contracts import CaseObject, ToolResult, Verdict
+from agent.llm.contracts import CaseObject, ToolResult, Verdict
 
 from .cases import FINDING_DUP, case_006
 
 CASE_OBJECT = CaseObject(
+    requester={"name": "Mira"},
     unknowns=["journal references"],
     asks=[{"id": "ask-1", "text": "one instruction or two?", "event": "event-001"}],
 )
@@ -29,7 +30,7 @@ def test_decide_can_choose_escalate_request_info_or_no_op(fake_llm):
 
 
 def test_question_is_passed_and_answered(fake_llm):
-    fake_llm.answers.append({"action": "reply", "reply": {"text": "We are checking."},
+    fake_llm.answers.append({"action": "reply", "reply": {"channel": "Secure chat", "text": "We are checking."},
                              "question_answer": "No, it should not be stopped yet."})
     out = decide(case_006(question="Should the pending payment be stopped?"), CASE_OBJECT, [], [])
     assert out.question_answer
@@ -46,7 +47,7 @@ def test_feedback_verdict_reaches_the_retry(fake_llm):
 
 
 def test_tool_results_so_far_are_shown(fake_llm):
-    fake_llm.answers.append({"action": "reply", "reply": {"text": "Two separate instructions."}})
+    fake_llm.answers.append({"action": "reply", "reply": {"channel": "Secure chat", "text": "Two separate instructions."}})
     results = [ToolResult(tool="transfer_journal", status="ok", data={"instructions": 2}, source_event="event-004")]
     decide(case_006(), CASE_OBJECT, [], results)
     assert '"instructions": 2' in fake_llm.calls[0]["user"] and "Tool calls used: 1 of 6." in fake_llm.calls[0]["user"]

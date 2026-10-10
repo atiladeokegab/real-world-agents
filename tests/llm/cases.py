@@ -1,4 +1,4 @@
-from agent.llm._contracts import Authority, Case, Event, Finding
+from agent.llm.contracts import Authority, Case, Event, Finding
 
 
 def case_006(question=None):
@@ -7,7 +7,7 @@ def case_006(question=None):
         case_id="006",
         title="Two Similar Transfers",
         source_role="Bank customer",
-        created="2025-07-29 09:00:00 UTC",
+        created="2025-07-29T09:00:00Z",
         initial_request="Mira wants to know whether two similar outgoing transfer entries are one instruction or two.",
         events=[
             Event(id="event-001", at="2025-07-29T09:00:00Z", channel="Secure portal", sender="Mira", recipient="H&V",

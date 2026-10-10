@@ -14,13 +14,14 @@ DEFAULT_TEAM = "the operations team"
 
 HANDOVER_HEADING = "## Handover note"
 HANDOVER_LABELS = {
-    "team": "Take it",
+    "who": "Take it",
     "urgency": "Urgency",
     "type": "Type",
+    "why": "Why it was handed over",
     "verified": "Verified",
     "claimed": "Only claimed",
     "conflicts": "Conflicts",
-    "done": "What the agent did",
+    "did": "What the agent did",
     "not_done": "What the agent did not do",
     "question": "Question for you",
     "holding_reply": "Holding reply (safe to send now)",

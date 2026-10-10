@@ -11,7 +11,7 @@ from agent.llm import handover
 ALL_ACTIONS = frozenset({"tool_call", "reply", "request_info", "escalate", "no_op"})
 MAX_TOOL_CALLS = 6
 _WRITE_WORDS = re.compile(r"cancel|return|release|amend|update|change|block|stop|send|pay|reissue|re-issue|close|remove|add")
-_COMPLAINT = re.compile(r"complain|complaint|ombudsman", re.I)
+_COMPLAINT = re.compile(r"complain|complaint|ombudsman", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -163,7 +163,7 @@ def normalise(proposal, case, case_object, findings, results):
     data["action"] = action
     data["uncertainties"] = list(data.get("uncertainties") or []) + notes
     if action == "escalate":
-        data["escalation"] = handover.build(data, case, case_object, findings, results, kind)
+        data["escalation"] = handover.build(data, case, case_object, findings, results, kind, "; ".join(notes))
         if not (data.get("reply") or {}).get("text"):
             data["reply"] = {"channel": _customer_channel(case), "text": data["escalation"]["holding_reply"]}
     return type(proposal).model_validate(data)

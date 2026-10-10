@@ -46,11 +46,16 @@ def _list(existing, extra) -> list[str]:
     return out
 
 
-def build(data: dict, case, case_object, findings, results, kind: str) -> dict:
-    """Fill every field of the handover note, keeping what the model wrote."""
+def build(data: dict, case, case_object, findings, results, kind: str, why: str = "") -> dict:
+    """Fill every field of the handover note, keeping what the model wrote. Keys follow core's loop (#12)."""
     note = dict(data.get("escalation") or {})
+    if "team" in note and "who" not in note:
+        note["who"] = note.pop("team")
+    if "done" in note and "did" not in note:
+        note["did"] = note.pop("done")
     note["type"] = "emotional" if kind == "emotional" else (note.get("type") or "technical")
-    note["team"] = note.get("team") or (EMOTIONAL_TEAM if note["type"] == "emotional" else _team(data, results))
+    note["who"] = note.get("who") or (EMOTIONAL_TEAM if note["type"] == "emotional" else _team(data, results))
+    note["why"] = note.get("why") or why or (data.get("exception_type") or "the agent could not safely finish this case")
 
     urgency = note.get("urgency") if note.get("urgency") in _URGENCY else "normal"
     state = _get(case_object, "emotional_state") or {}
@@ -81,7 +86,7 @@ def build(data: dict, case, case_object, findings, results, kind: str) -> dict:
                                  f"{_get(c, 'value')} vs {_get(claims[j], 'value')}")
     note["conflicts"] = _list(note.get("conflicts"), conflicts)
 
-    note["done"] = _list(note.get("done"), [
+    note["did"] = _list(note.get("did"), [
         f"tool:{_get(r, 'tool')} {_get(r, 'params')} -> {_get(r, 'status')}" for r in results])
 
     addressed = set(data.get("asks_addressed") or [])
@@ -95,8 +100,9 @@ def build(data: dict, case, case_object, findings, results, kind: str) -> dict:
     unknowns = _get(case_object, "unknowns", []) or []
     note["question"] = note.get("question") or case.question or (
         f"Please establish: {unknowns[0]}" if unknowns else f"What is the right next step on case {case.case_id}?")
-    note["holding_reply"] = note.get("holding_reply") or copy.HOLDING_REPLY.format(team=_customer_team(note["team"]))
-    return note
+    note["holding_reply"] = note.get("holding_reply") or copy.HOLDING_REPLY.format(team=_customer_team(note["who"]))
+    order = list(copy.HANDOVER_LABELS)
+    return {k: note[k] for k in order if k in note} | {k: v for k, v in note.items() if k not in order}
 
 
 def _risk(tool, params) -> int:

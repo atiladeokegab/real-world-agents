@@ -1,7 +1,7 @@
 import pytest
 
 from agent.llm import handover
-from agent.llm._contracts import CaseObject, Proposal, ToolResult
+from agent.llm.contracts import CaseObject, Proposal, ToolResult
 from agent.llm.exceptions import EXCEPTIONS, handling_for, normalise, sentiment_escalation
 
 from .cases import FINDING_DUP, case_006
@@ -9,6 +9,7 @@ from .cases import FINDING_DUP, case_006
 
 def obj(level="calm", trend="steady", asks=None, claims=None):
     return CaseObject(
+        requester={"name": "Mira"},
         unknowns=["journal references of the two entries"],
         asks=asks or [{"id": "ask-1", "text": "one instruction or two?", "event": "event-001"}],
         claims=claims or [],
@@ -69,12 +70,12 @@ def test_tool_budget_forces_escalation():
 
 
 @pytest.mark.parametrize("state, expected", [
-    (dict(level="calm"), None),
-    (dict(level="frustrated", trend="steady"), None),
-    (dict(level="frustrated", trend="worsening"), "frustration is worsening across events, unresolved"),
-    (dict(level="distressed"), "customer is distressed"),
-    (dict(level="vulnerable"), "customer is vulnerable"),
-    (dict(asks=[{"id": "ask-1", "text": "I want to make a formal complaint"}]), "customer has made a complaint"),
+    ({"level": "calm"}, None),
+    ({"level": "frustrated", "trend": "steady"}, None),
+    ({"level": "frustrated", "trend": "worsening"}, "frustration is worsening across events, unresolved"),
+    ({"level": "distressed"}, "customer is distressed"),
+    ({"level": "vulnerable"}, "customer is vulnerable"),
+    ({"asks": [{"id": "ask-1", "text": "I want to make a formal complaint", "event": "event-002"}]}, "customer has made a complaint"),
 ])
 def test_sentiment_rule(state, expected):
     assert sentiment_escalation(obj(**state)) == expected
@@ -87,32 +88,37 @@ def test_mild_frustration_is_solved_not_escalated():
 def test_distress_escalates_early_as_emotional():
     out = run(REPLY, obj(level="vulnerable"))
     assert out.action == "escalate"
-    assert out.escalation.type == "emotional" and out.escalation.urgency == "high"
-    assert out.reply.text == out.escalation.holding_reply
+    assert out.escalation["type"] == "emotional" and out.escalation["urgency"] == "high"
+    assert out.escalation["who"] == "Customer care (vulnerable customers)"
+    assert "sentiment: customer is vulnerable" in out.escalation["why"]
+    assert out.reply.text == out.escalation["holding_reply"]
 
 
 def test_escalation_always_carries_the_full_handover_note():
     claims = [
         {"subject": "pending transfer", "predicate": "status", "value": "stopped", "source_actor": "Mira",
-         "event": "event-001", "conflicts_with": [1]},
+         "channel": "Secure chat", "event": "event-001", "conflicts_with": [1]},
         {"subject": "pending transfer", "predicate": "status", "value": "pending", "source_actor": "H&V",
-         "event": "event-002"},
+         "channel": "Internal note", "event": "event-002"},
     ]
     results = [ToolResult(tool="transfer_journal", params={"action": "lookup"}, status="pending")]
     out = run({"action": "escalate", "exception_type": "conflicting_records"},
               obj(claims=claims), results=results, findings=[FINDING_DUP])
     note = out.escalation
-    assert note.team == "Payments operations"
-    assert note.type == "technical"
-    assert any("authenticated" in v for v in note.verified)
-    assert any("event-001" in c for c in note.claimed)
-    assert any("finding-1" in c for c in note.conflicts)
-    assert any("event-001 conflicts with event-002" in c for c in note.conflicts)
-    assert any("pending" in d for d in note.done)
-    assert "no change made to the account" in note.not_done
-    assert any("ask-1" in n for n in note.not_done)
-    assert note.question.startswith("Please establish")
-    assert note.holding_reply and "£" not in note.holding_reply
+    assert list(note) == ["who", "urgency", "type", "why", "verified", "claimed", "conflicts", "did",
+                          "not_done", "question", "holding_reply"]
+    assert note["who"] == "Payments operations"
+    assert note["type"] == "technical"
+    assert note["why"] == "conflicting_records"
+    assert any("authenticated" in v for v in note["verified"])
+    assert any("event-001" in c for c in note["claimed"])
+    assert any("finding-1" in c for c in note["conflicts"])
+    assert any("event-001 conflicts with event-002" in c for c in note["conflicts"])
+    assert any("pending" in d for d in note["did"])
+    assert "no change made to the account" in note["not_done"]
+    assert any("ask-1" in n for n in note["not_done"])
+    assert note["question"].startswith("Please establish")
+    assert note["holding_reply"] and "£" not in note["holding_reply"]
     md = handover.render(note)
     assert md.startswith("## Handover note") and "**Question for you:**" in md
 
@@ -120,6 +126,11 @@ def test_escalation_always_carries_the_full_handover_note():
 def test_model_handover_fields_are_kept():
     out = run({"action": "escalate", "escalation": {"team": "Fraud team", "urgency": "urgent",
                                                     "question": "Is this payee known fraud?"}})
-    assert out.escalation.team == "Fraud team"
-    assert out.escalation.urgency == "urgent"
-    assert out.escalation.question == "Is this payee known fraud?"
+    assert out.escalation["who"] == "Fraud team"
+    assert out.escalation["urgency"] == "urgent"
+    assert out.escalation["question"] == "Is this payee known fraud?"
+
+
+def test_loop_style_title_case_exception_names_are_understood():
+    out = run({**REPLY, "exception_type": "Write failure"})
+    assert out.exception_type == "write_failure" and out.action == "escalate"
