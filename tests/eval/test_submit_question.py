@@ -38,3 +38,20 @@ q = a[a.index('--question') + 1] if '--question' in a else 'none'
     assert submit.main([str(root), "--out", str(out)]) == 0
     table = capsys.readouterr().out
     assert "1\t0\t" in table and "Is it safe?\tn\ty" in table and "none\tn\tn" in table
+
+
+def test_unreadable_question_does_not_stop_the_run(tmp_path, monkeypatch, capsys):
+    root = cases(tmp_path, "001")
+
+    def boom(case):
+        raise PermissionError("denied")
+
+    monkeypatch.setattr(submit, "find_question", boom)
+    fake_uv(tmp_path, monkeypatch, """import pathlib, sys
+out = pathlib.Path(sys.argv[sys.argv.index('--out') + 1])
+out.mkdir(parents=True)
+(out / 'ANSWER.md').write_text('## Decision\\nok\\n')
+(out / 'REASONING.md').write_text('r')
+""")
+    assert submit.main([str(root), "--out", str(tmp_path / "a")]) == 0
+    assert "case 001: could not read a question" in capsys.readouterr().err

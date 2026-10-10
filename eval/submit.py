@@ -43,11 +43,20 @@ def find_question(case: Path) -> str | None:
     return found[0] if len(found) == 1 else "\n".join(f"{i}. {t}" for i, t in enumerate(found, 1))
 
 
+def safe_question(case: Path) -> str | None:
+    """Any failure reading a question means no question: it must never stop the run."""
+    try:
+        return find_question(case)
+    except Exception as exc:
+        print(f"WARNING: case {case.name}: could not read a question ({exc}); running without one", file=sys.stderr, flush=True)
+        return None
+
+
 def run_case(case: Path, out: Path):
     if (out / "ANSWER.md").exists() or (out / "REASONING.md").exists():
         return case, "skipped", 0.0, "existing output preserved; subprocess not rerun"
     start = time.monotonic()
-    question = find_question(case)
+    question = safe_question(case)
     try:
         process = subprocess.Popen(
             ["uv", "run", "agent", "run", "--case", str(case), "--out", str(out)]
@@ -150,7 +159,7 @@ def main(argv=None) -> int:
         reasoning = folder / "REASONING.md"
         if not answer.is_file() or not reasoning.is_file():
             missing += 1
-        print(f"{name}\t{code}\t{seconds:.1f}\t{decision(answer) if answer.is_file() else 'missing'}\t{'y' if fallback else 'n'}\t{'y' if find_question(case) else 'n'}")
+        print(f"{name}\t{code}\t{seconds:.1f}\t{decision(answer) if answer.is_file() else 'missing'}\t{'y' if fallback else 'n'}\t{'y' if safe_question(case) else 'n'}")
     print(f"total {len(cases)}; fallback {fallback_count}; missing {missing}")
     head = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True)
     print(f"HEAD {head.stdout.strip()}")
