@@ -21,7 +21,7 @@ def run(proposal, case_object=None, results=(), findings=()):
     return normalise(Proposal.model_validate(proposal), case_006(), case_object or obj(), list(findings), list(results))
 
 
-WRITE = {"action": "tool_call", "tool": "transfer_journal", "params": {"action": "cancel", "ref": "T2"}}
+WRITE = {"action": "tool_call", "tool": "transfer_journal.return_request", "params": {"action": "cancel", "ref": "T2"}}
 READ = {"action": "tool_call", "tool": "transfer_journal", "params": {"action": "lookup"}}
 REPLY = {"action": "reply", "reply": {"channel": "Secure chat", "text": "It was sent."}}
 

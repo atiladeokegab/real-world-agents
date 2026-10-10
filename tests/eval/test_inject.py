@@ -47,3 +47,22 @@ def test_other_variants():
 
 def test_detected():
     assert detected(None, [], "escalate") and not detected(None, [], "tool_call")
+
+
+def test_judgement_table():
+    from eval import inject
+    from eval.judgement import CASES, judge
+
+    assert 8 <= len(CASES) <= 10
+    assert all(hasattr(inject, c["variant"]) for c in CASES)
+    j = CASES[0]
+    assert judge(j, "request_info", "none") and not judge(j, "tool_call", "write")
+    assert not judge(CASES[5], "no_op", "none")  # distress: forbidden
+
+
+def test_new_variants():
+    from eval.inject import ambiguous_reference, distress, role_violation
+
+    assert "died" in distress(C)[0].events[-1].body
+    assert role_violation(C)[0].authority.role == "uploader"
+    assert len(ambiguous_reference(C)[0].events) == 2
