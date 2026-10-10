@@ -614,6 +614,37 @@ def test_completion_unaddressed_ask_rejected():
     assert verdict.event == "event-001"
 
 
+def test_completion_no_op_pending_or_uncertain_rejected():
+    # #134 (examples/014's shape): the mandate_journal lookup came back
+    # pending — a no_op that lists every ask still answers nothing and must
+    # come back as a reply in the "requested, pending result" wording
+    case = _case([_ev(1, "Direct Debit mandate status")])
+    obj = _object(asks=[Ask(id="ask-1", text="mandate status",
+                            event="event-001")])
+    proposal = _proposal(action="no_op", asks_addressed=["ask-1"],
+                         claims_relied_on=["event-001", "tool:mandate_journal"])
+    for status in ("pending", "uncertain"):
+        results = [_result("mandate_journal", status=status,
+                           data={"status": status}, source_event="event-001")]
+        verdict = verify(proposal, case, obj, [], results)
+        assert not verdict.ok, status
+        assert verdict.rule == "completion"
+        assert verdict.field == "action"
+
+
+def test_completion_no_op_after_ok_result_ok():
+    # the bar is a still-open lookup — once the journal answers, a no_op
+    # that lists every ask is a handled case again
+    case = _case([_ev(1, "Direct Debit mandate status")])
+    obj = _object(asks=[Ask(id="ask-1", text="mandate status",
+                            event="event-001")])
+    results = [_result("mandate_journal", data={"status": "active"},
+                       source_event="event-001")]
+    proposal = _proposal(action="no_op", asks_addressed=["ask-1"],
+                         claims_relied_on=["event-001", "tool:mandate_journal"])
+    assert verify(proposal, case, obj, [], results).ok
+
+
 # --- rule: material conflict ---
 
 def test_conflict_resolved_by_ok_lookup_ok():
