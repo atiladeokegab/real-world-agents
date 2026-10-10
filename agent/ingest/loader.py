@@ -60,7 +60,7 @@ def load_case(path, cut: int | None = None, question: str | None = None) -> Case
         initial_request=_section(index, "Initial request"),
         events=events,
         attachments=[],
-        authority=_authority(events, details.get("Source role", "")),
+        authority=_authority(_first_inbound(events), details.get("Source role", "")),
         raw_files=raw_files,
         question=question,
     )
@@ -163,9 +163,12 @@ def _first_inbound(events: list[Event]) -> Event | None:
     return None
 
 
-def _authority(events: list[Event], source_role: str) -> Authority:
-    request = _first_inbound(events)
-    identity = (
-        _CHANNEL_IDENTITY.get(request.channel.lower(), "unverified") if request else "unverified"
-    )
-    return Authority(identity=identity, role=source_role or None)
+def _authority(request: Event | None, source_role: str) -> Authority:
+    if request is None:
+        return Authority(identity="unverified", role=source_role or None)
+    identity = _CHANNEL_IDENTITY.get(request.channel.lower(), "unverified")
+    role = source_role or None
+    # §4.1: on Business portal the sender carries the role — "Mara Ellison, authorised file uploader".
+    if request.channel.lower() == "business portal" and "," in request.sender:
+        role = request.sender.rsplit(",", 1)[1].strip() or role
+    return Authority(identity=identity, role=role)

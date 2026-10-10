@@ -64,11 +64,18 @@ def test_authority_identity_from_channel(case_dir, identity):
     assert load_case(EXAMPLES / case_dir).authority.identity == identity
 
 
-def test_authority_role_from_the_record():
-    # "role from the record" (§4.1) — index.md's Source role, never the model.
-    for case_dir in ("041", "047"):
-        assert load_case(EXAMPLES / case_dir).authority.role == "Authorised business user"
+def test_authority_role_on_business_portal_from_sender():
+    # §4.1: role from the record — sender text after a comma, else Source role.
+    case = load_case(EXAMPLES / "041")  # "Mara Ellison, authorised file uploader"
+    assert case.authority.role == "authorised file uploader"
+
+    case = load_case(EXAMPLES / "043")  # plain sender name, no comma
+    assert case.authority.role == "Authorised business user"
+
+
+def test_authority_role_from_source_role_off_business_portal():
     assert load_case(EXAMPLES / "001").authority.role == "Bank customer"
+    assert load_case(EXAMPLES / "047").authority.role == "Authorised business user"
 
 
 def test_authority_never_model_derived():
