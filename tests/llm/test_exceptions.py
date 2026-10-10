@@ -255,3 +255,32 @@ def test_unverified_reply_without_a_result_is_kept():
 def test_authenticated_reply_with_a_result_is_kept():
     found = [ToolResult(tool="transfer_journal", status="ok", data={"instructions": 2})]
     assert run(REPLY, results=found).action == "reply"
+
+
+
+RESOLVING = {**REPLY, "asks_addressed": ["ask-1"]}
+
+
+def test_worsening_frustration_keeps_a_reply_that_resolves_every_ask():
+    assert run(RESOLVING, obj(**WORSE), results=DONE_READ).action == "reply"
+
+
+def test_worsening_frustration_keeps_a_resolving_reply_on_a_pending_result():
+    pending = [ToolResult(tool="transfer_journal", status="pending")]
+    assert run(RESOLVING, obj(**WORSE), results=pending).action == "reply"
+
+
+def test_worsening_frustration_escalates_a_reply_with_an_unaddressed_ask():
+    two = obj(**WORSE, asks=[{"id": "ask-1", "text": "where is it?", "event": "event-001"},
+                             {"id": "ask-2", "text": "why so slow?", "event": "event-002"}])
+    out = run(RESOLVING, two, results=DONE_READ)
+    assert out.action == "escalate" and out.escalation["type"] == "emotional"
+
+
+def test_distress_still_escalates_a_resolving_reply():
+    assert run(RESOLVING, obj(level="distressed"), results=DONE_READ).action == "escalate"
+
+
+def test_prompt_acknowledges_worsening_frustration_in_a_resolving_reply():
+    from agent.llm.prompts import DECISION_SYSTEM
+    assert "acknowledging the frustration in one sentence" in DECISION_SYSTEM

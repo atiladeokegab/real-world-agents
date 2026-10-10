@@ -121,6 +121,14 @@ def _failures(results, tool: str | None) -> int:
     return sum(1 for r in results if _get(r, "tool") == tool and _get(r, "status") in ("timeout", "error"))
 
 
+def _resolves(data, case_object, results) -> bool:
+    """A reply or request_info that answers every ask from an ok or pending tool result."""
+    asks = {_get(a, "id") for a in _get(case_object, "asks", []) or []}
+    return (data["action"] in ("reply", "request_info") and bool((data.get("reply") or {}).get("text"))
+            and asks <= set(data.get("asks_addressed") or [])
+            and any(_get(r, "status") in ("ok", "pending") for r in results))
+
+
 def normalise(proposal, case, case_object, findings, results):
     """Apply the registry, budget and sentiment rules; every escalation leaves with a full handover note."""
     data = proposal.model_dump()
@@ -156,7 +164,7 @@ def normalise(proposal, case, case_object, findings, results):
             force("escalate", "read failed after one retry")
 
     reason = sentiment_escalation(case_object)
-    if reason == WORSENING and (not results or action == "tool_call"):
+    if reason == WORSENING and (not results or action == "tool_call" or _resolves(data, case_object, results)):
         reason = None
     if reason and action != "escalate":
         force("escalate", f"sentiment: {reason}")
