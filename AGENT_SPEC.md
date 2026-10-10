@@ -263,7 +263,7 @@ Deterministic checks before anything runs. **No AI.**
   1. **read / check** — autonomous;
   2. **inform** (reply, portal message) — autonomous after the claim linter;
   3. **change or move money** (cancel, amend, return request, release, role change) — only with
-     verified identity, within mandate, no open conflict, and **its required prior reads in the
+     verified or authenticated identity (never unverified), within mandate, no open conflict, and **its required prior reads in the
      trace** (§12 [EB]). Otherwise escalate.
 - **Boundaries in code:** limits, thresholds, dates and cut-offs are compared here, not by the model.
 - **Completion:** every ask has an action or an explicit "not done, because" (§12 [LU], [SH]).
@@ -308,7 +308,7 @@ both. Unknown type → escalate.
 | Ambiguous request | "sort out my payment", two pending payments | `request_info` naming both; stop |
 | Ambiguous reference | "that transfer", two similar transfers | `request_info`; never pick one |
 | Conflicting records | customer says sent, journal shows no credit | report both, claim neither; route the check to the owning team |
-| Missing authority | no verified identity for an account change | `request_info` via a verified channel; no change |
+| Missing authority | no verified or authenticated identity for an account change | `request_info` via a verified channel; no change |
 | Read failure | journal lookup times out | one retry, then escalate with what is known |
 | Write failure | return request times out | `uncertain`; read back only if strong; else escalate |
 | Quiet wrong value | a result the evidence checker flags | don't use it; re-query once, else escalate |
