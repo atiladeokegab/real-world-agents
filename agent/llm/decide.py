@@ -34,13 +34,18 @@ UNCONFIRMED_COMPLETION = Verdict(
 
 _COMPLETION = re.compile(r"\b(complete|completed|done)\b", re.IGNORECASE)
 _NEGATED = re.compile(r"\b(not|no|nothing|never|yet to be)\b|n't", re.IGNORECASE)
+_FUTURE = re.compile(r"\b(once|when|after|until|will|as soon as|by the time)\b|'ll", re.IGNORECASE)
 
 
 def claims_completion(proposal: Proposal, results: list[ToolResult]) -> bool:
     text = proposal.reply.text if proposal.reply else ""
     if proposal.action not in ("reply", "request_info") or any(r.status == "ok" for r in results):
         return False
-    return any(not _NEGATED.search(text[max(0, m.start() - 30):m.start()]) for m in _COMPLETION.finditer(text or ""))
+    for m in _COMPLETION.finditer(text):
+        before = text[max(0, m.start() - 30):m.start()]
+        if not _NEGATED.search(before) and not _FUTURE.search(before):
+            return True
+    return False
 
 
 def misreads_not_found(proposal: Proposal, results: list[ToolResult]) -> bool:

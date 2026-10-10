@@ -163,6 +163,22 @@ def test_complete_with_an_ok_result_or_negated_is_kept(fake_llm):
     assert decide(case_006(), CASE_OBJECT, [], []).action == "reply" and len(fake_llm.calls) == 2
 
 
+def test_completion_worded_as_future_or_conditional_is_kept(fake_llm):
+    for text in ["We'll reply once the check is done.",
+                 "When the review is complete we'll update you.",
+                 "We'll update you after this is completed.",
+                 "We will confirm as soon as it is done."]:
+        fake_llm.answers.append(_reply(text))
+        assert decide(case_006(), CASE_OBJECT, [], PENDING).action == "reply", text
+    assert len(fake_llm.calls) == 4
+
+
+def test_bare_completion_claim_is_still_retried(fake_llm):
+    fake_llm.answers += [_reply("The transfer is complete."), _reply("We've asked Payments to check.")]
+    out = decide(case_006(), CASE_OBJECT, [], [])
+    assert out.reply.text == "We've asked Payments to check." and "rule: claims" in fake_llm.calls[1]["user"]
+
+
 def test_prompt_forbids_complete_without_a_result(fake_llm):
     fake_llm.answers.append(LOOKUP)
     decide(case_006(), CASE_OBJECT, [], [])
