@@ -1,5 +1,5 @@
-"""§4.3 mock services. Practice cases: a call is answered from the bank's own journal note in the
-hidden later events. Unseen cases: no journal exists, so the result is `pending`, never a fact."""
+"""§4.3 mock services. Practice cases: a call is answered from a later event written by the bank's own
+system or journal. Unseen cases: no journal exists, so the result is `pending`, never a fact."""
 
 import re
 from typing import Any
@@ -39,9 +39,18 @@ def _get(obj: Any, key: str, default: Any = "") -> Any:
     return obj.get(key, default) if isinstance(obj, dict) else getattr(obj, key, default)
 
 
-def is_journal_note(event: Any) -> bool:
-    """An internal note written by a bank system, journal or team, not by the agent handling the case."""
-    return _get(event, "channel").strip().lower() == "internal note" and "agent" not in _get(event, "sender").lower()
+SYSTEM_WORDS = ("journal", "system", "service", "team", "register", "log", "portal", "process", "group", "archive")
+BANK = ("h&v", "harrow & vale")
+INTERNAL = "internal note"
+
+
+def is_bank_system(event: Any) -> bool:
+    """Written by a bank system, journal or team on any channel; never the customer or a person handling the case.
+    Outside internal notes the sender must be the bank's own, so a customer firm called "... Services" never counts."""
+    sender = _get(event, "sender").strip().lower()
+    if "agent" in sender or "support" in sender or not any(w in sender for w in SYSTEM_WORDS):
+        return False
+    return sender.startswith(BANK) or _get(event, "channel").strip().lower() == INTERNAL
 
 
 def _case_number(case_id: str) -> int | None:
@@ -55,7 +64,9 @@ def matches(service: str, event: Any, case_id: str = "") -> bool:
 
 
 def find_note(service: str, practice_events: list, case_id: str = "") -> Any | None:
-    return next((e for e in practice_events if is_journal_note(e) and matches(service, e, case_id)), None)
+    """The first matching bank-system event, preferring the journal's internal notes."""
+    hits = [e for e in practice_events if is_bank_system(e) and matches(service, e, case_id)]
+    return next((e for e in hits if _get(e, "channel").strip().lower() == INTERNAL), hits[0] if hits else None)
 
 
 def note_data(service: str, event: Any) -> dict:

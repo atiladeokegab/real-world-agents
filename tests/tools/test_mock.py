@@ -1,11 +1,8 @@
 import pytest
 
 from agent.tools import CATALOGUE
-from agent.tools.mock import call, is_journal_note
+from agent.tools.mock import call, is_bank_system
 from tests.tools.conftest import EXAMPLES, practice
-
-CUSTOMER_CHANNELS = {"External message", "Secure chat", "Secure portal", "Business portal", "Verified call",
-                     "Email", "Phone"}
 
 
 def test_048_transfer_journal_answers_from_event_004():
@@ -25,6 +22,27 @@ def test_matching_service_reads_the_journal_note(num, tool, event):
     case, later = practice(num)
     r = call(CATALOGUE[tool], {}, case, later)
     assert (r.status, r.source_event) == ("ok", event)
+
+
+def test_044_row_status_comes_from_the_bank_portal():
+    case, later = practice("044")
+    r = call(CATALOGUE["business_service"], {}, case, later)
+    assert r.status == "ok" and r.source_event == "event-004" and "Rejected" in r.data["note"]
+
+
+def test_journal_note_beats_an_earlier_portal_message():
+    case, later = practice("048")
+    portal = later[0].model_copy(update={"id": "event-x", "channel": "Secure portal", "sender": "H&V payment team"})
+    r = call(CATALOGUE["transfer_journal"], {}, case, [portal, *later])
+    assert r.source_event == "event-004"
+
+
+@pytest.mark.parametrize("sender,channel", [
+    ("H&V service agent", "Secure portal"), ("H&V Business Support", "Business portal"), ("H&V", "Secure portal"),
+    ("Elm Quay Property Services", "External message"), ("Leona Voss", "Secure chat"),
+])
+def test_people_and_customers_are_not_bank_systems(sender, channel):
+    assert not is_bank_system({"sender": sender, "channel": channel})
 
 
 def test_wrong_service_is_not_found():
@@ -49,5 +67,5 @@ def test_agent_notes_and_customer_text_never_returned():
             r = call(spec, {}, case, later)
             if r.source_event:
                 e = by_id[r.source_event]
-                assert is_journal_note(e) and e.channel not in CUSTOMER_CHANNELS
-                assert "agent" not in e.sender.lower()
+                assert is_bank_system(e) and "agent" not in e.sender.lower()
+                assert e.sender.startswith(("H&V", "Harrow & Vale")) or e.channel == "Internal note"
