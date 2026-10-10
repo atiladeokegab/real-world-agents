@@ -163,6 +163,10 @@ def normalise(proposal, case, case_object, findings, results):
     if reason:
         kind = "emotional"
 
+    if action == "reply" and results and _get(_get(case, "authority"), "identity") == "unverified":
+        force("request_info", "unverified requester: no account or payment status from a tool result")
+        name = data["exception_type"] = "missing_authority"
+
     if action == "request_info" and not (data.get("reply") or {}).get("text"):
         data["reply"] = {"channel": (data.get("reply") or {}).get("channel") or _customer_channel(case),
                          "text": handover.request_info_reply(_request_question(name, case))}

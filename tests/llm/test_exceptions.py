@@ -233,3 +233,25 @@ def test_worsening_frustration_escalates_a_reply_once_a_result_is_back():
 
 def test_distress_still_escalates_before_any_read():
     assert run(READ, obj(level="distressed")).action == "escalate"
+
+
+
+def _unverified():
+    case = case_006()
+    return case.model_copy(update={"authority": case.authority.model_copy(update={"identity": "unverified"})})
+
+
+def test_unverified_requester_gets_request_info_not_account_details():
+    found = [ToolResult(tool="transfer_journal", status="ok", data={"instructions": 2})]
+    out = normalise(Proposal.model_validate(REPLY), _unverified(), obj(), [], found)
+    assert out.action == "request_info" and out.exception_type == "missing_authority"
+    assert "It was sent." not in out.reply.text and "verified call" in out.reply.text
+
+
+def test_unverified_reply_without_a_result_is_kept():
+    assert normalise(Proposal.model_validate(REPLY), _unverified(), obj(), [], []).action == "reply"
+
+
+def test_authenticated_reply_with_a_result_is_kept():
+    found = [ToolResult(tool="transfer_journal", status="ok", data={"instructions": 2})]
+    assert run(REPLY, results=found).action == "reply"
