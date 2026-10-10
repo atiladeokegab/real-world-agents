@@ -358,6 +358,18 @@ def test_fabricated_execution_conditional_same_clause_ok():
     assert verify(proposal, case, _object(), [], []).ok
 
 
+def test_fabricated_execution_nt_negation_ok():
+    # #114: "n't" inside a contraction is still a negator — the design's
+    # holding reply must not be rejected as fabricated execution
+    case = _case([_ev(1, "where is my payment")])
+    for text in [
+        "We haven't made any changes to your account while this is reviewed.",
+        "We haven't changed anything.",
+    ]:
+        proposal = _proposal(reply=_reply(text))
+        assert verify(proposal, case, _object(), [], []).ok, text
+
+
 # --- rule: question answered ---
 
 def test_question_answered_ok():
@@ -486,7 +498,7 @@ def test_risk3_unverified_identity_rejected(monkeypatch):
             "business_service.release_batch", risk=3,
             roles=["Authorised business user"], required_reads=["business_service"]),
     })
-    case = _case([_ev(1, "help")], identity="authenticated",
+    case = _case([_ev(1, "help")], identity="unverified",
                  role="Authorised business user")
     results = [_result("business_service")]
     proposal = _proposal(action="tool_call", tool="business_service.release_batch",
@@ -509,6 +521,44 @@ def test_risk3_missing_required_reads_rejected(monkeypatch):
     assert not verdict.ok
     assert verdict.rule == "risk"
     assert "business_service" in verdict.message
+
+
+def test_risk3_authenticated_pending_read_ok(monkeypatch):
+    # #114: an authenticated customer's write after a pending read is
+    # approved — it is recorded as requested, pending result
+    _catalogue(monkeypatch, {
+        "business_service.release_batch": _spec(
+            "business_service.release_batch", risk=3,
+            roles=["Authorised business user"], required_reads=["business_service"]),
+    })
+    case = _case([_ev(1, "help")], identity="authenticated",
+                 role="Authorised business user")
+    results = [_result("business_service", status="pending",
+                       data={"status": "pending"})]
+    proposal = _proposal(action="tool_call", tool="business_service.release_batch",
+                         params={"batch": "SUP-17"},
+                         claims_relied_on=["event-001", "tool:business_service"])
+    assert verify(proposal, case, _object(), [], results).ok
+
+
+def test_risk3_failed_required_reads_rejected(monkeypatch):
+    # #114: only ok/pending reads count — not_found, timeout and error
+    # still block the write
+    _catalogue(monkeypatch, {
+        "business_service.release_batch": _spec(
+            "business_service.release_batch", risk=3,
+            roles=["Authorised business user"], required_reads=["business_service"]),
+    })
+    case = _case([_ev(1, "help")], identity="verified",
+                 role="Authorised business user")
+    proposal = _proposal(action="tool_call", tool="business_service.release_batch",
+                         claims_relied_on=["event-001", "tool:business_service"])
+    for status in ("not_found", "timeout", "error"):
+        verdict = verify(proposal, case, _object(), [],
+                         [_result("business_service", status=status)])
+        assert not verdict.ok, status
+        assert verdict.rule == "risk"
+        assert "business_service" in verdict.message
 
 
 # --- rule: authority & risk — channel constraint ---
