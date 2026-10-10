@@ -445,6 +445,81 @@ def test_fabricated_execution_nt_negation_ok():
         assert verify(proposal, case, _object(), [], []).ok, text
 
 
+def test_fabricated_execution_cited_bank_record_ok():
+    # #164: case 022 — event-004 'H&V card system: Card journal status: BLOCKED'
+    # already confirms the block; restating it is not fabricated execution
+    case = _case([
+        _ev(1, "I've lost my debit card, please block it"),
+        _ev(3, "block submitted", sender="H&V agent", recipient="H&V card system"),
+        _ev(4, "Card journal status: BLOCKED. Case HV-022.",
+            sender="H&V card system", recipient="H&V agent"),
+    ])
+    proposal = _proposal(
+        reply=_reply("Our card journal shows your missing H&V debit card "
+                     "as blocked under case HV-022."),
+        claims_relied_on=["event-004"],
+    )
+    assert verify(proposal, case, _object(), [], []).ok
+
+
+def test_fabricated_execution_no_bank_support_still_rejected():
+    # #164: "we've cancelled it" with no ok result and no bank-side record
+    case = _case([_ev(1, "please cancel the direct debit")])
+    proposal = _proposal(
+        reply=_reply("We've cancelled it for you."),
+    )
+    verdict = verify(proposal, case, _object(), [], [])
+    assert not verdict.ok
+    assert verdict.rule == "fabricated_execution"
+    assert "cancelled" in verdict.message
+
+
+def test_fabricated_execution_customer_message_is_not_support():
+    # #164: the customer's own message cannot confirm a done-word even when cited
+    case = _case([
+        _ev(1, "it looks like the payment was already sent", sender="Mara Ellison"),
+    ])
+    proposal = _proposal(
+        reply=_reply("Your payment was sent."),
+        claims_relied_on=["event-001"],
+    )
+    verdict = verify(proposal, case, _object(), [], [])
+    assert not verdict.ok
+    assert verdict.rule == "fabricated_execution"
+
+
+def test_fabricated_execution_negated_bank_record_rejected():
+    # #164: 'status: not blocked' must not support 'blocked'
+    case = _case([
+        _ev(1, "is my card blocked"),
+        _ev(4, "Card journal status: not blocked", sender="H&V card system"),
+    ])
+    proposal = _proposal(
+        reply=_reply("Your card is blocked."),
+        claims_relied_on=["event-004"],
+    )
+    verdict = verify(proposal, case, _object(), [], [])
+    assert not verdict.ok
+    assert verdict.rule == "fabricated_execution"
+
+
+def test_fabricated_execution_partial_support_rejected():
+    # #164: a cited record for 'blocked' does not cover a second claim —
+    # every claimed done-word needs its own support
+    case = _case([
+        _ev(1, "block my card and cancel the fee"),
+        _ev(4, "Card journal status: BLOCKED", sender="H&V card system"),
+    ])
+    proposal = _proposal(
+        reply=_reply("Your card is blocked and the fee has been cancelled."),
+        claims_relied_on=["event-004"],
+    )
+    verdict = verify(proposal, case, _object(), [], [])
+    assert not verdict.ok
+    assert verdict.rule == "fabricated_execution"
+    assert "cancelled" in verdict.message
+
+
 # --- rule: question answered ---
 
 def test_question_answered_ok():
