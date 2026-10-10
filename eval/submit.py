@@ -1,6 +1,7 @@
 """Run numbered Reality Test cases concurrently and report their answers."""
 
 import argparse
+import json
 import os
 import re
 import signal
@@ -11,7 +12,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from agent.core.writer import write_fallback
+from agent.core.writer import STATES, write_fallback
 
 
 CASE_TIMEOUT = 300
@@ -100,6 +101,46 @@ def decision(answer: Path) -> str:
     return "missing"
 
 
+def write_index(out: Path, head: str | None, seconds: dict[str, float] | None = None) -> None:
+    """<out>/README.md: one row per case for the judges. Reads only what the run wrote; writes only this file."""
+    folders = sorted((p for p in out.iterdir() if p.is_dir() and p.name.isdecimal()), key=lambda p: int(p.name))
+    totals = dict.fromkeys([badge for badge, _, _ in STATES.values()] + ["unknown"], 0)
+    lines = ["# Reality Test answers", "",
+             "One row per case. Open a case for its full answer, reasoning and trace.", "",
+             "| Case | State | Decision | Escalated | Fallback | Question | Seconds |",
+             "| --- | --- | --- | --- | --- | --- | ---: |"]
+    for folder in folders:
+        try:
+            result = json.loads((folder / "run.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            result = {}
+        if not isinstance(result, dict):
+            result = {}
+        state = STATES[result["state"]][0] if result.get("state") in STATES else "unknown"
+        totals[state] += 1
+        answer = folder / "ANSWER.md"
+        try:
+            answer_text = answer.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            answer_text = ""
+        line = decision(answer) if answer_text else "missing"
+        if line == "missing":
+            line = result.get("summary") or "unknown"
+        line = line.split(" — ", 1)[1] if line.startswith(f"{state} — ") else line  # the badge has its own column
+        line = " ".join(str(line).split()).replace("|", "\\|")
+        flags = ["unknown" if key not in result else ("y" if result[key] else "n") for key in ("escalated", "fallback")]
+        question = "y" if "## Answer to the question" in answer_text else ("n" if answer_text else "unknown")
+        secs = (seconds or {}).get(folder.name, result.get("seconds"))
+        secs = f"{secs:.1f}" if isinstance(secs, (int, float)) else "unknown"
+        lines.append(f"| [{folder.name}]({folder.name}/ANSWER.md) | {state} | {line} | "
+                     f"{flags[0]} | {flags[1]} | {question} | {secs} |")
+    lines += ["", f"**Totals:** {len(folders)} cases · "
+              + " · ".join(f"{name} {count}" for name, count in totals.items() if count or name != "unknown")]
+    if head:
+        lines += ["", f"**Commit:** `{head}`"]
+    (out / "README.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("cases_dir", type=Path)
@@ -161,8 +202,14 @@ def main(argv=None) -> int:
             missing += 1
         print(f"{name}\t{code}\t{seconds:.1f}\t{decision(answer) if answer.is_file() else 'missing'}\t{'y' if fallback else 'n'}\t{'y' if safe_question(case) else 'n'}")
     print(f"total {len(cases)}; fallback {fallback_count}; missing {missing}")
-    head = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True)
-    print(f"HEAD {head.stdout.strip()}")
+    try:
+        head = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True,
+                              text=True, check=True).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        head = ""
+    if head:
+        print(f"HEAD {head}")
+    write_index(args.out, head, {numbers[case]: secs for case, _, secs, _ in results})
     return 1 if missing else 0
 
 

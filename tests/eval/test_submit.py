@@ -39,7 +39,7 @@ out.mkdir(parents=True)
         [str(root), "--out", str(out), "--workers", "2", "--limit", "2"]
     ) == 0
 
-    assert sorted(p.name for p in out.iterdir()) == ["1", "2"]
+    assert sorted(p.name for p in out.iterdir() if p.is_dir()) == ["1", "2"]
     assert all((out / n / "REASONING.md").is_file() for n in ("1", "2"))
     table = capsys.readouterr().out
     assert "001 -> 1" in table and "002 -> 2" in table and "escalate" in table
@@ -72,7 +72,7 @@ out.mkdir(parents=True)
     out = tmp_path / "answers"
 
     assert import_module("eval.submit").main([str(root), "--out", str(out)]) == 0
-    assert sorted(p.name for p in out.iterdir()) == ["1", "2", "3"]
+    assert sorted(p.name for p in out.iterdir() if p.is_dir()) == ["1", "2", "3"]
     mapping = capsys.readouterr().out
     assert "alpha -> 1" in mapping and "case-2 -> 2" in mapping and "beta -> 3" in mapping
 
