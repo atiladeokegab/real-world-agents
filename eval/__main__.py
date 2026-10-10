@@ -9,6 +9,7 @@ from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
 from eval.cut import cut_index
+from eval.stages import first_failing_stage
 
 ROOT = Path(__file__).parents[1]
 GOLD = json.loads((Path(__file__).parent / "gold.json").read_text())
@@ -34,6 +35,7 @@ def run_case(num: str, dry: bool = False, variant: str | None = None) -> dict:
             from eval import inject
 
             case, row["expect"] = getattr(inject, variant)(case)
+        row["visible"] = len(case.events)
         row["stage"] = "findings"
         findings = checks.find_evidence(case)
         row["checks"] = [_get(f, "check") for f in findings]
@@ -78,6 +80,8 @@ def main():
         rows = list(ex.map(run_case, nums, [a.dry] * len(nums)))
     m = score(rows)
     for r in rows:
+        if not r["ok"]:
+            r["stage"] = first_failing_stage(r, cut_index(ROOT / "examples" / r["case"] / "history.md"))
         print(f"{r['case']} {'ok  ' if r['ok'] else 'FAIL'} got={r['action']}/{r['kind']} "
               f"want={GOLD[r['case']]['action']}/{GOLD[r['case']]['kind']}"
               + (f" stage={r['stage']} {r['error']}" if r["error"] else ""))
