@@ -5,6 +5,7 @@ description = "Banking track agent: real-world case handling with verified, boun
 requires-python = ">=3.11"
 dependencies = [
     "anthropic>=1.13.0",
+    "elevenlabs>=2.71.0",
     "pydantic>=2.14.0",
     "pypdf>=6.20.0",
     "python-dateutil>=2.9.0.post0",
