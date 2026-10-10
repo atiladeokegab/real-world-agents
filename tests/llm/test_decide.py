@@ -64,3 +64,30 @@ def test_channel_constraints_and_reply_channel_rules_in_prompts():
     assert "Type channel only for a rule about which channel to reply or act on" in prompts.EXTRACTION_SYSTEM
     assert "is not authorisation" in prompts.EXTRACTION_SYSTEM
     assert "never an external message" in prompts.DECISION_SYSTEM
+
+
+PENDING = [ToolResult(tool="mandate_journal", status="pending", data={"note": "status check requested"})]
+PENDING_REPLY = {"action": "reply", "asks_addressed": ["ask-1"],
+                 "reply": {"channel": "Secure chat", "text": "We've asked our payments team to check the mandate. "
+                                                             "We'll reply here once they've confirmed."}}
+
+
+def test_no_op_after_a_pending_lookup_is_retried_as_a_reply(fake_llm):
+    fake_llm.answers += [{"action": "no_op", "asks_addressed": ["ask-1"]}, PENDING_REPLY]
+    out = decide(case_006(), CASE_OBJECT, [], PENDING)
+    assert out.action == "reply" and "once they've confirmed" in out.reply.text
+    assert len(fake_llm.calls) == 2 and "rule: completion" in fake_llm.calls[1]["user"]
+
+
+def test_no_op_twice_while_pending_escalates_with_a_holding_reply(fake_llm):
+    fake_llm.answers += [{"action": "no_op"}, {"action": "no_op"}]
+    out = decide(case_006(), CASE_OBJECT, [], PENDING)
+    assert out.action == "escalate" and out.exception_type == "incomplete_answer"
+    assert out.reply and out.reply.text and out.escalation
+
+
+def test_no_op_without_a_pending_result_is_kept(fake_llm):
+    fake_llm.answers.append({"action": "no_op"})
+    done = [ToolResult(tool="mandate_journal", status="ok", data={"status": "Active"})]
+    assert decide(case_006(), CASE_OBJECT, [], done).action == "no_op"
+    assert len(fake_llm.calls) == 1
