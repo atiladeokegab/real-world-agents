@@ -133,10 +133,13 @@ _DONE_RE = re.compile(
     r"reversed|applied|taken|deducted|collected|declined|failed|unpaid|"
     r"unprocessed|uncancelled)\b"
 )
-# negators/hedges that turn "was sent" into "was not sent" / "still pending"
+# negators/hedges that turn "was sent" into "was not sent" / "still pending",
+# and conditionals that make a done-word describe a future event, not a claim:
+# "once it has been changed", "until we have verified", "when it is sent"
 _NEGATION_RE = re.compile(
     r"(?i)\b(not|n't|never|no|without|cannot|can't|unable|pending|awaiting|"
-    r"will|would|could|should|may|might|due|yet)\b"
+    r"will|would|could|should|may|might|due|yet|once|until|when|whenever|"
+    r"if)\b"
 )
 _AFTER_HEDGE_RE = re.compile(r"(?i)^\s*(?:yet|until|still pending)\b")
 
@@ -330,8 +333,9 @@ def _claims_execution(text: str) -> str | None:
     for m in _DONE_RE.finditer(text):
         boundary = max(text.rfind(c, 0, m.start()) for c in ".!?\n") + 1
         window = text[boundary:m.start()]
-        if re.search(r"(?i)\b(?:be|been|being|to)\s*$", window):
-            continue  # subjunctive/infinitive: "requested it be sent", "to be paid"
+        if re.search(r"(?i)\b(?:be|being|to)\s*$", window):
+            continue  # subjunctive/infinitive: "requested it be sent", "to be
+            # paid" — but "has been sent" IS a completion claim and must fire
         if _NEGATION_RE.search(window):
             continue
         if _AFTER_HEDGE_RE.match(text[m.end():]):
@@ -419,8 +423,10 @@ def verify(
                              "or a tool result")
 
     # 3. no fabricated execution — a reported check/change needs an ok result;
-    #    "requested — pending result" never becomes "done" (§4.3)
-    if reply_text:
+    #    "requested — pending result" never becomes "done" (§4.3). Only the
+    #    reply action's text is a completion claim: an escalate or
+    #    request_info reply is holding text that asserts nothing was done.
+    if proposal.action == "reply" and reply_text:
         claimed = _claims_execution(reply_text)
         if claimed and not any(r.status == "ok" for r in results):
             event = next((r.source_event for r in results if r.source_event), None)

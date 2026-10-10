@@ -292,6 +292,46 @@ def test_fabricated_execution_future_and_passive_ok():
     assert verify(proposal, case, _object(), [], []).ok
 
 
+def test_fabricated_execution_conditional_ok():
+    # #107: conditional/future phrasing asserts nothing completed — "once it
+    # has been changed" and "when it is sent" are not completion claims
+    case = _case([_ev(1, "where is my payment")])
+    proposal = _proposal(
+        reply=_reply("A colleague will review it once it has been changed, "
+                     "and we will confirm when it is sent.")
+    )
+    assert verify(proposal, case, _object(), [], []).ok
+
+
+def test_fabricated_execution_escalate_holding_reply_ok():
+    # #107: an escalation claims nothing done — done-words in its holding
+    # reply or handover note must not need an ok result
+    case = _case([_ev(1, "please stop the payment")])
+    proposal = _proposal(
+        action="escalate",
+        reply=_reply("We have reviewed the file and passed it to our "
+                     "specialists, who will confirm the change."),
+        escalation={"note": "reviewed and changed where permitted"},
+    )
+    assert verify(proposal, case, _object(), [], []).ok
+
+
+def test_fabricated_execution_perfect_passive_rejected():
+    # #107: "has been sent" is a past-tense completion claim — the rule stays
+    # strict for it and still needs an ok result
+    case = _case([_ev(1, "did my payment go out")])
+    obj = _object(claims=[_claim("£420.00 to Alder & Reed Workshop")])
+    proposal = _proposal(
+        reply=_reply("Your payment of £420.00 to Alder & Reed Workshop "
+                     "has been sent."),
+    )
+    verdict = verify(proposal, case, obj, [], [])
+    assert not verdict.ok
+    assert verdict.rule == "fabricated_execution"
+    assert verdict.field == "reply.text"
+    assert "sent" in verdict.message
+
+
 # --- rule: question answered ---
 
 def test_question_answered_ok():
