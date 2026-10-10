@@ -57,3 +57,10 @@ def test_tool_results_so_far_are_shown(fake_llm):
     results = [ToolResult(tool="transfer_journal", status="ok", data={"instructions": 2}, source_event="event-004")]
     decide(case_006(), CASE_OBJECT, [], results)
     assert '"instructions": 2' in fake_llm.calls[0]["user"] and "Tool calls used: 1 of 6." in fake_llm.calls[0]["user"]
+
+
+def test_channel_constraints_and_reply_channel_rules_in_prompts():
+    from agent.llm import prompts
+    assert "Type channel only for a rule about which channel to reply or act on" in prompts.EXTRACTION_SYSTEM
+    assert "is not authorisation" in prompts.EXTRACTION_SYSTEM
+    assert "never an external message" in prompts.DECISION_SYSTEM
