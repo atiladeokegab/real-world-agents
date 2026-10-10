@@ -17,7 +17,9 @@ TRACE: ContextVar[list | None] = ContextVar("TRACE", default=None)
 
 
 def _client(stage: str) -> anthropic.Anthropic:
-    key = os.environ.get(f"ANTHROPIC_API_KEY_{stage.upper()}") or os.environ.get("ANTHROPIC_API_KEY")
+    # Other stages (e.g. ingest's fallback parse) share the extraction key unless given their own.
+    key = (os.environ.get(f"ANTHROPIC_API_KEY_{stage.upper()}") or os.environ.get("ANTHROPIC_API_KEY")
+           or os.environ.get("ANTHROPIC_API_KEY_EXTRACTION"))
     # The SDK retries 429/5xx with exponential backoff; 6 retries rides out a busy minute.
     return anthropic.Anthropic(api_key=key, max_retries=6)
 
