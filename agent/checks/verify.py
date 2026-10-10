@@ -40,11 +40,19 @@ _DATE_RE = re.compile(
 _REF_RE = re.compile(r"\b(?=[\w-]*[A-Za-z])(?=[\w-]*\d)[A-Za-z0-9][\w-]{2,}\b")
 _NAME_SPAN_RE = re.compile(r"[A-Z][\w'&.-]*(?:\s+[A-Z][\w'&.-]*)+")
 _CAP_WORD_RE = re.compile(r"[A-Z][\w'&.-]*")
-# a ". " inside a span is a sentence end only after a lower-case word ending
-# in 3+ letters — keeps "St. James" together, splits "was sent. Your" apart
-_SENT_END_IN_SPAN_RE = re.compile(r"(?<=[a-z]{3})\.\s+(?=[A-Z])")
-# a greeting word opening a name span: "Dear Ms Shah" lints as "Ms Shah"
-_GREETING_RE = re.compile(r"(?i)^(?:dear|hello|hi|hey)\b[\s,]*")
+# a ". " inside a span is a sentence end after a lower-case word ending in
+# 3+ letters ("sent. Your") or an upper/digit token ("H&V. We", "SENT. You",
+# "PIN. That") — abbreviations (St., Mr., Dr.) stay together; a newline
+# always ends the span
+_SENT_END_IN_SPAN_RE = re.compile(
+    r"(?<=[a-z]{3})\.\s+(?=[A-Z])"
+    r"|(?<=[A-Z0-9&'])\.\s+(?=[A-Z])"
+    r"|\n+"
+)
+# possessive tail: "Northmere Studio Ltd's" -> "Northmere Studio Ltd"
+_POSSESSIVE_RE = re.compile(r"(?i)'s\b")
+# a leading "The" folds into phrase allow-list entries
+_THE_RE = re.compile(r"(?i)^the\s+")
 
 _WORD_STOP = {
     # function words that may be capitalised mid-sentence
@@ -89,6 +97,12 @@ _WORD_STOP = {
     "mr", "mrs", "ms", "miss", "dr", "prof", "sir", "dame", "madam",
     "ltd", "plc", "llc", "inc", "co", "uk", "eu", "us", "re", "fw", "fwd",
     "cc", "bcc", "ps", "etc",
+    # pronouns and product words the linter must never call a name
+    "i", "i'm", "i've", "i'll", "i'd", "me",
+    "we're", "we've", "we'll", "we'd",
+    "you're", "you've", "you'll", "you'd",
+    "he's", "she's", "it's", "they're", "they've", "they'll",
+    "profile", "pin",
 }
 _PHRASE_STOP_RAW = {
     "secure chat", "verified call", "external message", "business portal",
@@ -100,6 +114,12 @@ _PHRASE_STOP_RAW = {
     "terms and conditions", "bank customer", "authorised business user",
     "case journal", "h&v", "h&v agent", "h&v bank", "h&v team",
     "harrow & vale", "harrow and vale",
+    # the bank's own names and product words, seen capitalised in replies
+    "vale bank", "h&v bank plc",
+    "harrow & vale bank", "harrow and vale bank",
+    "harrow & vale bank plc", "harrow and vale bank plc",
+    "direct debits", "standing orders",
+    "secure portal", "pin number", "personal profile",
 }
 
 # --- no fabricated execution ---
@@ -109,7 +129,7 @@ _DONE_RE = re.compile(
     r"transferred|released|debited|credited|posted|executed|charged|"
     r"confirmed|updated|amended|changed|deleted|removed|added|downloaded|"
     r"uploaded|submitted|approved|rejected|issued|activated|blocked|frozen|"
-    r"closed|opened|checked|verified|reviewed|found|done|stopped|returned|"
+    r"closed|opened|checked|verified|reviewed|done|stopped|returned|"
     r"reversed|applied|taken|deducted|collected|declined|failed|unpaid|"
     r"unprocessed|uncancelled)\b"
 )
@@ -180,6 +200,16 @@ def _norm(text: str) -> str:
 
 _WORD_STOP = {_norm(w) for w in _WORD_STOP}
 _PHRASE_STOP = {_norm(p) for p in _PHRASE_STOP_RAW}
+# words that may open a capitalised span without making it a name:
+# function words, greetings and pronoun contractions — titles stay, so
+# "Dear Ms Shah" still lints as "Ms Shah" against the requester
+_LEAD_STOP = (_WORD_STOP - {_norm(t) for t in
+                            ("mr mrs ms miss dr prof sir dame madam mx").split()}) | {
+    _norm(w) for w in (
+        "i i'm i've i'll i'd me you're you've you'll you'd "
+        "we're we've we'll we'd he's she's it's they're they've they'll"
+    ).split()
+}
 
 
 def _flatten(obj) -> str:
@@ -222,9 +252,18 @@ def _reply_atoms(text: str) -> list[tuple[str, str]]:
         if any(m.start() < e and m.end() > s for s, e in claimed):
             continue  # the span sits inside a date/amount/reference match
         claimed.append(m.span())
-        for frag in _SENT_END_IN_SPAN_RE.split(m.group(0)):
-            frag = _GREETING_RE.sub("", frag.strip(" .,;:!?\"'")).strip(" .,;:!?\"'")
-            if len(frag.split()) >= 2 and _norm(frag) not in _PHRASE_STOP:
+        # a capital at a sentence start proves nothing — drop that first word
+        at_boundary = not text[:m.start()].strip() or bool(
+            re.search(r"[.!?:]\s*$|\n\s*$", text[:m.start()]))
+        for i, frag in enumerate(_SENT_END_IN_SPAN_RE.split(m.group(0))):
+            words = frag.strip(" .,;:!?\"'").split()
+            if words and (i > 0 or at_boundary):
+                words = words[1:]  # split frags always start a new sentence
+            while words and _norm(words[0]) in _LEAD_STOP:
+                words = words[1:]  # greetings, titles, pronouns, stop words
+            frag = " ".join(words)
+            if len(words) >= 2 and _norm(frag) not in _PHRASE_STOP \
+                    and _norm(_THE_RE.sub("", frag)) not in _PHRASE_STOP:
                 atoms.append(("name", frag))
     for m in _CAP_WORD_RE.finditer(text):
         if any(m.start() >= s and m.end() <= e for s, e in claimed):
@@ -235,7 +274,7 @@ def _reply_atoms(text: str) -> list[tuple[str, str]]:
         word = m.group(0).rstrip(".")
         if len(word) <= 2 or word.isupper():
             continue  # too short to pin down, or an acronym
-        if word.lower() in _WORD_STOP:
+        if _norm(word) in _WORD_STOP:
             continue
         atoms.append(("name", word))
     return atoms
@@ -252,16 +291,38 @@ def _atom_variants(kind: str, raw: str) -> set[str]:
     elif kind == "name":
         variants.add(_norm(_TITLE_RE.sub("", raw)))  # "Ms Ellison" -> "Ellison"
         variants.add(_norm(raw.replace("-", " ").replace("'", " ").replace(".", " ")))
+        variants.add(_norm(_POSSESSIVE_RE.sub("", raw)))  # "Ltd's" -> "Ltd"
     elif kind == "reference":
         variants.add(base.replace("-", " "))
     return {v for v in variants if v}
 
 
-def _in_hay(atom_norm: str, hay: str) -> bool:
-    """Bounded containment: '420' must not pass on '4200' or '1420'."""
+def _in_hay(atom_norm: str, hay: str, dot_suffix: bool = False) -> bool:
+    """Bounded containment: '420' must not pass on '4200' or '1420'.
+    `dot_suffix` lets a reference be a prefix of a longer one
+    ('batch-041' inside 'batch-041.csv') while still refusing 'batch-0412'."""
+    tail = r"(?![\w-])" if dot_suffix else r"(?![\w.-])"
     if re.fullmatch(r"[\w.-]+", atom_norm):
-        return re.search(rf"(?<![\w.-]){re.escape(atom_norm)}(?![\w.-])", hay) is not None
+        return re.search(rf"(?<![\w.-]){re.escape(atom_norm)}{tail}", hay) is not None
     return re.search(rf"(?<!\w){re.escape(atom_norm)}(?!\w)", hay) is not None
+
+
+def _token_in_hay(token: str, hay: str) -> bool:
+    """A name token bounded by word characters only — 'approver.' at a
+    sentence end still counts (the '. ' bound is for amounts/refs)."""
+    return re.search(rf"(?<!\w){re.escape(token)}(?!\w)", hay) is not None
+
+
+def _atom_ok(kind: str, raw: str, hay: str) -> bool:
+    """A reply atom is evidenced: names pass when every token appears anywhere
+    in the case text (a name may be reordered or carry a title/possessive);
+    references match as a prefix of a case reference; the rest need bounded
+    containment of a variant."""
+    variants = _atom_variants(kind, raw)
+    if kind == "name":
+        return any(v and all(_token_in_hay(t, hay) for t in v.split())
+                   for v in variants)
+    return any(_in_hay(v, hay, dot_suffix=(kind == "reference")) for v in variants)
 
 
 def _claims_execution(text: str) -> str | None:
@@ -342,8 +403,17 @@ def verify(
     # 2. claim linter — every amount/date/name/reference in reply.text is evidenced
     if reply_text:
         hay = _haystack(case_object, results)
+        # names and references may be evidenced by the wider case text: the
+        # request, the title, and every event's sender, recipient and body —
+        # claims and results alone are too narrow
+        name_hay = hay + " " + _norm(" ".join(
+            [case.initial_request or "", getattr(case, "title", "") or ""]
+            + [getattr(e, "body", "") or "" for e in case.events]
+            + [getattr(e, "sender", "") or "" for e in case.events]
+            + [getattr(e, "recipient", "") or "" for e in case.events]))
         for kind, raw in _reply_atoms(reply_text):
-            if not any(_in_hay(v, hay) for v in _atom_variants(kind, raw)):
+            pool = name_hay if kind in ("name", "reference") else hay
+            if not _atom_ok(kind, raw, pool):
                 return _fail("claim_linter", "reply.text", None,
                              f"{kind} '{raw}' in the reply is not in a claim "
                              "or a tool result")
