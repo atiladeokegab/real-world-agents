@@ -331,7 +331,7 @@ def _atom_ok(kind: str, raw: str, hay: str) -> bool:
 def _claims_execution(text: str) -> str | None:
     """A done-word asserting a check/change happened, outside negated clauses."""
     for m in _DONE_RE.finditer(text):
-        boundary = max(text.rfind(c, 0, m.start()) for c in ".!?\n") + 1
+        boundary = max(text.rfind(c, 0, m.start()) for c in ".!?\n,;") + 1
         window = text[boundary:m.start()]
         if re.search(r"(?i)\b(?:be|being|to)\s*$", window):
             continue  # subjunctive/infinitive: "requested it be sent", "to be

@@ -332,6 +332,32 @@ def test_fabricated_execution_perfect_passive_rejected():
     assert "sent" in verdict.message
 
 
+def test_fabricated_execution_other_clause_rejected():
+    # #113 review: a conditional in an earlier clause must not hide a real
+    # completion claim later in the same sentence — the window cuts at the
+    # last clause break, so "we refunded" is judged without "when"
+    case = _case([_ev(1, "where is my fee")])
+    obj = _object(claims=[_claim("£20 fee")])
+    proposal = _proposal(
+        reply=_reply("When you called, we refunded the £20 fee."),
+    )
+    verdict = verify(proposal, case, obj, [], [])
+    assert not verdict.ok
+    assert verdict.rule == "fabricated_execution"
+    assert verdict.field == "reply.text"
+    assert "refunded" in verdict.message
+
+
+def test_fabricated_execution_conditional_same_clause_ok():
+    # "once" shares the clause with "checked", so it still suppresses the
+    # done-word even when the clause break comes later
+    case = _case([_ev(1, "where is my payment")])
+    proposal = _proposal(
+        reply=_reply("Once the batch is checked, we'll reply."),
+    )
+    assert verify(proposal, case, _object(), [], []).ok
+
+
 # --- rule: question answered ---
 
 def test_question_answered_ok():
