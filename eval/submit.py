@@ -13,6 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from agent.core.llm import api_key
+from eval.intake import normalise_input
 from agent.core.writer import STATES, write_fallback
 
 
@@ -153,13 +154,13 @@ def write_index(out: Path, head: str | None, seconds: dict[str, float] | None = 
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("cases_dir", type=Path)
+    parser.add_argument("cases_dir", type=Path, help="cases in any form: folder, archive, or file(s) (eval/intake.py)")
     parser.add_argument("--out", type=Path, default=Path("ANSWERS"))
     parser.add_argument("--workers", type=int, default=6)
     parser.add_argument("--limit", type=int)
     args = parser.parse_args(argv)
-    if not args.cases_dir.is_dir():
-        parser.error(f"not a directory: {args.cases_dir}")
+    if not args.cases_dir.exists():
+        parser.error(f"not found: {args.cases_dir}")
     if args.workers < 1 or (args.limit is not None and args.limit < 1):
         parser.error("--workers and --limit must be positive")
     # Without a key every case fails in a second and still "answers" with SYSTEM FAILURE: stop first.
@@ -167,12 +168,14 @@ def main(argv=None) -> int:
         if not api_key(stage):
             print(f"ERROR: no Anthropic key for {stage}; set it in .env", file=sys.stderr)
             return 1
+    given = args.cases_dir
+    args.cases_dir = normalise_input(given)  # any format the organisers hand over → a folder of case folders
 
     cases = sorted((p for p in args.cases_dir.iterdir()
                     if p.is_dir() and not p.name.startswith((".", "_")) and any(f.is_file() for f in p.iterdir())),
                    key=lambda p: (0, int(p.name), p.name) if p.name.isdecimal() else (1, p.name))
     if not cases:
-        print(f"ERROR: no case folders found in {args.cases_dir}", file=sys.stderr)
+        print(f"ERROR: no case folders found in {given}", file=sys.stderr)
         return 1
     numbers = {}
     used = set()
