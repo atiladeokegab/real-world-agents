@@ -1,309 +1,1347 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Scale</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-:root {
-  --green: #0F3D2E;
-  --green-2: #16503D;
-  --green-3: #1F6B52;
-  --cream: #F6F3EC;
-  --paper: #FFFFFF;
-  --ink: #15201B;
-  --ink-2: #56645D;
-  --ink-3: #8C9891;
-  --line: #E4DFD4;
-  --gold: #C8A85B;
-  --ok: #1F8A5B;
-  --wait: #B7791F;
-  --warn: #C0412C;
-  --sans: "Geist", ui-sans-serif, system-ui, sans-serif;
-  --mono: "Geist Mono", ui-monospace, monospace;
-}
-* { box-sizing: border-box; margin: 0; }
-html, body { height: 100%; }
-body { font: 15px/1.45 var(--sans); color: var(--ink); background: #DCD6CA; -webkit-font-smoothing: antialiased; display: grid; place-items: center; }
-button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
-.phone { position: relative; width: 390px; height: 844px; border-radius: 48px; background: var(--cream); overflow: hidden; box-shadow: 0 0 0 10px #111, 0 40px 90px -30px rgba(0,0,0,.6); }
-@media (max-width: 500px) { body { display: block; background: var(--cream); } .phone { width: 100%; height: 100dvh; border-radius: 0; box-shadow: none; } }
-.status { height: 50px; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 30px 8px; font: 600 15px var(--sans); color: #fff; position: relative; z-index: 2; }
-.screen { position: absolute; inset: 0; overflow-y: auto; padding-bottom: 110px; scrollbar-width: none; }
-.screen::-webkit-scrollbar { display: none; }
-[hidden] { display: none !important; }
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Scale</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --green: #0f3d2e;
+        --green-2: #16503d;
+        --green-3: #1f6b52;
+        --cream: #f6f3ec;
+        --paper: #ffffff;
+        --ink: #15201b;
+        --ink-2: #56645d;
+        --ink-3: #8c9891;
+        --line: #e4dfd4;
+        --gold: #c8a85b;
+        --ok: #1f8a5b;
+        --wait: #b7791f;
+        --warn: #c0412c;
+        --sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+        --mono: "Geist Mono", ui-monospace, monospace;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        font: 15px/1.45 var(--sans);
+        color: var(--ink);
+        background: #dcd6ca;
+        -webkit-font-smoothing: antialiased;
+        display: grid;
+        place-items: center;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        background: none;
+        border: 0;
+        cursor: pointer;
+      }
+      .phone {
+        position: relative;
+        width: 390px;
+        height: 844px;
+        border-radius: 48px;
+        background: var(--cream);
+        overflow: hidden;
+        box-shadow:
+          0 0 0 10px #111,
+          0 40px 90px -30px rgba(0, 0, 0, 0.6);
+      }
+      @media (max-width: 500px) {
+        body {
+          display: block;
+          background: var(--cream);
+        }
+        .phone {
+          width: 100%;
+          height: 100dvh;
+          border-radius: 0;
+          box-shadow: none;
+        }
+      }
+      .status {
+        height: 50px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        padding: 0 30px 8px;
+        font: 600 15px var(--sans);
+        color: #fff;
+        position: relative;
+        z-index: 2;
+      }
+      .screen {
+        position: absolute;
+        inset: 0;
+        overflow-y: auto;
+        padding-bottom: 110px;
+        scrollbar-width: none;
+      }
+      .screen::-webkit-scrollbar {
+        display: none;
+      }
+      [hidden] {
+        display: none !important;
+      }
 
-/* home */
-.hero { background: linear-gradient(170deg, var(--green) 0%, var(--green-2) 100%); color: #fff; padding: 0 22px 26px; border-radius: 0 0 28px 28px; }
-.hello { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; }
-.hello .who { display: flex; align-items: center; gap: 10px; }
-.avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--gold); color: var(--green); display: grid; place-items: center; font-weight: 700; }
-.hello small { display: block; color: rgba(255,255,255,.65); font-size: 12.5px; }
-.hello b { font-size: 16px; font-weight: 600; }
-.bell { width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,.12); display: grid; place-items: center; }
-.balance { margin-top: 26px; }
-.balance .lbl { color: rgba(255,255,255,.7); font-size: 13px; display: flex; gap: 8px; align-items: center; }
-.balance .amt { font-size: 42px; font-weight: 700; letter-spacing: -.03em; margin-top: 2px; }
-.balance .amt span { font-size: 24px; opacity: .8; }
-.balance .acct { font: 12.5px var(--mono); color: rgba(255,255,255,.6); margin-top: 2px; }
-.actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 24px; }
-.actions button { display: flex; flex-direction: column; align-items: center; gap: 7px; font-size: 12.5px; color: rgba(255,255,255,.9); }
-.actions i { width: 48px; height: 48px; border-radius: 16px; background: rgba(255,255,255,.12); display: grid; place-items: center; font-style: normal; font-size: 19px; }
-.section { padding: 22px 20px 0; }
-.section h2 { font-size: 15px; font-weight: 600; display: flex; justify-content: space-between; margin-bottom: 10px; }
-.section h2 span { font-weight: 500; font-size: 13px; color: var(--green-3); }
-.card { background: var(--paper); border-radius: 20px; padding: 6px 16px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
-.tx { display: grid; grid-template-columns: 42px 1fr auto; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); width: 100%; text-align: left; }
-.tx:first-child { border-top: 0; }
-.tx .ic { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; font-size: 18px; background: var(--cream); }
-.tx .nm { font-weight: 600; font-size: 14.5px; }
-.tx .sub { font-size: 12.5px; color: var(--ink-3); display: flex; gap: 6px; align-items: center; }
-.tx .am { font-weight: 600; font-size: 14.5px; text-align: right; }
-.tx .am.in { color: var(--ok); }
-.pill { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 99px; }
-.pill.sent { background: #E5F2EB; color: var(--ok); }
-.pill.pend { background: #FBEFD8; color: var(--wait); }
-.promo { margin: 18px 20px 0; padding: 16px; border-radius: 20px; background: var(--paper); display: flex; gap: 14px; align-items: center; }
-.promo i { width: 44px; height: 44px; border-radius: 14px; background: var(--green); color: var(--gold); display: grid; place-items: center; font-style: normal; font-size: 20px; flex: none; }
-.promo b { font-size: 14px; } .promo p { font-size: 12.5px; color: var(--ink-2); }
+      /* home */
+      .hero {
+        background: linear-gradient(
+          170deg,
+          var(--green) 0%,
+          var(--green-2) 100%
+        );
+        color: #fff;
+        padding: 0 22px 26px;
+        border-radius: 0 0 28px 28px;
+      }
+      .hello {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 10px;
+      }
+      .hello .who {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: var(--gold);
+        color: var(--green);
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+      }
+      .hello small {
+        display: block;
+        color: rgba(255, 255, 255, 0.65);
+        font-size: 12.5px;
+      }
+      .hello b {
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .bell {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.12);
+        display: grid;
+        place-items: center;
+      }
+      .balance {
+        margin-top: 26px;
+      }
+      .balance .lbl {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 13px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .balance .amt {
+        font-size: 42px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        margin-top: 2px;
+      }
+      .balance .amt span {
+        font-size: 24px;
+        opacity: 0.8;
+      }
+      .balance .acct {
+        font: 12.5px var(--mono);
+        color: rgba(255, 255, 255, 0.6);
+        margin-top: 2px;
+      }
+      .actions {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-top: 24px;
+      }
+      .actions button {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 7px;
+        font-size: 12.5px;
+        color: rgba(255, 255, 255, 0.9);
+      }
+      .actions i {
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.12);
+        display: grid;
+        place-items: center;
+        font-style: normal;
+        font-size: 19px;
+      }
+      .section {
+        padding: 22px 20px 0;
+      }
+      .section h2 {
+        font-size: 15px;
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+      .section h2 span {
+        font-weight: 500;
+        font-size: 13px;
+        color: var(--green-3);
+      }
+      .card {
+        background: var(--paper);
+        border-radius: 20px;
+        padding: 6px 16px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      }
+      .tx {
+        display: grid;
+        grid-template-columns: 42px 1fr auto;
+        gap: 12px;
+        align-items: center;
+        padding: 12px 0;
+        border-top: 1px solid var(--line);
+        width: 100%;
+        text-align: left;
+      }
+      .tx:first-child {
+        border-top: 0;
+      }
+      .tx .ic {
+        width: 42px;
+        height: 42px;
+        border-radius: 13px;
+        display: grid;
+        place-items: center;
+        font-size: 18px;
+        background: var(--cream);
+      }
+      .tx .nm {
+        font-weight: 600;
+        font-size: 14.5px;
+      }
+      .tx .sub {
+        font-size: 12.5px;
+        color: var(--ink-3);
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .tx .am {
+        font-weight: 600;
+        font-size: 14.5px;
+        text-align: right;
+      }
+      .tx .am.in {
+        color: var(--ok);
+      }
+      .pill {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 1px 7px;
+        border-radius: 99px;
+      }
+      .pill.sent {
+        background: #e5f2eb;
+        color: var(--ok);
+      }
+      .pill.pend {
+        background: #fbefd8;
+        color: var(--wait);
+      }
+      .promo {
+        margin: 18px 20px 0;
+        padding: 16px;
+        border-radius: 20px;
+        background: var(--paper);
+        display: flex;
+        gap: 14px;
+        align-items: center;
+      }
+      .promo i {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        background: var(--green);
+        color: var(--gold);
+        display: grid;
+        place-items: center;
+        font-style: normal;
+        font-size: 20px;
+        flex: none;
+      }
+      .promo b {
+        font-size: 14px;
+      }
+      .promo p {
+        font-size: 12.5px;
+        color: var(--ink-2);
+      }
 
-/* payment detail */
-.top { position: sticky; top: 0; background: var(--cream); padding: 6px 16px 10px; display: flex; align-items: center; gap: 10px; z-index: 2; }
-.back { width: 38px; height: 38px; border-radius: 50%; background: var(--paper); display: grid; place-items: center; font-size: 18px; }
-.top b { font-size: 16px; }
-.pay-head { text-align: center; padding: 18px 20px 6px; }
-.pay-head .ic { width: 64px; height: 64px; border-radius: 20px; background: var(--paper); display: grid; place-items: center; font-size: 28px; margin: 0 auto 12px; }
-.pay-head .amt { font-size: 38px; font-weight: 700; letter-spacing: -.03em; }
-.pay-head .to { color: var(--ink-2); margin-top: 2px; }
-.pay-head .pill { display: inline-block; margin-top: 10px; font-size: 12.5px; padding: 3px 11px; }
-.steps { list-style: none; padding: 4px 0; }
-.steps li { display: grid; grid-template-columns: 22px 1fr; gap: 12px; padding: 10px 0; position: relative; }
-.steps li::before { content: ""; position: absolute; left: 10px; top: 32px; bottom: -4px; width: 2px; background: var(--line); }
-.steps li:last-child::before { display: none; }
-.steps .dot { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; color: #fff; background: var(--ok); }
-.steps .dot.unk { background: var(--paper); border: 2px dashed var(--ink-3); color: var(--ink-3); }
-.steps b { font-size: 14.5px; font-weight: 600; } .steps p { font-size: 12.5px; color: var(--ink-3); }
-.rows .r { display: flex; justify-content: space-between; padding: 12px 0; border-top: 1px solid var(--line); font-size: 14px; }
-.rows .r:first-child { border-top: 0; } .rows .r span { color: var(--ink-3); }
-.ask { margin: 18px 20px 0; width: calc(100% - 40px); padding: 15px; border-radius: 16px; background: var(--green); color: #fff; font-weight: 600; display: flex; justify-content: center; gap: 8px; }
-.note { margin: 12px 24px 0; font-size: 12.5px; color: var(--ink-3); text-align: center; }
+      /* payment detail */
+      .top {
+        position: sticky;
+        top: 0;
+        background: var(--cream);
+        padding: 6px 16px 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        z-index: 2;
+      }
+      .back {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: var(--paper);
+        display: grid;
+        place-items: center;
+        font-size: 18px;
+      }
+      .top b {
+        font-size: 16px;
+      }
+      .pay-head {
+        text-align: center;
+        padding: 18px 20px 6px;
+      }
+      .pay-head .ic {
+        width: 64px;
+        height: 64px;
+        border-radius: 20px;
+        background: var(--paper);
+        display: grid;
+        place-items: center;
+        font-size: 28px;
+        margin: 0 auto 12px;
+      }
+      .pay-head .amt {
+        font-size: 38px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+      }
+      .pay-head .to {
+        color: var(--ink-2);
+        margin-top: 2px;
+      }
+      .pay-head .pill {
+        display: inline-block;
+        margin-top: 10px;
+        font-size: 12.5px;
+        padding: 3px 11px;
+      }
+      .steps {
+        list-style: none;
+        padding: 4px 0;
+      }
+      .steps li {
+        display: grid;
+        grid-template-columns: 22px 1fr;
+        gap: 12px;
+        padding: 10px 0;
+        position: relative;
+      }
+      .steps li::before {
+        content: "";
+        position: absolute;
+        left: 10px;
+        top: 32px;
+        bottom: -4px;
+        width: 2px;
+        background: var(--line);
+      }
+      .steps li:last-child::before {
+        display: none;
+      }
+      .steps .dot {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        color: #fff;
+        background: var(--ok);
+      }
+      .steps .dot.unk {
+        background: var(--paper);
+        border: 2px dashed var(--ink-3);
+        color: var(--ink-3);
+      }
+      .steps b {
+        font-size: 14.5px;
+        font-weight: 600;
+      }
+      .steps p {
+        font-size: 12.5px;
+        color: var(--ink-3);
+      }
+      .rows .r {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-top: 1px solid var(--line);
+        font-size: 14px;
+      }
+      .rows .r:first-child {
+        border-top: 0;
+      }
+      .rows .r span {
+        color: var(--ink-3);
+      }
+      .ask {
+        margin: 18px 20px 0;
+        width: calc(100% - 40px);
+        padding: 15px;
+        border-radius: 16px;
+        background: var(--green);
+        color: #fff;
+        font-weight: 600;
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+      }
+      .note {
+        margin: 12px 24px 0;
+        font-size: 12.5px;
+        color: var(--ink-3);
+        text-align: center;
+      }
 
-/* tab bar */
-.tabbar { position: absolute; left: 0; right: 0; bottom: 0; height: 84px; background: rgba(255,255,255,.94); backdrop-filter: blur(12px); border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(4, 1fr); padding: 10px 6px 0; z-index: 3; }
-.tabbar button { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; color: var(--ink-3); }
-.tabbar button.on { color: var(--green); font-weight: 600; }
-.tabbar i { font-style: normal; font-size: 19px; }
+      /* tab bar */
+      .tabbar {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 84px;
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(12px);
+        border-top: 1px solid var(--line);
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        padding: 10px 6px 0;
+        z-index: 3;
+      }
+      .tabbar button {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        color: var(--ink-3);
+      }
+      .tabbar button.on {
+        color: var(--green);
+        font-weight: 600;
+      }
+      .tabbar i {
+        font-style: normal;
+        font-size: 19px;
+      }
 
-/* chat launcher */
-.fab { position: absolute; right: 18px; bottom: 100px; z-index: 4; height: 54px; padding: 0 18px 0 14px; border-radius: 27px; background: var(--green); color: #fff; display: flex; align-items: center; gap: 9px; font-weight: 600; box-shadow: 0 14px 30px -10px rgba(15,61,46,.7); }
-.fab i { width: 28px; height: 28px; border-radius: 50%; background: var(--gold); color: var(--green); display: grid; place-items: center; font-style: normal; font-size: 15px; }
+      /* chat launcher */
+      .fab {
+        position: absolute;
+        right: 18px;
+        bottom: 100px;
+        z-index: 4;
+        height: 54px;
+        padding: 0 18px 0 14px;
+        border-radius: 27px;
+        background: var(--green);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-weight: 600;
+        box-shadow: 0 14px 30px -10px rgba(15, 61, 46, 0.7);
+      }
+      .fab i {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--gold);
+        color: var(--green);
+        display: grid;
+        place-items: center;
+        font-style: normal;
+        font-size: 15px;
+      }
 
-/* chat sheet */
-.sheet { position: absolute; inset: 0; z-index: 10; background: var(--cream); display: flex; flex-direction: column; transform: translateY(100%); transition: transform .35s cubic-bezier(.2,.9,.3,1); }
-.sheet.open { transform: none; }
-.sheet .head { background: var(--green); color: #fff; padding: 50px 16px 14px; display: flex; align-items: center; gap: 12px; }
-.sheet .head .avatar { background: var(--gold); width: 40px; height: 40px; font-size: 18px; }
-.sheet .head b { display: block; font-size: 16px; } .sheet .head small { font-size: 12px; color: rgba(255,255,255,.7); display: flex; align-items: center; gap: 6px; }
-.sheet .head small::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #5BE39A; }
-.sheet .head .x { margin-left: auto; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,.12); color: #fff; font-size: 18px; }
-.msgs { flex: 1; overflow-y: auto; padding: 16px 14px 10px; display: flex; flex-direction: column; gap: 10px; scrollbar-width: none; }
-.msgs::-webkit-scrollbar { display: none; }
-.b { max-width: 82%; padding: 11px 14px; border-radius: 18px; font-size: 14.5px; line-height: 1.45; white-space: pre-wrap; }
-.b.me { align-self: flex-end; background: var(--green); color: #fff; border-bottom-right-radius: 6px; }
-.b.bot { align-self: flex-start; background: var(--paper); border-bottom-left-radius: 6px; }
-.b.err { background: #FBE7E3; color: var(--warn); }
-.ctx { align-self: center; font-size: 12px; color: var(--ink-3); background: var(--paper); padding: 4px 10px; border-radius: 99px; }
-.work { align-self: flex-start; width: 86%; background: var(--paper); border-radius: 18px; padding: 13px 14px; border-bottom-left-radius: 6px; }
-.work .t { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-.spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--green); animation: spin .8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.work ul { list-style: none; padding: 0; margin-top: 8px; }
-.work li { font-size: 12.5px; color: var(--ink-2); padding: 3px 0; display: flex; gap: 8px; }
-.work li::before { content: "✓"; color: var(--ok); font-weight: 700; }
-.work li.blocked::before { content: "!"; color: var(--warn); }
-.work li.now::before { content: "•"; color: var(--wait); }
-.status-card { align-self: flex-start; width: 86%; border-radius: 16px; padding: 12px 14px; font-size: 13px; display: flex; gap: 10px; align-items: flex-start; }
-.status-card i { font-style: normal; font-size: 16px; }
-.status-card b { display: block; font-size: 13.5px; }
-.status-card.done { background: #E5F2EB; color: #134D33; }
-.status-card.wait { background: #FBEFD8; color: #6B4510; }
-.status-card.person { background: #E8ECF7; color: #26386E; }
-.why { font-size: 12px; color: var(--ink-3); align-self: flex-start; padding-left: 4px; }
-.hist { align-self: flex-start; width: 92%; background: var(--paper); border-radius: 18px; border-bottom-left-radius: 6px; padding: 12px 14px; }
-.hist .t { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-.hist .t small { margin-left: auto; font: 11px var(--mono); color: var(--ink-3); font-weight: 400; }
-.ev { position: relative; padding: 7px 0 7px 16px; border-left: 2px solid var(--line); margin-left: 4px; animation: evin .35s ease both; }
-.ev::before { content: ""; position: absolute; left: -6px; top: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--paper); border: 2px solid var(--ink-3); }
-.ev.ok::before, .ev.result::before { border-color: var(--ok); background: var(--ok); }
-.ev.blocked::before, .ev.flag::before { border-color: var(--warn); background: var(--warn); }
-.ev.ask::before { border-color: var(--green-3); }
-.ev.escalate::before { border-color: #3B5BC0; background: #3B5BC0; }
-.ev .m { font: 10.5px/1.4 var(--mono); color: var(--ink-3); }
-.ev .n { font-size: 13px; color: var(--ink); margin-top: 1px; }
-.ev.blocked .n { color: var(--warn); }
-@keyframes evin { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-details.reason { align-self: flex-start; width: 92%; font-size: 12.5px; color: var(--ink-2); }
-details.reason summary { cursor: pointer; color: var(--green-3); font-weight: 600; padding: 2px 4px; }
-details.reason pre { white-space: pre-wrap; font: 11.5px/1.5 var(--mono); background: var(--paper); border-radius: 12px; padding: 12px; margin-top: 6px; max-height: 260px; overflow: auto; }
-.sheet .head .tog { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,.12); color: #fff; font-size: 16px; }
-.sheet .head .tog[aria-pressed="false"] { opacity: .5; }
-.composer .mic { background: var(--paper); color: var(--green); border: 1px solid var(--line); }
-.composer .mic.rec { background: var(--warn); color: #fff; border-color: var(--warn); animation: pulse 1.2s infinite; }
-@keyframes pulse { 50% { box-shadow: 0 0 0 8px rgba(192,65,44,.15); } }
-.b.bot .play { margin-left: 6px; font-size: 12px; color: var(--green-3); }
-.chips { display: flex; gap: 8px; overflow-x: auto; padding: 0 14px 10px; scrollbar-width: none; }
-.chips button { white-space: nowrap; padding: 8px 12px; border-radius: 99px; background: var(--paper); border: 1px solid var(--line); font-size: 13px; }
-.composer { display: flex; gap: 8px; padding: 10px 14px 28px; background: var(--paper); border-top: 1px solid var(--line); }
-.composer input { flex: 1; border: 1px solid var(--line); border-radius: 22px; padding: 12px 16px; font: inherit; background: var(--cream); outline: none; }
-.composer input:focus { border-color: var(--green-3); }
-.composer button { width: 46px; height: 46px; border-radius: 50%; background: var(--green); color: #fff; font-size: 18px; }
-.composer button:disabled { opacity: .4; }
-</style>
-</head>
-<body>
-<div class="phone" aria-label="Scale mobile banking">
-  <!-- HOME -->
-  <section class="screen" id="home" aria-label="Home">
-    <div class="hero">
-      <div class="status"><span>9:41</span><span>●●● ▮</span></div>
-      <div class="hello">
-        <div class="who"><div class="avatar">EM</div><div><small>Good afternoon</small><b>Elowen Marsh</b></div></div>
-        <button class="bell" aria-label="Notifications">🔔</button>
-      </div>
-      <div class="balance">
-        <div class="lbl">Current account</div>
-        <div class="amt">£2,184<span>.36</span></div>
-        <div class="acct">Scale · ···· 4821</div>
-      </div>
-      <div class="actions">
-        <button><i>↗</i>Pay</button><button><i>⇄</i>Transfer</button><button><i>▭</i>Cards</button><button><i>≡</i>Statements</button>
-      </div>
+      /* chat sheet */
+      .sheet {
+        position: absolute;
+        inset: 0;
+        z-index: 10;
+        background: var(--cream);
+        display: flex;
+        flex-direction: column;
+        transform: translateY(100%);
+        transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1);
+      }
+      .sheet.open {
+        transform: none;
+      }
+      .sheet .head {
+        background: var(--green);
+        color: #fff;
+        padding: 50px 16px 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .sheet .head .avatar {
+        background: var(--gold);
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+      }
+      .sheet .head b {
+        display: block;
+        font-size: 16px;
+      }
+      .sheet .head small {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.7);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .sheet .head small::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #5be39a;
+      }
+      .sheet .head .x {
+        margin-left: auto;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+        font-size: 18px;
+      }
+      .msgs {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px 14px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        scrollbar-width: none;
+      }
+      .msgs::-webkit-scrollbar {
+        display: none;
+      }
+      .b {
+        max-width: 82%;
+        padding: 11px 14px;
+        border-radius: 18px;
+        font-size: 14.5px;
+        line-height: 1.45;
+        white-space: pre-wrap;
+      }
+      .b.me {
+        align-self: flex-end;
+        background: var(--green);
+        color: #fff;
+        border-bottom-right-radius: 6px;
+      }
+      .b.bot {
+        align-self: flex-start;
+        background: var(--paper);
+        border-bottom-left-radius: 6px;
+      }
+      .b.err {
+        background: #fbe7e3;
+        color: var(--warn);
+      }
+      .ctx {
+        align-self: center;
+        font-size: 12px;
+        color: var(--ink-3);
+        background: var(--paper);
+        padding: 4px 10px;
+        border-radius: 99px;
+      }
+      .work {
+        align-self: flex-start;
+        width: 86%;
+        background: var(--paper);
+        border-radius: 18px;
+        padding: 13px 14px;
+        border-bottom-left-radius: 6px;
+      }
+      .work .t {
+        font-size: 13px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .spin {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 2px solid var(--line);
+        border-top-color: var(--green);
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .work ul {
+        list-style: none;
+        padding: 0;
+        margin-top: 8px;
+      }
+      .work li {
+        font-size: 12.5px;
+        color: var(--ink-2);
+        padding: 3px 0;
+        display: flex;
+        gap: 8px;
+      }
+      .work li::before {
+        content: "✓";
+        color: var(--ok);
+        font-weight: 700;
+      }
+      .work li.blocked::before {
+        content: "!";
+        color: var(--warn);
+      }
+      .work li.now::before {
+        content: "•";
+        color: var(--wait);
+      }
+      .status-card {
+        align-self: flex-start;
+        width: 86%;
+        border-radius: 16px;
+        padding: 12px 14px;
+        font-size: 13px;
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+      }
+      .status-card i {
+        font-style: normal;
+        font-size: 16px;
+      }
+      .status-card b {
+        display: block;
+        font-size: 13.5px;
+      }
+      .status-card.done {
+        background: #e5f2eb;
+        color: #134d33;
+      }
+      .status-card.wait {
+        background: #fbefd8;
+        color: #6b4510;
+      }
+      .status-card.person {
+        background: #e8ecf7;
+        color: #26386e;
+      }
+      .why {
+        font-size: 12px;
+        color: var(--ink-3);
+        align-self: flex-start;
+        padding-left: 4px;
+      }
+      .hist {
+        align-self: flex-start;
+        width: 92%;
+        background: var(--paper);
+        border-radius: 18px;
+        border-bottom-left-radius: 6px;
+        padding: 12px 14px;
+      }
+      .hist .t {
+        font-size: 13px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+      .hist .t small {
+        margin-left: auto;
+        font: 11px var(--mono);
+        color: var(--ink-3);
+        font-weight: 400;
+      }
+      .ev {
+        position: relative;
+        padding: 7px 0 7px 16px;
+        border-left: 2px solid var(--line);
+        margin-left: 4px;
+        animation: evin 0.35s ease both;
+      }
+      .ev::before {
+        content: "";
+        position: absolute;
+        left: -6px;
+        top: 12px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--paper);
+        border: 2px solid var(--ink-3);
+      }
+      .ev.ok::before,
+      .ev.result::before {
+        border-color: var(--ok);
+        background: var(--ok);
+      }
+      .ev.blocked::before,
+      .ev.flag::before {
+        border-color: var(--warn);
+        background: var(--warn);
+      }
+      .ev.ask::before {
+        border-color: var(--green-3);
+      }
+      .ev.escalate::before {
+        border-color: #3b5bc0;
+        background: #3b5bc0;
+      }
+      .ev .m {
+        font: 10.5px/1.4 var(--mono);
+        color: var(--ink-3);
+      }
+      .ev .n {
+        font-size: 13px;
+        color: var(--ink);
+        margin-top: 1px;
+      }
+      .ev.blocked .n {
+        color: var(--warn);
+      }
+      @keyframes evin {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      details.reason {
+        align-self: flex-start;
+        width: 92%;
+        font-size: 12.5px;
+        color: var(--ink-2);
+      }
+      details.reason summary {
+        cursor: pointer;
+        color: var(--green-3);
+        font-weight: 600;
+        padding: 2px 4px;
+      }
+      details.reason pre {
+        white-space: pre-wrap;
+        font: 11.5px/1.5 var(--mono);
+        background: var(--paper);
+        border-radius: 12px;
+        padding: 12px;
+        margin-top: 6px;
+        max-height: 260px;
+        overflow: auto;
+      }
+      .sheet .head .tog {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+        font-size: 16px;
+      }
+      .sheet .head .tog[aria-pressed="false"] {
+        opacity: 0.5;
+      }
+      .composer .mic {
+        background: var(--paper);
+        color: var(--green);
+        border: 1px solid var(--line);
+        flex: none;
+      }
+      .composer .mic.rec {
+        background: var(--warn);
+        color: #fff;
+        border-color: var(--warn);
+        animation: pulse 1.2s infinite;
+      }
+      @keyframes pulse {
+        50% {
+          box-shadow: 0 0 0 8px rgba(192, 65, 44, 0.15);
+        }
+      }
+      .b.bot .play {
+        margin-left: 6px;
+        font-size: 12px;
+        color: var(--green-3);
+      }
+      .chips {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding: 0 14px 10px;
+        scrollbar-width: none;
+      }
+      .chips button {
+        white-space: nowrap;
+        padding: 8px 12px;
+        border-radius: 99px;
+        background: var(--paper);
+        border: 1px solid var(--line);
+        font-size: 13px;
+      }
+      .composer {
+        display: flex;
+        gap: 8px;
+        padding: 10px 14px 28px;
+        background: var(--paper);
+        border-top: 1px solid var(--line);
+      }
+      .composer input {
+        flex: 1;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 12px 16px;
+        font: inherit;
+        background: var(--cream);
+        outline: none;
+      }
+      .composer input:focus {
+        border-color: var(--green-3);
+      }
+      .composer button {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        background: var(--green);
+        color: #fff;
+        font-size: 18px;
+      }
+      .composer button:disabled {
+        opacity: 0.4;
+      }
+
+      /* live voice bar (replaces composer during a call) */
+      .voicebar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px 30px;
+        background: var(--paper);
+        border-top: 1px solid var(--line);
+      }
+      .voicebar .orb {
+        position: relative;
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        background: var(--green);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-style: normal;
+        font-size: 17px;
+        flex: none;
+      }
+      .voicebar .orb::after {
+        content: "";
+        position: absolute;
+        inset: -6px;
+        border-radius: 50%;
+        border: 2px solid var(--green-3);
+        opacity: 0;
+      }
+      .voicebar[data-mode="listening"] .orb::after {
+        animation: ring 1.5s ease-out infinite;
+      }
+      .voicebar[data-mode="speaking"] .orb {
+        background: var(--gold);
+        color: var(--green);
+      }
+      .voicebar[data-mode="speaking"] .orb::after {
+        animation: ring 1.1s ease-out infinite;
+        border-color: var(--gold);
+      }
+      .voicebar[data-mode="connecting"] .orb {
+        opacity: 0.55;
+      }
+      @keyframes ring {
+        from {
+          transform: scale(0.82);
+          opacity: 0.8;
+        }
+        to {
+          transform: scale(1.4);
+          opacity: 0;
+        }
+      }
+      .voicebar .vstat {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--ink-2);
+      }
+      .voicebar .endcall {
+        margin-left: auto;
+        padding: 10px 18px;
+        border-radius: 99px;
+        background: var(--warn);
+        color: #fff;
+        font-weight: 600;
+        font-size: 13.5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="phone" aria-label="Scale mobile banking">
+      <!-- HOME -->
+      <section class="screen" id="home" aria-label="Home">
+        <div class="hero">
+          <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+          <div class="hello">
+            <div class="who">
+              <div class="avatar">EM</div>
+              <div><small>Good afternoon</small><b>Elowen Marsh</b></div>
+            </div>
+            <button class="bell" aria-label="Notifications">🔔</button>
+          </div>
+          <div class="balance">
+            <div class="lbl">Current account</div>
+            <div class="amt">£2,184<span>.36</span></div>
+            <div class="acct">Scale · ···· 4821</div>
+          </div>
+          <div class="actions">
+            <button><i>↗</i>Pay</button><button><i>⇄</i>Transfer</button
+            ><button><i>▭</i>Cards</button><button><i>≡</i>Statements</button>
+          </div>
+        </div>
+        <div class="section">
+          <h2>Recent activity <span>See all</span></h2>
+          <div class="card" id="activity"></div>
+        </div>
+        <div class="promo">
+          <i>✦</i>
+          <div>
+            <b>Questions about a payment?</b>
+            <p>
+              Ask our assistant. It checks your records and tells you exactly
+              what we can see.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- PAYMENT DETAIL -->
+      <section class="screen" id="detail" aria-label="Payment detail" hidden>
+        <div class="status" style="color: var(--ink)">
+          <span>9:41</span><span>●●● ▮</span>
+        </div>
+        <div class="top">
+          <button class="back" data-go="home" aria-label="Back">←</button
+          ><b>Payment</b>
+        </div>
+        <div id="detail-body"></div>
+      </section>
+
+      <nav class="tabbar">
+        <button class="on" data-go="home"><i>⌂</i>Home</button
+        ><button><i>↗</i>Payments</button><button><i>▭</i>Cards</button
+        ><button><i>☺</i>Profile</button>
+      </nav>
+
+      <button class="fab" id="fab" aria-label="Open the assistant">
+        <i>✦</i>Ask Scale
+      </button>
+
+      <!-- CHAT -->
+      <section
+        class="sheet"
+        id="sheet"
+        aria-label="Assistant"
+        aria-hidden="true"
+      >
+        <div class="head">
+          <div class="avatar">✦</div>
+          <div>
+            <b>Scale Assistant</b
+            ><small>Checks your records before it answers</small>
+          </div>
+          <button
+            class="tog"
+            id="voice"
+            aria-pressed="true"
+            aria-label="Read replies aloud"
+            style="margin-left: auto"
+          >
+            🔊
+          </button>
+          <button
+            class="x"
+            id="close"
+            aria-label="Close the assistant"
+            style="margin-left: 8px"
+          >
+            ✕
+          </button>
+        </div>
+        <div class="msgs" id="msgs" aria-live="polite"></div>
+        <div class="chips" id="chips"></div>
+        <form class="composer" id="composer">
+          <input
+            id="input"
+            autocomplete="off"
+            placeholder="Message Scale…"
+            aria-label="Your message"
+            maxlength="1000"
+          />
+          <button
+            type="button"
+            class="mic"
+            id="mic"
+            aria-label="Talk to Scale by voice"
+          >
+            🎙
+          </button>
+          <button id="send" aria-label="Send">↑</button>
+        </form>
+        <div class="voicebar" id="voicebar" hidden>
+          <i class="orb">◉</i>
+          <span class="vstat" id="vstat">Connecting…</span>
+          <button type="button" class="endcall" id="endcall">End</button>
+        </div>
+      </section>
     </div>
-    <div class="section">
-      <h2>Recent activity <span>See all</span></h2>
-      <div class="card" id="activity"></div>
-    </div>
-    <div class="promo"><i>✦</i><div><b>Questions about a payment?</b><p>Ask our assistant. It checks your records and tells you exactly what we can see.</p></div></div>
-  </section>
 
-  <!-- PAYMENT DETAIL -->
-  <section class="screen" id="detail" aria-label="Payment detail" hidden>
-    <div class="status" style="color:var(--ink)"><span>9:41</span><span>●●● ▮</span></div>
-    <div class="top"><button class="back" data-go="home" aria-label="Back">←</button><b>Payment</b></div>
-    <div id="detail-body"></div>
-  </section>
+    <script>
+      const ACTIVITY = [
+        {
+          id: "alder",
+          icon: "🪵",
+          name: "Alder & Reed Workshop",
+          sub: "Transfer · Today, 10:12",
+          amount: -420,
+          status: "sent",
+          ref: "Bookcase",
+          account: "Alder & Reed Workshop · 20-14-77 ···· 3390",
+          detail: true,
+        },
+        {
+          id: "fern",
+          icon: "📚",
+          name: "Fern & Finch Books",
+          sub: "Card · Today, 09:03",
+          amount: -38.4,
+        },
+        {
+          id: "salary",
+          icon: "💼",
+          name: "Kestrel Loom Ltd",
+          sub: "Salary · Yesterday",
+          amount: 2450,
+          in: true,
+        },
+        {
+          id: "pottery",
+          icon: "🏺",
+          name: "Fernlea Pottery Studio",
+          sub: "Standing order · 18 Jul",
+          amount: -65,
+        },
+        {
+          id: "gym",
+          icon: "🏋️",
+          name: "Northmere Fitness",
+          sub: "Direct Debit · 17 Jul",
+          amount: -42,
+        },
+        {
+          id: "tfl",
+          icon: "🚇",
+          name: "Transport for London",
+          sub: "Card · 16 Jul",
+          amount: -7.6,
+        },
+      ];
+      const CHIPS = [
+        "Has my friend's £150 for the kiln arrived?",
+        "Was my £420 payment to Alder & Reed sent?",
+        "Cancel my Northmere Fitness Direct Debit",
+        "I don't recognise a card payment",
+      ];
 
-  <nav class="tabbar">
-    <button class="on" data-go="home"><i>⌂</i>Home</button><button><i>↗</i>Payments</button><button><i>▭</i>Cards</button><button><i>☺</i>Profile</button>
-  </nav>
+      // Scripted conversations, worded from the organisers' practice cases (Banking 002, 001, 015, 023).
+      const SCRIPTS = [
+        {
+          id: "kiln",
+          match: /kiln|150|friend|arriv|incoming|received/i,
+          ack: "I'll check what's come into your account.",
+          events: [
+            [
+              "Internal note",
+              "Scale identity check",
+              "Scale service agent",
+              "Message came through the signed-in app: authenticated.",
+              "check",
+            ],
+            [
+              "Internal note",
+              "Scale service agent",
+              "Scale incoming-payment journal",
+              "I'm checking incoming credits recorded for Elowen Marsh's account now. I'll report only what Scale's records show.",
+              "ask",
+            ],
+            [
+              "Internal note",
+              "Scale safety check",
+              "Scale service agent",
+              "Approved: a read of her own account.",
+              "ok",
+            ],
+            [
+              "Internal note",
+              "Scale incoming-payment system",
+              "Scale service agent",
+              "No incoming payment found for the account at the time of this check.",
+              "result",
+            ],
+            [
+              "Internal note",
+              "Scale safety check",
+              "Scale service agent",
+              "Reply approved: it says only what the records show, not whether the sender paid.",
+              "ok",
+            ],
+          ],
+          reply:
+            "I checked the incoming payments recorded for your account, and no incoming payment was found at the time of the check. This confirms only what we can see. I can't tell from our records whether the sender made or completed the payment.",
+          status: "done",
+          title: "Answered",
+          sub: "Ask your friend for their payment reference if it still doesn't show",
+          reasoning:
+            "Facts: the customer is signed in (authenticated). The incoming-payment journal shows no incoming payment at the time of the check.\nClaim: the friend said they sent it. Not verified.\nRule applied: a missing record is not proof the money wasn't sent, so the reply doesn't say it.\nNot done: chasing the sender's bank. We can't see it.",
+        },
+        {
+          id: "alder",
+          match: /420|alder|reed|bookcase|sent\?|was my .* sent/i,
+          ack: "Let me check that transfer for you.",
+          events: [
+            [
+              "Internal note",
+              "Scale identity check",
+              "Scale service agent",
+              "Message came through the signed-in app: authenticated.",
+              "check",
+            ],
+            [
+              "Internal note",
+              "Scale service agent",
+              "Scale transfer journal",
+              "I'm checking the journal entry for the one-off £420 transfer to Alder & Reed Workshop. Please return the recorded transfer status.",
+              "ask",
+            ],
+            [
+              "Internal note",
+              "Scale safety check",
+              "Scale service agent",
+              "Approved: a read of her own transfer.",
+              "ok",
+            ],
+            [
+              "Internal note",
+              "Scale transfer journal",
+              "Scale service agent",
+              "Transfer status: SENT. This is Scale's outgoing-transfer record; recipient-bank receipt or credit is not confirmed.",
+              "result",
+            ],
+            [
+              "Internal note",
+              "Scale safety check",
+              "Scale service agent",
+              "First draft said “received”. Not approved: no record confirms it. Rewritten.",
+              "blocked",
+            ],
+            [
+              "Internal note",
+              "Scale safety check",
+              "Scale service agent",
+              "Reply approved.",
+              "ok",
+            ],
+          ],
+          reply:
+            "Your £420 transfer to Alder & Reed Workshop is recorded as sent in our transfer journal. That confirms it left Scale. It doesn't confirm that their bank has received or credited it.",
+          status: "done",
+          title: "Answered",
+          sub: "If they say it hasn't arrived, ask their bank to check",
+          reasoning:
+            "Facts: the transfer journal records the £420 transfer as SENT.\nNot confirmed: receipt or credit by the recipient's bank.\nSafety check: the first draft used “received”; blocked because no record confirms it, then rewritten.\nNot done: contacting the recipient's bank.",
+        },
+        {
+          id: "dd",
+          match: /direct debit|northmere|gym|mandate|cancel/i,
+          ack: "I can help with that. Checking the Direct Debit now.",
+          events: [
+            [
+              "Internal note",
+              "Scale identity check",
+              "Scale service agent",
+              "Signed in with Face ID: verified. A cancellation is a change, so this matters.",
+              "check",
+            ],
+            [
+              "Internal note",
+              "Scale service agent",
+              "Scale case record",
+              "I reviewed the collection-stage information. I can't rule out a collection already being processed, so that needs separate reconciliation.",
+              "flag",
+            ],
+            [
+              "Internal note",
+              "Scale safety check",
+              "Scale service agent",
+              "Approved: verified customer, her own mandate, no open conflict.",
+              "ok",
+            ],
+            [
+              "Internal note",
+              "Scale service agent",
+              "Scale Direct Debit service",
+              "I have submitted Elowen Marsh's instruction to cancel the Northmere Fitness mandate. This records her instruction; I am not authorising it on her behalf.",
+              "ask",
+            ],
+            [
+              "Internal note",
+              "Scale Direct Debit service",
+              "Scale service agent",
+              "Direct Debit mandate: Northmere Fitness — Cancelled.",
+              "result",
+            ],
+          ],
+          reply:
+            "Your Northmere Fitness Direct Debit is now cancelled, so it can't be used for future collections. This stops your bank paying them. It doesn't end your agreement with Northmere, and a collection already in progress may still go through.",
+          status: "done",
+          title: "Done: mandate cancelled",
+          sub: "Nothing else needed from you",
+          reasoning:
+            "Facts: the customer is verified (Face ID). The mandate was active.\nCheck: a collection could already be in progress. Flagged, not hidden.\nAction: one change, cancel the mandate, submitted once.\nNot done: cancelling her contract with Northmere. That's between her and them.",
+        },
+        {
+          id: "card",
+          match:
+            /recognise|recognize|card payment|fern|finch|38|fraud|didn't make/i,
+          ack: "Sorry to hear that. Let me look into it with our card team.",
+          events: [
+            [
+              "Internal note",
+              "Scale identity check",
+              "Scale service agent",
+              "Message came through the signed-in app: authenticated.",
+              "check",
+            ],
+            [
+              "Internal note",
+              "Scale evidence check",
+              "Scale service agent",
+              "Card purchase found: Fern & Finch Books, £38.40, today 09:03. She says she doesn't recognise it.",
+              "flag",
+            ],
+            [
+              "Internal note",
+              "Scale service agent",
+              "Scale card team",
+              "I'm opening a case for review of the Fern & Finch Books purchase for £38.40. The customer says she does not recognise it; no conclusion about the merchant or the purchase has been reached.",
+              "escalate",
+            ],
+            [
+              "Internal note",
+              "Scale card team",
+              "Scale service agent",
+              "Case registered for the specified card purchase. Registration records the enquiry only; it is not a finding of fraud or a decision to refund.",
+              "result",
+            ],
+            [
+              "Internal note",
+              "Scale safety check",
+              "Scale service agent",
+              "Reply approved: no fraud finding or refund promised.",
+              "ok",
+            ],
+          ],
+          reply:
+            "I've registered your enquiry about the £38.40 Fern & Finch Books purchase with our card team. We haven't yet established who made it, whether it was fraud, or whether a refund is due. If you're worried, you can freeze your card in Cards; no card change has been made.",
+          status: "person",
+          title: "Passed to our card team",
+          sub: "They'll reply here",
+          reasoning:
+            "Facts: the purchase is posted on her account. She says she doesn't recognise it.\nNot established: who made it, fraud, or refund.\nHandover: card team, with the purchase details and her claim.\nNot done: refunding or replacing the card. Neither has been decided.",
+        },
+      ];
 
-  <button class="fab" id="fab" aria-label="Open the assistant"><i>✦</i>Ask Scale</button>
+      const $ = (s) => document.querySelector(s);
+      const money = (n) =>
+        (n < 0 ? "−" : "+") +
+        "£" +
+        Math.abs(n).toLocaleString("en-GB", { minimumFractionDigits: 2 });
+      const esc = (t) =>
+        String(t).replace(
+          /[&<>"]/g,
+          (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+        );
 
-  <!-- CHAT -->
-  <section class="sheet" id="sheet" aria-label="Assistant" aria-hidden="true">
-    <div class="head">
-      <div class="avatar">✦</div>
-      <div><b>Scale Assistant</b><small>Checks your records before it answers</small></div>
-      <button class="tog" id="voice" aria-pressed="true" aria-label="Read replies aloud" style="margin-left:auto">🔊</button>
-      <button class="x" id="close" aria-label="Close the assistant" style="margin-left:8px">✕</button>
-    </div>
-    <div class="msgs" id="msgs" aria-live="polite"></div>
-    <div class="chips" id="chips"></div>
-    <form class="composer" id="composer">
-      <input id="input" autocomplete="off" placeholder="Message Scale…" aria-label="Your message" maxlength="1000">
-      <button id="send" aria-label="Send">↑</button>
-    </form>
-  </section>
-</div>
-
-<script>
-const ACTIVITY = [
-  { id: "alder", icon: "🪵", name: "Alder & Reed Workshop", sub: "Transfer · Today, 10:12", amount: -420, status: "sent",
-    ref: "Bookcase", account: "Alder & Reed Workshop · 20-14-77 ···· 3390", detail: true },
-  { id: "fern", icon: "📚", name: "Fern & Finch Books", sub: "Card · Today, 09:03", amount: -38.4 },
-  { id: "salary", icon: "💼", name: "Kestrel Loom Ltd", sub: "Salary · Yesterday", amount: 2450, in: true },
-  { id: "pottery", icon: "🏺", name: "Fernlea Pottery Studio", sub: "Standing order · 18 Jul", amount: -65 },
-  { id: "gym", icon: "🏋️", name: "Northmere Fitness", sub: "Direct Debit · 17 Jul", amount: -42 },
-  { id: "tfl", icon: "🚇", name: "Transport for London", sub: "Card · 16 Jul", amount: -7.6 },
-];
-const CHIPS = [
-  "Has my friend's £150 for the kiln arrived?",
-  "Was my £420 payment to Alder & Reed sent?",
-  "Cancel my Northmere Fitness Direct Debit",
-  "I don't recognise a card payment",
-];
-
-// Scripted conversations, worded from the organisers' practice cases (Banking 002, 001, 015, 023).
-const SCRIPTS = [
-  { id: "kiln", match: /kiln|150|friend|arriv|incoming|received/i,
-    ack: "I'll check what's come into your account.",
-    events: [
-      ["Internal note", "Scale identity check", "Scale service agent", "Message came through the signed-in app: authenticated.", "check"],
-      ["Internal note", "Scale service agent", "Scale incoming-payment journal", "I'm checking incoming credits recorded for Elowen Marsh's account now. I'll report only what Scale's records show.", "ask"],
-      ["Internal note", "Scale safety check", "Scale service agent", "Approved: a read of her own account.", "ok"],
-      ["Internal note", "Scale incoming-payment system", "Scale service agent", "No incoming payment found for the account at the time of this check.", "result"],
-      ["Internal note", "Scale safety check", "Scale service agent", "Reply approved: it says only what the records show, not whether the sender paid.", "ok"],
-    ],
-    reply: "I checked the incoming payments recorded for your account, and no incoming payment was found at the time of the check. This confirms only what we can see. I can't tell from our records whether the sender made or completed the payment.",
-    status: "done", title: "Answered", sub: "Ask your friend for their payment reference if it still doesn't show",
-    reasoning: "Facts: the customer is signed in (authenticated). The incoming-payment journal shows no incoming payment at the time of the check.\nClaim: the friend said they sent it. Not verified.\nRule applied: a missing record is not proof the money wasn't sent, so the reply doesn't say it.\nNot done: chasing the sender's bank. We can't see it." },
-  { id: "alder", match: /420|alder|reed|bookcase|sent\?|was my .* sent/i,
-    ack: "Let me check that transfer for you.",
-    events: [
-      ["Internal note", "Scale identity check", "Scale service agent", "Message came through the signed-in app: authenticated.", "check"],
-      ["Internal note", "Scale service agent", "Scale transfer journal", "I'm checking the journal entry for the one-off £420 transfer to Alder & Reed Workshop. Please return the recorded transfer status.", "ask"],
-      ["Internal note", "Scale safety check", "Scale service agent", "Approved: a read of her own transfer.", "ok"],
-      ["Internal note", "Scale transfer journal", "Scale service agent", "Transfer status: SENT. This is Scale's outgoing-transfer record; recipient-bank receipt or credit is not confirmed.", "result"],
-      ["Internal note", "Scale safety check", "Scale service agent", "First draft said “received”. Not approved: no record confirms it. Rewritten.", "blocked"],
-      ["Internal note", "Scale safety check", "Scale service agent", "Reply approved.", "ok"],
-    ],
-    reply: "Your £420 transfer to Alder & Reed Workshop is recorded as sent in our transfer journal. That confirms it left Scale. It doesn't confirm that their bank has received or credited it.",
-    status: "done", title: "Answered", sub: "If they say it hasn't arrived, ask their bank to check",
-    reasoning: "Facts: the transfer journal records the £420 transfer as SENT.\nNot confirmed: receipt or credit by the recipient's bank.\nSafety check: the first draft used “received”; blocked because no record confirms it, then rewritten.\nNot done: contacting the recipient's bank." },
-  { id: "dd", match: /direct debit|northmere|gym|mandate|cancel/i,
-    ack: "I can help with that. Checking the Direct Debit now.",
-    events: [
-      ["Internal note", "Scale identity check", "Scale service agent", "Signed in with Face ID: verified. A cancellation is a change, so this matters.", "check"],
-      ["Internal note", "Scale service agent", "Scale case record", "I reviewed the collection-stage information. I can't rule out a collection already being processed, so that needs separate reconciliation.", "flag"],
-      ["Internal note", "Scale safety check", "Scale service agent", "Approved: verified customer, her own mandate, no open conflict.", "ok"],
-      ["Internal note", "Scale service agent", "Scale Direct Debit service", "I have submitted Elowen Marsh's instruction to cancel the Northmere Fitness mandate. This records her instruction; I am not authorising it on her behalf.", "ask"],
-      ["Internal note", "Scale Direct Debit service", "Scale service agent", "Direct Debit mandate: Northmere Fitness — Cancelled.", "result"],
-    ],
-    reply: "Your Northmere Fitness Direct Debit is now cancelled, so it can't be used for future collections. This stops your bank paying them. It doesn't end your agreement with Northmere, and a collection already in progress may still go through.",
-    status: "done", title: "Done: mandate cancelled", sub: "Nothing else needed from you",
-    reasoning: "Facts: the customer is verified (Face ID). The mandate was active.\nCheck: a collection could already be in progress. Flagged, not hidden.\nAction: one change, cancel the mandate, submitted once.\nNot done: cancelling her contract with Northmere. That's between her and them." },
-  { id: "card", match: /recognise|recognize|card payment|fern|finch|38|fraud|didn't make/i,
-    ack: "Sorry to hear that. Let me look into it with our card team.",
-    events: [
-      ["Internal note", "Scale identity check", "Scale service agent", "Message came through the signed-in app: authenticated.", "check"],
-      ["Internal note", "Scale evidence check", "Scale service agent", "Card purchase found: Fern & Finch Books, £38.40, today 09:03. She says she doesn't recognise it.", "flag"],
-      ["Internal note", "Scale service agent", "Scale card team", "I'm opening a case for review of the Fern & Finch Books purchase for £38.40. The customer says she does not recognise it; no conclusion about the merchant or the purchase has been reached.", "escalate"],
-      ["Internal note", "Scale card team", "Scale service agent", "Case registered for the specified card purchase. Registration records the enquiry only; it is not a finding of fraud or a decision to refund.", "result"],
-      ["Internal note", "Scale safety check", "Scale service agent", "Reply approved: no fraud finding or refund promised.", "ok"],
-    ],
-    reply: "I've registered your enquiry about the £38.40 Fern & Finch Books purchase with our card team. We haven't yet established who made it, whether it was fraud, or whether a refund is due. If you're worried, you can freeze your card in Cards; no card change has been made.",
-    status: "person", title: "Passed to our card team", sub: "They'll reply here",
-    reasoning: "Facts: the purchase is posted on her account. She says she doesn't recognise it.\nNot established: who made it, fraud, or refund.\nHandover: card team, with the purchase details and her claim.\nNot done: refunding or replacing the card. Neither has been decided." },
-];
-
-const $ = (s) => document.querySelector(s);
-const money = (n) => (n < 0 ? "−" : "+") + "£" + Math.abs(n).toLocaleString("en-GB", { minimumFractionDigits: 2 });
-const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-
-function renderActivity() {
-  $("#activity").innerHTML = ACTIVITY.map((t) => `
+      function renderActivity() {
+        $("#activity").innerHTML = ACTIVITY.map(
+          (t) => `
     <button class="tx" ${t.detail ? `data-tx="${t.id}"` : ""} aria-label="${esc(t.name)} ${money(t.amount)}">
       <span class="ic">${t.icon}</span>
       <span><span class="nm">${esc(t.name)}</span><span class="sub">${esc(t.sub)}${t.status === "sent" ? '<span class="pill sent">Sent</span>' : ""}</span></span>
       <span class="am ${t.in ? "in" : ""}">${money(t.amount)}</span>
-    </button>`).join("");
-}
+    </button>`,
+        ).join("");
+      }
 
-function renderDetail(t) {
-  $("#detail-body").innerHTML = `
+      function renderDetail(t) {
+        $("#detail-body").innerHTML = `
     <div class="pay-head"><div class="ic">${t.icon}</div><div class="amt">${money(t.amount)}</div><div class="to">to ${esc(t.name)}</div><span class="pill sent">✓ Sent by Scale</span></div>
     <div class="section"><h2>Where it is</h2><div class="card"><ol class="steps">
       <li><span class="dot">✓</span><div><b>You set up the payment</b><p>Today, 10:11 · reference “${esc(t.ref)}”</p></div></li>
@@ -317,124 +1355,292 @@ function renderDetail(t) {
     </div></div>
     <button class="ask" data-ask="${t.id}">✦ Ask about this payment</button>
     <p class="note">The assistant checks our records and tells you exactly what we can see, nothing more.</p>`;
-}
+      }
 
-function show(screen) {
-  ["home", "detail"].forEach((s) => ($(`#${s}`).hidden = s !== screen));
-  $(`#${screen}`).scrollTop = 0;
-}
+      function show(screen) {
+        ["home", "detail"].forEach((s) => ($(`#${s}`).hidden = s !== screen));
+        $(`#${screen}`).scrollTop = 0;
+      }
 
-/* ---------- chat ---------- */
-const history = [];
-let context = null;
-let busy = false;
+      /* ---------- chat ---------- */
+      const history = [];
+      let context = null;
+      let busy = false;
 
-function bubble(cls, html) {
-  const el = document.createElement("div");
-  el.className = cls;
-  el.innerHTML = html;
-  $("#msgs").appendChild(el);
-  $("#msgs").scrollTop = $("#msgs").scrollHeight;
-  return el;
-}
+      function bubble(cls, html) {
+        const el = document.createElement("div");
+        el.className = cls;
+        el.innerHTML = html;
+        $("#msgs").appendChild(el);
+        $("#msgs").scrollTop = $("#msgs").scrollHeight;
+        return el;
+      }
 
-function openChat(ctx, prefill) {
-  context = ctx || null;
-  $("#sheet").classList.add("open");
-  $("#sheet").setAttribute("aria-hidden", "false");
-  if (!$("#msgs").children.length) bubble("b bot", "Hi Elowen 👋 I can check payments, cards, Direct Debits and statements. What can I help with?");
-  if (ctx) bubble("ctx", `About: ${esc(ctx)}`);
-  $("#chips").innerHTML = CHIPS.map((c) => `<button type="button">${esc(c)}</button>`).join("");
-  $("#input").value = prefill || "";
-  setTimeout(() => $("#input").focus(), 350);
-}
+      function openChat(ctx, prefill) {
+        context = ctx || null;
+        $("#sheet").classList.add("open");
+        $("#sheet").setAttribute("aria-hidden", "false");
+        if (!$("#msgs").children.length)
+          bubble(
+            "b bot",
+            "Hi Elowen 👋 I can check payments, cards, Direct Debits and statements. What can I help with?",
+          );
+        if (ctx) bubble("ctx", `About: ${esc(ctx)}`);
+        $("#chips").innerHTML = CHIPS.map(
+          (c) => `<button type="button">${esc(c)}</button>`,
+        ).join("");
+        $("#input").value = prefill || "";
+        setTimeout(() => $("#input").focus(), 350);
+      }
 
-function closeChat() {
-  $("#sheet").classList.remove("open");
-  $("#sheet").setAttribute("aria-hidden", "true");
-}
+      function closeChat() {
+        endVoice();
+        $("#sheet").classList.remove("open");
+        $("#sheet").setAttribute("aria-hidden", "true");
+      }
 
-const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-const now = () => new Date().toTimeString().slice(0, 8);
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      const now = () => new Date().toTimeString().slice(0, 8);
 
-async function send(text) {
-  text = text.trim();
-  if (!text || busy) return;
-  busy = true;
-  $("#send").disabled = true;
-  $("#chips").innerHTML = "";
-  bubble("b me", esc(text));
-  const script = SCRIPTS.find((x) => x.match.test(text));
-  await wait(700);
-  if (!script) {
-    bubble("b bot", "I can check payments, transfers, Direct Debits and card purchases on your account. What would you like me to look into?");
-    $("#chips").innerHTML = CHIPS.map((c) => `<button type="button">${esc(c)}</button>`).join("");
-  } else {
-    bubble("b bot", esc(script.ack));
-    await play(script);
-  }
-  busy = false;
-  $("#send").disabled = false;
-}
+      async function send(text) {
+        text = text.trim();
+        if (!text || busy) return;
+        busy = true;
+        $("#send").disabled = true;
+        $("#chips").innerHTML = "";
+        bubble("b me", esc(text));
+        const script = SCRIPTS.find((x) => x.match.test(text));
+        await wait(700);
+        if (!script) {
+          bubble(
+            "b bot",
+            "I can check payments, transfers, Direct Debits and card purchases on your account. What would you like me to look into?",
+          );
+          $("#chips").innerHTML = CHIPS.map(
+            (c) => `<button type="button">${esc(c)}</button>`,
+          ).join("");
+        } else {
+          bubble("b bot", esc(script.ack));
+          await play(script);
+        }
+        busy = false;
+        $("#send").disabled = false;
+      }
 
-async function play(script) {
-  const card = bubble("hist", `<div class="t"><span class="spin"></span><span class="lbl">Working on your request</span><small>case history</small></div><div class="evs"></div>`);
-  const list = card.querySelector(".evs");
-  await wait(600);
-  for (const [channel, frm, to, note, kind] of script.events) {
-    list.insertAdjacentHTML("beforeend", `<div class="ev ${kind}"><div class="m">${now()} · ${esc(channel)} · ${esc(frm)} → ${esc(to)}</div><div class="n">${esc(note)}</div></div>`);
-    $("#msgs").scrollTop = $("#msgs").scrollHeight;
-    await wait(kind === "result" || kind === "blocked" ? 1500 : 1100);
-  }
-  list.insertAdjacentHTML("beforeend", `<div class="ev ok"><div class="m">${now()} · Secure chat · Scale service agent → Elowen Marsh</div><div class="n">Replied below.</div></div>`);
-  card.querySelector(".t .spin").replaceWith(Object.assign(document.createElement("span"), { textContent: "✓" }));
-  card.querySelector(".lbl").textContent = "Done";
-  await wait(500);
-  showResult(script);
-}
+      async function play(script) {
+        const card = bubble(
+          "hist",
+          `<div class="t"><span class="spin"></span><span class="lbl">Working on your request</span><small>case history</small></div><div class="evs"></div>`,
+        );
+        const list = card.querySelector(".evs");
+        await wait(600);
+        for (const [channel, frm, to, note, kind] of script.events) {
+          list.insertAdjacentHTML(
+            "beforeend",
+            `<div class="ev ${kind}"><div class="m">${now()} · ${esc(channel)} · ${esc(frm)} → ${esc(to)}</div><div class="n">${esc(note)}</div></div>`,
+          );
+          $("#msgs").scrollTop = $("#msgs").scrollHeight;
+          await wait(kind === "result" || kind === "blocked" ? 1500 : 1100);
+        }
+        list.insertAdjacentHTML(
+          "beforeend",
+          `<div class="ev ok"><div class="m">${now()} · Secure chat · Scale service agent → Elowen Marsh</div><div class="n">Replied below.</div></div>`,
+        );
+        card
+          .querySelector(".t .spin")
+          .replaceWith(
+            Object.assign(document.createElement("span"), { textContent: "✓" }),
+          );
+        card.querySelector(".lbl").textContent = "Done";
+        await wait(500);
+        showResult(script);
+      }
 
-function showResult(r) {
-  bubble("b bot", esc(r.reply));
-  const icon = { done: "✓", wait: "⏳", person: "👤" }[r.status];
-  bubble(`status-card ${r.status}`, `<i>${icon}</i><div><b>${esc(r.title)}</b>${esc(r.sub)}</div>`);
-  const el = document.createElement("details");
-  el.className = "reason";
-  el.innerHTML = `<summary>Why this answer?</summary><pre>${esc(r.reasoning)}</pre>`;
-  $("#msgs").appendChild(el);
-  bubble("why", `Every answer passes Scale's safety checks before you see it`);
-  $("#msgs").scrollTop = $("#msgs").scrollHeight;
-  say(r.id);
-}
+      function showResult(r) {
+        bubble("b bot", esc(r.reply));
+        const icon = { done: "✓", wait: "⏳", person: "👤" }[r.status];
+        bubble(
+          `status-card ${r.status}`,
+          `<i>${icon}</i><div><b>${esc(r.title)}</b>${esc(r.sub)}</div>`,
+        );
+        const el = document.createElement("details");
+        el.className = "reason";
+        el.innerHTML = `<summary>Why this answer?</summary><pre>${esc(r.reasoning)}</pre>`;
+        $("#msgs").appendChild(el);
+        bubble(
+          "why",
+          `Every answer passes Scale's safety checks before you see it`,
+        );
+        $("#msgs").scrollTop = $("#msgs").scrollHeight;
+        say(r.id);
+      }
 
-/* ---------- voice (ElevenLabs) ---------- */
-let voiceOn = true;
-let player = null;
-async function say(id) {
-  if (!voiceOn || !id) return;
-  try {
-    if (player) player.pause();
-    player = new Audio(`audio/${id}.mp3`);
-    await player.play();
-  } catch { /* voice is a nice-to-have: the text reply is already on screen */ }
-}
+      /* ---------- voice (ElevenLabs) ---------- */
+      let voiceOn = true;
+      let player = null;
+      async function say(id) {
+        if (!voiceOn || !id) return;
+        try {
+          if (player) player.pause();
+          player = new Audio(`audio/${id}.mp3`);
+          await player.play();
+        } catch {
+          /* voice is a nice-to-have: the text reply is already on screen */
+        }
+      }
 
-/* ---------- wiring ---------- */
-document.addEventListener("click", (e) => {
-  const tx = e.target.closest("[data-tx]");
-  if (tx) { renderDetail(ACTIVITY.find((t) => t.id === tx.dataset.tx)); show("detail"); return; }
-  const go = e.target.closest("[data-go]");
-  if (go && go.dataset.go) { show(go.dataset.go); return; }
-  const ask = e.target.closest("[data-ask]");
-  if (ask) { const t = ACTIVITY.find((x) => x.id === ask.dataset.ask); openChat(`${t.name} · ${money(t.amount)} · ${t.sub}`, `I can see the ${money(t.amount).replace("−", "")} payment to ${t.name} left my account. Has it been sent?`); return; }
-  const chip = e.target.closest(".chips button");
-  if (chip) { send(chip.textContent); return; }
-});
-$("#fab").addEventListener("click", () => openChat(null));
-$("#close").addEventListener("click", closeChat);
-$("#voice").addEventListener("click", () => { voiceOn = !voiceOn; $("#voice").setAttribute("aria-pressed", String(voiceOn)); $("#voice").textContent = voiceOn ? "🔊" : "🔈"; if (!voiceOn && player) player.pause(); });
-$("#composer").addEventListener("submit", (e) => { e.preventDefault(); const v = $("#input").value; $("#input").value = ""; send(v); });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeChat(); });
-renderActivity();
-</script>
-</body>
+      /* ---------- live voice (ElevenLabs Conversational AI) ---------- */
+      const VOICE_SDK =
+        "https://cdn.jsdelivr.net/npm/@elevenlabs/client@1.27.0/+esm";
+      let voiceCfg = null;
+      let convo = null;
+      let voiceBusy = false;
+
+      async function voiceConfig() {
+        if (!voiceCfg) {
+          voiceCfg = {};
+          try {
+            const r = await fetch("/api/voice/config");
+            if (r.ok) voiceCfg = await r.json();
+          } catch {
+            /* plain static server: no voice endpoints */
+          }
+          const q = new URLSearchParams(location.search).get("agent");
+          if (q) voiceCfg.agentId = q;
+        }
+        return voiceCfg;
+      }
+
+      function setVoiceUI(mode) {
+        const bar = $("#voicebar");
+        if (mode === "off") {
+          bar.hidden = true;
+          $("#composer").hidden = false;
+          return;
+        }
+        bar.dataset.mode = mode;
+        bar.hidden = false;
+        $("#composer").hidden = true;
+        $("#vstat").textContent =
+          {
+            connecting: "Connecting…",
+            listening: "Listening — talk to Scale",
+            speaking: "Scale is speaking…",
+          }[mode] || mode;
+      }
+
+      async function startVoice() {
+        if (convo || voiceBusy) return;
+        const cfg = await voiceConfig();
+        if (!cfg.agentId) {
+          bubble(
+            "b bot",
+            "Voice calls aren't set up on this build yet. Serve the app with <code>python3 app/server.py</code> and ELEVENLABS_AGENT_ID — see app/README.md.",
+          );
+          return;
+        }
+        voiceBusy = true;
+        setVoiceUI("connecting");
+        if (player) player.pause();
+        try {
+          const opts = {
+            onMessage: (m) => {
+              const who =
+                m.source === "user" || m.role === "user" ? "me" : "bot";
+              const text = m.message || m.text;
+              if (text) bubble(`b ${who}`, esc(text));
+            },
+            onModeChange: (m) =>
+              setVoiceUI(m.mode === "speaking" ? "speaking" : "listening"),
+            onDisconnect: () => endVoice(),
+            onError: () => {
+              bubble("b err", "Voice error — the call ended.");
+              endVoice();
+            },
+          };
+          if (cfg.private) {
+            const r = await fetch("/api/voice/signed-url");
+            if (!r.ok) throw new Error("no signed url");
+            const { signed_url } = await r.json();
+            opts.signedUrl = signed_url;
+            opts.connectionType = "websocket";
+          } else {
+            opts.agentId = cfg.agentId;
+          }
+          const { Conversation } = await import(VOICE_SDK);
+          convo = await Conversation.startSession(opts);
+          setVoiceUI("listening");
+          bubble("ctx", "Voice call · live ElevenLabs agent");
+        } catch {
+          bubble(
+            "b err",
+            "Couldn't start voice — check mic permission and the voice setup.",
+          );
+          setVoiceUI("off");
+        }
+        voiceBusy = false;
+      }
+
+      async function endVoice() {
+        const c = convo;
+        convo = null;
+        if (c) {
+          try {
+            await c.endSession();
+          } catch {}
+          bubble("ctx", "Voice call ended");
+        }
+        setVoiceUI("off");
+      }
+
+      /* ---------- wiring ---------- */
+      document.addEventListener("click", (e) => {
+        const tx = e.target.closest("[data-tx]");
+        if (tx) {
+          renderDetail(ACTIVITY.find((t) => t.id === tx.dataset.tx));
+          show("detail");
+          return;
+        }
+        const go = e.target.closest("[data-go]");
+        if (go && go.dataset.go) {
+          show(go.dataset.go);
+          return;
+        }
+        const ask = e.target.closest("[data-ask]");
+        if (ask) {
+          const t = ACTIVITY.find((x) => x.id === ask.dataset.ask);
+          openChat(
+            `${t.name} · ${money(t.amount)} · ${t.sub}`,
+            `I can see the ${money(t.amount).replace("−", "")} payment to ${t.name} left my account. Has it been sent?`,
+          );
+          return;
+        }
+        const chip = e.target.closest(".chips button");
+        if (chip) {
+          send(chip.textContent);
+          return;
+        }
+      });
+      $("#fab").addEventListener("click", () => openChat(null));
+      $("#close").addEventListener("click", closeChat);
+      $("#voice").addEventListener("click", () => {
+        voiceOn = !voiceOn;
+        $("#voice").setAttribute("aria-pressed", String(voiceOn));
+        $("#voice").textContent = voiceOn ? "🔊" : "🔈";
+        if (!voiceOn && player) player.pause();
+      });
+      $("#mic").addEventListener("click", startVoice);
+      $("#endcall").addEventListener("click", () => endVoice());
+      $("#composer").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const v = $("#input").value;
+        $("#input").value = "";
+        send(v);
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeChat();
+      });
+      renderActivity();
+    </script>
+  </body>
 </html>
