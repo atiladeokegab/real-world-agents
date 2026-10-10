@@ -6,9 +6,11 @@ sections of this page it must follow.
 
 The mockup is `docs/mockup/index.html`: every screen and state, clickable, with the exact copy.
 Open it in a browser: the case list shows every case with its one outcome; click a row for the case
-page; `Esc` goes back. It is built for a bank operations reviewer. Type is Geist throughout, with
-Geist Mono only for the run log, case numbers and file names. Colour appears only in the state
-pills and step dots.
+page; `Esc` goes back. It is built for a bank operations reviewer, in dark mode. Type is Geist throughout, with
+Geist Mono only for the run log, case numbers and file names. Colour appears only in the status
+tags, step icons and tinted log lines (yellow for a warning, red for a rejection, magenta for a
+failure). Escalations appear as a pinned note at the top of the case timeline, with "Take case"
+and "Reply to customer".
 
 References:
 - [GitHub Actions](https://docs.github.com/en/actions):
@@ -16,6 +18,10 @@ References:
   until you ask for it. Our case list and the "What the agent did" card follow this.
 - [Stripe Dashboard](https://stripe.com/payments): one object per page, a status pill
   next to the title, a plain timeline, details in a narrow side column. Our case page follows this.
+- [Mercury](https://mercury.com): transactions as a borderless table with thin row lines, a small
+  status tag next to the name and summary numbers above. Our case list follows this.
+- [Vercel](https://vercel.com): deployment steps as collapsible rows with a status icon each, and
+  warning or error lines tinted in the log. Our "What the agent did" follows this.
 - [Zendesk agent workspace](https://www.zendesk.com): what the
   customer sees kept apart from internal notes. Our "Reply to the customer" and "Needs a person"
   cards follow this.
