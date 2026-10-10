@@ -1,0 +1,5 @@
+HARROW & VALE BANK PLC | ALLOWED SESSION EXTRACT
+Extract HV-039 | 11 July 2025
+10 July 2025 09:15 UTC | recognised device | successful sign-in
+11 July 2025 08:42 UTC | new device | sign-in notification generated
+Device and network identifiers withheld. Origin of the new session not determined.
