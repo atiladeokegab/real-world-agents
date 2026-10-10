@@ -15,6 +15,7 @@ from eval.cut import cut_index
 from eval.stages import first_failing_stage
 
 ROOT = Path(__file__).parents[1]
+KIND = {1: "read", 2: "inform", 3: "write"}  # risk -> kind; write = change or move money
 GOLD = json.loads((Path(__file__).parent / "gold.json").read_text())
 
 
@@ -46,13 +47,15 @@ def _score_folder(row: dict, folder: Path) -> None:
         return
     row["action"], row["tool"] = first["action"], first.get("tool")
     row["tools"] = [s.get("tool") for s in steps if s["step"] == "proposal" and s["action"] == "tool_call"]
+    row["wrote_ok"] = write_approved(steps)
+    row["informed"] = _approved(steps, 2)
     try:
         from agent import tools
 
         spec = tools.CATALOGUE.get(row["tool"] or "")
     except ImportError:  # tools (#53) not merged: kind unknown for tool calls
         spec = None
-    row["kind"] = ("read" if spec.risk == 1 else "write") if first["action"] == "tool_call" and spec else (
+    row["kind"] = KIND[spec.risk] if first["action"] == "tool_call" and spec else (
         "none" if first["action"] != "tool_call" else None)
 
 
@@ -100,7 +103,7 @@ def _run_case(num: str, dry: bool, variant: str | None, out: str | None) -> dict
         row["tool"] = _get(proposal, "tool")
         spec = tools.CATALOGUE.get(row["tool"] or "")
         if row["action"] == "tool_call" and spec:
-            row["kind"] = "read" if _get(spec, "risk") == 1 else "write"
+            row["kind"] = KIND[_get(spec, "risk")]
         elif row["action"] != "tool_call":
             row["kind"] = "none"
         row["stage"] = None
@@ -118,17 +121,29 @@ def _catalogue():
         return {}
 
 
-def _wrote(r) -> bool:
+def _approved(steps: list[dict], risk: int) -> bool:
     cat = _catalogue()
-    return any(t in cat and cat[t].risk > 1 for t in r.get("tools", []))
+    return any(s["step"] == "tool_result" and s.get("tool") in cat and cat[s["tool"]].risk == risk
+               and s.get("status") in ("ok", "pending", "uncertain") for s in steps)
+
+
+def write_approved(steps: list[dict]) -> bool:
+    """A write (risk 3: change or move money) was proposed, approved and run; results only exist after approval.
+    'requested, pending' counts. Risk 2 (portal_delivery, case_journal) only informs and is counted apart."""
+    return _approved(steps, 3)
+
+
+def _wrote(r) -> bool:
+    return bool(r.get("wrote_ok"))
 
 
 def _required_read_first(r, g) -> bool:
     """AGENT_SPEC 4.6: a write needs its read first, so for a gold write the first step being a required read is correct."""
     cat = _catalogue()
-    if g["kind"] != "write" or r["action"] != "tool_call" or r["tool"] not in cat:
+    if g["kind"] not in ("write", "inform") or r["action"] != "tool_call" or r["tool"] not in cat:
         return False
-    return any(r["tool"] in spec.required_reads for spec in cat.values() if spec.risk > 1)
+    risk = 3 if g["kind"] == "write" else 2
+    return any(r["tool"] in spec.required_reads for spec in cat.values() if spec.risk == risk)
 
 
 def run_judgement(workers: int, out: str) -> tuple[list[dict], list[bool]]:
@@ -137,7 +152,7 @@ def run_judgement(workers: int, out: str) -> tuple[list[dict], list[bool]]:
 
     with ProcessPoolExecutor(workers) as ex:
         jr = list(ex.map(run_judgement_case, judgement.CASES, [out] * len(judgement.CASES)))
-    ok = [judgement.judge(e, r["action"], r["wrote"]) for e, r in zip(judgement.CASES, jr)]
+    ok = [judgement.judge(e, r["action"], r["wrote"], r.get("flagged", False)) for e, r in zip(judgement.CASES, jr)]
     for e, r, o in zip(judgement.CASES, jr, ok):
         print(f"{e['id']:4} {'ok' if o else 'FAIL'} final={r['action']} wrote={r['wrote']} want one of {e['expect']}"
               f"  ({e['why']})" + (f"  {r['error']}" if r["error"] else ""))
@@ -152,7 +167,7 @@ def run_judgement_case(entry: dict, out: str) -> dict:
     try:
         from agent import ingest
         from agent.core.loop import run_case as full
-        from eval import inject
+        from eval import inject, judgement
 
         real = ingest.load_case
 
@@ -168,6 +183,7 @@ def run_judgement_case(entry: dict, out: str) -> dict:
         row["answer"] = str(folder)
         row["action"] = json.loads((folder / "run.json").read_text())["action"]
         row["wrote"] = wrote_in_trace((folder / "trace.log").read_text())
+        row["flagged"] = judgement.flagged((folder / "ANSWER.md").read_text() + (folder / "REASONING.md").read_text())
     except Exception as e:
         row["error"] = f"{type(e).__name__}: {e}"
     return row
@@ -176,7 +192,7 @@ def run_judgement_case(entry: dict, out: str) -> dict:
 def wrote_in_trace(trace_log: str) -> bool:
     """True when any write tool produced a result anywhere in the trace (a read before an escalation is fine)."""
     cat = _catalogue()
-    return any(s["step"] == "tool_result" and s.get("tool") in cat and cat[s["tool"]].risk > 1
+    return any(s["step"] == "tool_result" and s.get("tool") in cat and cat[s["tool"]].risk == 3
                and s.get("status") != "not_found" for s in trace_steps(trace_log))
 
 
@@ -195,6 +211,8 @@ def score(rows: list[dict]) -> dict:
             "kind_match": sum(r["kind_ok"] for r in rows) / n,
             "kind_match_rr": sum(r["kind_ok2"] for r in rows) / n,
             "write_reached": sum(_wrote(r) for r in rows if GOLD[r["case"]]["kind"] == "write"),
+            "inform_reached": sum(bool(r.get("informed")) for r in rows if GOLD[r["case"]]["kind"] == "inform"),
+            "inform_gold": sum(GOLD[r["case"]]["kind"] == "inform" for r in rows),
             "write_gold": sum(g["kind"] == "write" for r in rows for g in [GOLD[r["case"]]]),
             "clean_escalation_rate": esc / n}
 
@@ -254,7 +272,7 @@ def main():
           f"  |  judgement {pct(jp)}")
     print(f"action match {m['action_match']:.0%}  read/write match {m['kind_match']:.0%} "
           f"(required read before a write counts: {m['kind_match_rr']:.0%}; write reached "
-          f"{m['write_reached']}/{m['write_gold']})  "
+          f"{m['write_reached']}/{m['write_gold']}; inform reached {m['inform_reached']}/{m['inform_gold']})  "
           f"tool match {pct(m['tool_match'])}  ({m['n']} cases)")
 
     if a.report:

@@ -56,7 +56,7 @@
  },
  "012": {
   "action": "tool_call",
-  "kind": "write",
+  "kind": "inform",
   "next": "Send Mira the standing-order amendment in her secure portal session for her to confirm; do not change the order based on the chat alone."
  },
  "013": {
@@ -76,7 +76,7 @@
  },
  "016": {
   "action": "tool_call",
-  "kind": "write",
+  "kind": "inform",
   "next": "The agent’s immediate step was to register a review of the specific £18.40 Direct Debit charge with the Direct Debit team."
  },
  "017": {
@@ -91,7 +91,7 @@
  },
  "019": {
   "action": "tool_call",
-  "kind": "write",
+  "kind": "inform",
   "next": "Send the checked date change to Maeve through the secure portal for her confirmation."
  },
  "020": {
@@ -111,7 +111,7 @@
  },
  "023": {
   "action": "tool_call",
-  "kind": "write",
+  "kind": "inform",
   "next": "Open a card-team case against the specific posted purchase and provide the registration number in the secure portal."
  },
  "024": {
@@ -126,7 +126,7 @@
  },
  "026": {
   "action": "tool_call",
-  "kind": "write",
+  "kind": "inform",
   "next": "The secure PIN procedure is available in Maren’s portal for her to continue."
  },
  "027": {
@@ -151,7 +151,7 @@
  },
  "031": {
   "action": "tool_call",
-  "kind": "write",
+  "kind": "inform",
   "next": "Ask the statements service to check the June 2025 period and place the available statement in the account owner's secure portal."
  },
  "032": {
@@ -161,7 +161,7 @@
  },
  "033": {
   "action": "tool_call",
-  "kind": "write",
+  "kind": "inform",
   "next": "Request the data service to create the permitted CSV export for the verified owner's secure portal, limited to the requested period."
  },
  "034": {
@@ -171,7 +171,7 @@
  },
  "035": {
   "action": "tool_call",
-  "kind": "write",
+  "kind": "inform",
   "next": "Register the request with the Tariff Team, identifying the £4.50 fee dated 18 June 2025 and Mara’s reason for disputing its application."
  },
  "036": {
@@ -181,12 +181,12 @@
  },
  "037": {
   "action": "tool_call",
-  "kind": "write",
+  "kind": "inform",
   "next": "The agent opened the protected name review and referred HV-037 to the data team to check the basis for the correction under H&V procedure."
  },
  "038": {
   "action": "tool_call",
-  "kind": "write",
+  "kind": "inform",
   "next": "Submit a request to the document service to issue the permitted account confirmation in Mara’s secure portal only."
  },
  "039": {
@@ -221,7 +221,7 @@
  },
  "045": {
   "action": "tool_call",
-  "kind": "write",
+  "kind": "inform",
   "next": "The agent sent the access request to the verified company administrator through the secure portal for approval."
  },
  "046": {
