@@ -13,7 +13,8 @@ def claimed(text: str, phrase: str) -> bool:
     """True when phrase appears outside a negation or hedge ("hasn't arrived", "whether … received" are not claims)."""
     i = text.find(phrase)
     while i != -1:
-        if not NEGATED.search(text[max(0, i - 45): i]):
+        clause = re.split(r"[.,;!?\n]", text[max(0, i - 45): i])[-1]  # the hedge must be in the same clause
+        if not NEGATED.search(clause):
             return True
         i = text.find(phrase, i + 1)
     return False

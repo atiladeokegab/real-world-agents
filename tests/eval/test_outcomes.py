@@ -22,3 +22,11 @@ def test_negated_forbidden_words_are_not_claims():
     ok = "It is shown as sent by H&V. We can't see whether the recipient's bank has received it, and if it hasn't arrived, tell us."
     assert score_outcome("001", ok, []) == []
     assert score_outcome("001", "It is sent and the bank received it.", [])  # a plain claim still fails
+
+
+def test_hedge_does_not_cross_a_clause():
+    assert score_outcome("005", "Return request done. If you need anything, your refund has been refunded.", [])  # real claim stays
+    from eval.outcomes import claimed
+
+    assert claimed("if you need anything, your refund has been credited.", "credited")
+    assert not claimed("we can't see whether the bank has credited it", "credited")
