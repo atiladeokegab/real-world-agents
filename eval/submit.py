@@ -154,7 +154,7 @@ def main(argv=None) -> int:
         parser.error("--workers and --limit must be positive")
 
     cases = sorted((p for p in args.cases_dir.iterdir()
-                    if p.is_dir() and ((p / "index.md").is_file() or (p / "history.md").is_file())),
+                    if p.is_dir() and not p.name.startswith((".", "_")) and any(f.is_file() for f in p.iterdir())),
                    key=lambda p: (0, int(p.name), p.name) if p.name.isdecimal() else (1, p.name))
     if not cases:
         print(f"ERROR: no case folders found in {args.cases_dir}", file=sys.stderr)

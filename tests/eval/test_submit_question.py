@@ -55,3 +55,21 @@ out.mkdir(parents=True)
 """)
     assert submit.main([str(root), "--out", str(tmp_path / "a")]) == 0
     assert "case 001: could not read a question" in capsys.readouterr().err
+
+
+def test_folder_without_index_or_history_is_still_a_case(tmp_path, monkeypatch):
+    root = cases(tmp_path, "1")
+    odd = root / "2"
+    odd.mkdir()
+    (odd / "request.md").write_text("help")
+    (root / ".git").mkdir()
+    (root / ".git" / "HEAD").write_text("x")
+    fake_uv(tmp_path, monkeypatch, """import pathlib, sys
+out = pathlib.Path(sys.argv[sys.argv.index('--out') + 1])
+out.mkdir(parents=True)
+(out / 'ANSWER.md').write_text('## Decision\\nok\\n')
+(out / 'REASONING.md').write_text('r')
+""")
+    out = tmp_path / "a"
+    assert submit.main([str(root), "--out", str(out)]) == 0
+    assert sorted(p.name for p in out.iterdir() if p.is_dir()) == ["1", "2"]
