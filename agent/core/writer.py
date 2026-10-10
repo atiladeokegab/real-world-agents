@@ -41,6 +41,23 @@ def _trace_log(raw_files: dict[str, str], case_object: CaseObject | None, trace:
     return "\n\n".join(parts) + "\n"
 
 
+def _exception(name: str | None) -> str:
+    """§4.8: REASONING.md names the exception type and its fixed handling (brain's registry)."""
+    if not name:
+        return "none"
+    try:
+        from agent.llm import handling_for
+        return f"{name}: {handling_for(name)}"
+    except ImportError:  # brain not merged: the type alone
+        return name
+
+
+def _cost(trace: list) -> dict:
+    calls = [r for r in trace if r.get("step") == "model_call"]
+    return {"model_calls": len(calls),
+            **{k: sum(r.get(k) or 0 for r in calls) for k in ("input_tokens", "output_tokens", "seconds")}}
+
+
 def write(out: Path, case: Case, case_object: CaseObject, findings: list[Finding],
           proposal: Proposal, results: list[ToolResult],
           rejected: list[tuple[Proposal, Verdict]], trace: list) -> None:
@@ -77,14 +94,14 @@ def write(out: Path, case: Case, case_object: CaseObject, findings: list[Finding
                      + ("addressed" if f.id in fixed else "not addressed") for f in findings),
                  "", "## Policy checks", _bullets(
                      f"rejected {p.action}: {v.rule} on {v.field} ({v.event}): {v.message}" for p, v in rejected),
-                 "", "## Exception", proposal.exception_type or "none",
+                 "", "## Exception", _exception(proposal.exception_type),
                  "", "## Alternatives rejected", _bullets(f"{p.action} {p.tool or ''}".strip() for p, _ in rejected),
                  "", "## Uncertainties", _bullets(proposal.uncertainties)]
 
     run = {"track": case.track, "case_id": case.case_id, "action": proposal.action,
            "escalated": escalated, "exception_type": proposal.exception_type,
            "outcome": "escalated" if escalated else "answered", "tool_calls": len(results),
-           "fallback": False}
+           "fallback": False, **_cost(trace)}
 
     _put(out / "ANSWER.md", "\n".join(answer) + "\n")
     _put(out / "REASONING.md", "\n".join(reasoning) + "\n")

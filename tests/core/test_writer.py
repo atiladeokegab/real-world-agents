@@ -33,3 +33,14 @@ def test_fallback_is_escalated(tmp_path):
     assert "escalate (system failure)" in (out / "ANSWER.md").read_text()
     assert "index.md" in (out / "ANSWER.md").read_text()
     assert json.loads((out / "run.json").read_text())["fallback"] is True
+
+
+def test_exception_names_its_handling(monkeypatch):
+    import sys
+    import types
+    from agent.core.writer import _exception
+    monkeypatch.setitem(sys.modules, "agent.llm", types.SimpleNamespace(handling_for=lambda n: "escalate"))
+    assert _exception("read_failure") == "read_failure: escalate"
+    monkeypatch.setitem(sys.modules, "agent.llm", None)
+    assert _exception("read_failure") == "read_failure"
+    assert _exception(None) == "none"

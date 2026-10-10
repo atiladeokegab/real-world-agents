@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from agent.core.contracts import Authority, Case, Event
+from agent.ingest.attachments import read_attachments
+from agent.ingest.fallback import fallback_events
 
 _ANCHOR_RE = re.compile(r'<a id="(event-\d+)"></a>')
 _HEADER_RE = re.compile(r"\s*##\s*(?P<at>.+?)\s*—\s*event\s*\d+\s*\n")
@@ -41,16 +43,43 @@ def load_case(path, cut: int | None = None, question: str | None = None) -> Case
     index = _read(path / "index.md")
     history = _read(path / "history.md")
 
-    events = _parse_events(history)
-    if cut is not None:
-        events = [e for e in events if _event_number(e.id) <= cut]
+    parsed = _parse_events(history)
+    attachments = read_attachments(path)
+    details = _details(index)
 
     raw_files = {"index.md": index, "history.md": history}
+    unknown = [
+        e.name
+        for e in sorted(path.iterdir())
+        if e.is_file() and e.name not in raw_files and not e.name.startswith(".")
+    ]
+    for name in unknown:
+        raw_files[name] = _read(path / name)  # unknown files read as text
+    for a in attachments:
+        raw_files[f"attachments/{a.name}"] = a.text
+
     if cut is not None:
+        # strip before any fallback prompt so the agreed answer can't leak in
         raw_files["index.md"] = _strip_sections(index)
         raw_files["history.md"] = _truncate_history(history, cut)
 
-    details = _details(index)
+    if not parsed:
+        # regex found nothing — one structured() call over everything received
+        events = _renumbered(fallback_events(raw_files))
+    else:
+        events = parsed
+        if unknown:
+            # unrecognised files: one structured() call on them alone, appended —
+            # a stray file can never replace or poison the parsed events
+            extra = _renumbered(
+                fallback_events({n: raw_files[n] for n in unknown}), start=len(events) + 1
+            )
+            events = events + extra
+
+    if cut is not None:
+        events = [e for e in events if _event_number(e.id) <= cut]
+        parsed = [e for e in parsed if _event_number(e.id) <= cut]
+
     return Case(
         track=_TRACK_ALIASES.get(path.parent.name, path.parent.name),
         case_id=path.name,
@@ -59,11 +88,18 @@ def load_case(path, cut: int | None = None, question: str | None = None) -> Case
         created=_parse_ts(details.get("Created")),
         initial_request=_section(index, "Initial request"),
         events=events,
-        attachments=[],
-        authority=_authority(_first_inbound(events), details.get("Source role", "")),
+        attachments=attachments,
+        # authority reads only the regex-parsed events; the model can never raise it
+        authority=_authority(_first_inbound(parsed), details.get("Source role", "")),
         raw_files=raw_files,
         question=question,
     )
+
+
+def _renumbered(events: list[Event], start: int = 1) -> list[Event]:
+    for i, e in enumerate(events, start):
+        e.id = f"event-{i:03d}"
+    return events
 
 
 def _read(path: Path) -> str:
