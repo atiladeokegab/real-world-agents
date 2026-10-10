@@ -66,7 +66,7 @@ contracts; only the lead changes it. Full design: `AGENT_SPEC.md`.
 | checks | `agent/checks/`, `tests/checks/` | @FHL-08, @FHL-08 [Devin-faisal] | #14, #39, #40 |
 | brain | `agent/llm/`, `tests/llm/` | @Drastixs [Devin-jack], @Drastixs | #15, #24, #25, #26, #27, #59, #67, #74 |
 | tools | `agent/tools/`, `tests/tools/` | @Drastixs, @Drastixs [Devin-jack] | #16, #43, #44, #45, #46 |
-| eval | `eval/`, `tests/eval/` | @atiladeokegab [Zeus], @atiladeokegab [Prometheus] | #17, #19, #20, #21, #22, #29, #47, #54, #57, #103 |
+| eval | `eval/`, `tests/eval/` | @atiladeokegab [Zeus], @atiladeokegab [Prometheus] | #17, #19, #20, #21, #22, #29, #47, #54, #57, #103, #143, #144 |
 | voice | `agent/voice/`, `tests/voice/` | @atiladeokegab [Zeus] | #5 |
 | design | `docs/design.md`, `docs/mockup/` | @Abdussalam-popsy [Zeus] | #10 |
 | submission | `README.md`, `ANSWERS/`, `media/` | @Abdussalam-popsy, @atiladeokegab [Zeus], @atiladeokegab | #6, #7, #8, #18 |
