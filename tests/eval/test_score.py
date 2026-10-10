@@ -83,3 +83,18 @@ def test_gold_has_write_and_inform_labels():
     g = json.loads((Path(__file__).parents[2] / "eval/gold.json").read_text())
     kinds = [v["kind"] for v in g.values()]
     assert kinds.count("write") == 6 and kinds.count("inform") == 11
+
+
+def test_recorded_outcome_counts_as_reached(tmp_path):
+    import json
+
+    from eval.__main__ import _score_folder, score
+
+    log = ('== proposal ==\n{"action": "tool_call", "tool": "mandate_journal"}\n\n'
+           '== tool_result ==\n{"tool": "mandate_journal", "status": "ok", "source_event": "event-004"}\n')
+    (tmp_path / "trace.log").write_text(log)
+    (tmp_path / "run.json").write_text(json.dumps({"escalated": False}))
+    row = {"case": "016", "action": None, "kind": None, "tool": None, "error": None}
+    _score_folder(row, tmp_path)
+    m = score([row])
+    assert m["inform_reached"] == 0 and m["inform_reached_rec"] == 1 and m["inform_gold"] == 1

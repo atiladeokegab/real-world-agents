@@ -49,6 +49,9 @@ def _score_folder(row: dict, folder: Path) -> None:
     row["tools"] = [s.get("tool") for s in steps if s["step"] == "proposal" and s["action"] == "tool_call"]
     row["wrote_ok"] = write_approved(steps)
     row["informed"] = _approved(steps, 2)
+    # practice mode: a read that returns the bank's own later note (source_event) shows the action was already recorded
+    row["recorded"] = any(s["step"] == "tool_result" and s.get("source_event") and s.get("status") in ("ok", "pending", "uncertain")
+                          for s in steps)
     try:
         from agent import tools
 
@@ -212,6 +215,8 @@ def score(rows: list[dict]) -> dict:
             "kind_match_rr": sum(r["kind_ok2"] for r in rows) / n,
             "write_reached": sum(_wrote(r) for r in rows if GOLD[r["case"]]["kind"] == "write"),
             "inform_reached": sum(bool(r.get("informed")) for r in rows if GOLD[r["case"]]["kind"] == "inform"),
+            "write_reached_rec": sum(_wrote(r) or bool(r.get("recorded")) for r in rows if GOLD[r["case"]]["kind"] == "write"),
+            "inform_reached_rec": sum(bool(r.get("informed") or r.get("recorded")) for r in rows if GOLD[r["case"]]["kind"] == "inform"),
             "inform_gold": sum(GOLD[r["case"]]["kind"] == "inform" for r in rows),
             "write_gold": sum(g["kind"] == "write" for r in rows for g in [GOLD[r["case"]]]),
             "clean_escalation_rate": esc / n}
@@ -234,6 +239,15 @@ def main():
 
         outcome, sweep = score_dir(a.score_only)
         print("\n".join(outcome), f"\noutcome cases: {sum(l.split()[1] == 'PASS' for l in outcome)}/{len(outcome)} pass")
+        rows = []
+        for d in sorted(p for p in a.score_only.iterdir() if p.is_dir() and p.name[0].isdigit()):
+            r = {"case": d.name, "action": None, "kind": None, "tool": None, "error": None}
+            _score_folder(r, d)
+            rows.append(r)
+        m = score(rows)
+        print(f"write reached {m['write_reached']}/{m['write_gold']} by executed action, "
+              f"{m['write_reached_rec']}/{m['write_gold']} counting the bank's recorded outcome; "
+              f"inform reached {m['inform_reached']}/{m['inform_gold']} and {m['inform_reached_rec']}/{m['inform_gold']}")
         print("\nsweep:", *sweep, sep="\n  ", end=f"\n  ({len(sweep)} findings)\n")
         return
     if a.only_judgement:
@@ -280,7 +294,8 @@ def main():
           f"  |  judgement {pct(jp)}")
     print(f"action match {m['action_match']:.0%}  read/write match {m['kind_match']:.0%} "
           f"(required read before a write counts: {m['kind_match_rr']:.0%}; write reached "
-          f"{m['write_reached']}/{m['write_gold']}; inform reached {m['inform_reached']}/{m['inform_gold']})  "
+          f"{m['write_reached']}/{m['write_gold']}; inform reached {m['inform_reached']}/{m['inform_gold']}; "
+          f"with the bank's recorded outcome: write {m['write_reached_rec']}/{m['write_gold']}, inform {m['inform_reached_rec']}/{m['inform_gold']})  "
           f"tool match {pct(m['tool_match'])}  ({m['n']} cases)")
 
     if a.report:
