@@ -30,4 +30,4 @@ contracts; only the lead changes it. Areas are set at approval 1.
 
 | Area | Directories | Owner | Issues |
 |---|---|---|---|
-| core | core/ | @atiladeokegab | — |
+| core | core/ | — | — |
