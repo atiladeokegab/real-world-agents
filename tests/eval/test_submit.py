@@ -160,12 +160,12 @@ out.mkdir(parents=True)
 
     assert import_module("eval.submit").main([str(root), "--out", str(out)]) == 0
 
-    assert "escalate (system failure)" in (out / "1" / "ANSWER.md").read_text()
+    assert "SYSTEM FAILURE" in (out / "1" / "ANSWER.md").read_text()
     assert "index.md" in (out / "1" / "REASONING.md").read_text()
     assert (out / "2" / "ANSWER.md").read_text().endswith("no-op\n")
     table = capsys.readouterr().out
     assert "1\t7\t" in table and "2\t0\t" in table
-    assert "system failure" in table and "total 2; fallback 1; missing 0" in table
+    assert "SYSTEM FAILURE" in table and "total 2; fallback 1; missing 0" in table
 
 
 def test_timeout_keeps_written_answer_and_fills_missing_reasoning(tmp_path, monkeypatch, capsys):
@@ -206,5 +206,5 @@ time.sleep(1)
     assert import_module("eval.submit").main([str(root), "--out", str(out)]) == 0
     time.sleep(0.4)
 
-    assert "system failure" in (out / "1" / "ANSWER.md").read_text()
+    assert "SYSTEM FAILURE" in (out / "1" / "ANSWER.md").read_text()
     assert not (out / "1" / "late.txt").exists()
