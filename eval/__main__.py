@@ -46,6 +46,7 @@ def _score_folder(row: dict, folder: Path) -> None:
         return
     row["action"], row["tool"] = first["action"], first.get("tool")
     row["tools"] = [s.get("tool") for s in steps if s["step"] == "proposal" and s["action"] == "tool_call"]
+    row["wrote_ok"] = write_approved(steps)
     try:
         from agent import tools
 
@@ -118,9 +119,15 @@ def _catalogue():
         return {}
 
 
-def _wrote(r) -> bool:
+def write_approved(steps: list[dict]) -> bool:
+    """A write was proposed, approved and run: results only exist after the verifier approved. 'requested, pending' counts."""
     cat = _catalogue()
-    return any(t in cat and cat[t].risk > 1 for t in r.get("tools", []))
+    return any(s["step"] == "tool_result" and s.get("tool") in cat and cat[s["tool"]].risk > 1
+               and s.get("status") in ("ok", "pending", "uncertain") for s in steps)
+
+
+def _wrote(r) -> bool:
+    return bool(r.get("wrote_ok"))
 
 
 def _required_read_first(r, g) -> bool:
