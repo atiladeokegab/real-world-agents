@@ -144,7 +144,8 @@ def normalise(proposal, case, case_object, findings, results):
     elif name is not None:
         entry = EXCEPTIONS[name]
         risky = action == "tool_call" and tool_risk(data.get("tool"), data.get("params")) >= 3
-        if action not in entry.allowed and entry.fallback:
+        read = action == "tool_call" and not risky
+        if action not in entry.allowed and not read and entry.fallback:
             force(entry.fallback, f"exception '{name}' handling ({entry.handling})")
         elif risky and not entry.allow_change:
             force("escalate", f"exception '{name}' allows no change ({entry.handling})")
@@ -159,7 +160,7 @@ def normalise(proposal, case, case_object, findings, results):
 
     if action == "request_info" and not (data.get("reply") or {}).get("text"):
         data["reply"] = {"channel": (data.get("reply") or {}).get("channel") or _customer_channel(case),
-                         "text": handover.request_info_reply(_request_question(name))}
+                         "text": handover.request_info_reply(_request_question(name, case))}
 
     if action != "tool_call":
         data["tool"], data["params"] = None, {}
@@ -179,12 +180,14 @@ _REQUEST_QUESTIONS = {
 }
 
 
-def _request_question(exception_type: str | None) -> str:
+def _request_question(exception_type: str | None, case=None) -> str:
+    if exception_type == "missing_authority" and _get(_get(case, "authority"), "identity") == "authenticated":
+        return "that you hold the role this request needs, or ask your administrator to confirm it with us"
     return _REQUEST_QUESTIONS.get(exception_type or "", "the details of your request, so we act on the right one")
 
 
 def _customer_channel(case) -> str:
     for e in reversed(case.events):
-        if e.channel and "internal" not in e.channel.lower() and e.sender not in ("H&V", "H&V agent"):
+        if e.channel and "internal" not in e.channel.lower() and not e.sender.startswith(("H&V", "Harrow & Vale")):
             return e.channel
-    return ""
+    return next((e.channel for e in case.events if e.channel), "")

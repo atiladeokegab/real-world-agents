@@ -40,7 +40,18 @@ def _team(data: dict, results) -> str:
     return copy.DEFAULT_TEAM
 
 
+_LIST_KEYS = ("verified", "claimed", "conflicts", "did", "not_done")
+_ALIASES = {
+    "team": "who", "assigned_team": "who", "reason": "why", "verified_facts": "verified",
+    "claimed_only": "claimed", "claims": "claimed", "done": "did", "actions_taken": "did",
+    "deliberately_not_done": "not_done", "not_done_deliberately": "not_done",
+    "question_for_human": "question", "holding_message": "holding_reply",
+}
+
+
 def _list(existing, extra) -> list[str]:
+    if isinstance(existing, (str, dict)):
+        existing = [existing]
     out = [str(x) for x in (existing or []) if x]
     out += [x for x in extra if x and x not in out]
     return out
@@ -49,13 +60,18 @@ def _list(existing, extra) -> list[str]:
 def build(data: dict, case, case_object, findings, results, kind: str, why: str = "") -> dict:
     """Fill every field of the handover note, keeping what the model wrote. Keys follow core's loop (#12)."""
     note = dict(data.get("escalation") or {})
-    if "team" in note and "who" not in note:
-        note["who"] = note.pop("team")
-    if "done" in note and "did" not in note:
-        note["did"] = note.pop("done")
+    for alias, key in _ALIASES.items():
+        if alias in note:
+            value = note.pop(alias)
+            if key in _LIST_KEYS:
+                note[key] = _list(note.get(key), _list(value, []))
+            elif not note.get(key):
+                note[key] = value
     note["type"] = "emotional" if kind == "emotional" else (note.get("type") or "technical")
     note["who"] = note.get("who") or (EMOTIONAL_TEAM if note["type"] == "emotional" else _team(data, results))
-    note["why"] = note.get("why") or why or (data.get("exception_type") or "the agent could not safely finish this case")
+    first_uncertainty = next(iter(data.get("uncertainties") or []), None)
+    note["why"] = (note.get("why") or why or data.get("exception_type") or first_uncertainty
+                   or "the agent could not safely finish this case")
 
     urgency = note.get("urgency") if note.get("urgency") in _URGENCY else "normal"
     state = _get(case_object, "emotional_state") or {}

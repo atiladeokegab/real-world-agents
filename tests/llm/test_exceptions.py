@@ -42,6 +42,8 @@ def test_registry_has_the_ten_types_of_section_4_8():
     ("conflicting_records", WRITE, "escalate"),
     ("conflicting_records", READ, "tool_call"),
     ("missing_authority", WRITE, "request_info"),
+    ("missing_authority", READ, "tool_call"),
+    ("ambiguous_reference", READ, "tool_call"),
     ("read_failure", READ, "tool_call"),
     ("write_failure", REPLY, "escalate"),
     ("quiet_wrong_value", REPLY, "escalate"),
@@ -74,6 +76,38 @@ def test_tool_risk_counts_write_words_on_read_named_tools(monkeypatch):
     proposal = {"action": "tool_call", "tool": "transfer_journal",
                 "params": {"action": "cancel", "ref": "T2"}, "exception_type": "conflicting_records"}
     assert run(proposal).action == "escalate"
+
+
+def test_missing_authority_question_fits_an_authenticated_channel():
+    out = run({**WRITE, "exception_type": "missing_authority"})
+    assert "role this request needs" in out.reply.text and "verified call" not in out.reply.text
+
+
+def test_handover_keeps_string_lists_whole_and_maps_invented_keys():
+    out = run({"action": "escalate", "escalation": {
+        "conflicts": "event-001 says one transfer; journal shows two",
+        "claimed_only": ["Mira says she made one transfer"], "actions_taken": ["looked up transfer_journal"],
+        "deliberately_not_done": ["did not cancel the pending transfer"], "question_for_human": "Cancel T2?"}})
+    note = out.escalation
+    assert "event-001 says one transfer; journal shows two" in note["conflicts"]
+    assert all(len(c) > 1 for c in note["conflicts"])
+    assert "Mira says she made one transfer" in note["claimed"]
+    assert "looked up transfer_journal" in note["did"]
+    assert "did not cancel the pending transfer" in note["not_done"]
+    assert note["question"] == "Cancel T2?"
+    assert not {"claimed_only", "actions_taken", "deliberately_not_done", "question_for_human"} & set(note)
+
+
+def test_untyped_escalation_gives_a_specific_why():
+    out = run({"action": "escalate", "uncertainties": ["journal shows two references; customer says one"]})
+    assert out.escalation["why"] == "journal shows two references; customer says one"
+
+
+def test_holding_reply_channel_falls_back_when_only_the_bank_wrote():
+    case = case_006()
+    case.events = [e.model_copy(update={"sender": "H&V service agent"}) for e in case.events]
+    out = normalise(Proposal.model_validate({"action": "escalate"}), case, obj(), [], [])
+    assert out.reply.channel == case.events[0].channel
 
 
 def test_read_failure_retries_once_then_escalates():
