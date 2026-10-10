@@ -26,7 +26,7 @@ reasoning, and a full trace a regulator could follow.
   against row status, duplicates, dates, limits.
 - Works in a **short loop**: look things up, then at most one checked change, then reply.
 - **Authority comes from code**: identity and role from the channel, never from the model; money
-  and account changes only with verified identity, within mandate, no open conflict.
+  and account changes only with verified or authenticated identity (never unverified), within mandate, no open conflict.
 - **Never does a money action twice**: keys built from the intent, a log of every change,
   approvals used once, timeouts marked "uncertain" and escalated.
 - **Knows when to stop**: a fixed handling for each kind of exception, and an escalation note a
