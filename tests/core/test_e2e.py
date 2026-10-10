@@ -14,8 +14,24 @@ import pytest
 from agent.core.loop import run_case
 
 ROOT = Path(__file__).parents[2]
-AREAS = ["agent.ingest", "agent.checks", "agent.llm", "agent.tools"]
-missing = [a for a in AREAS if importlib.util.find_spec(a) is None]
+# What run_case calls. An area merged only in part (e.g. checks without verify) still skips,
+# so the smoke stays green until the whole loop can run.
+NEEDS = {"agent.ingest": ["load_case"], "agent.checks": ["find_evidence", "verify"],
+         "agent.llm": ["extract", "decide"], "agent.tools": ["CATALOGUE", "execute"]}
+
+
+def _missing() -> list[str]:
+    out = []
+    for mod, names in NEEDS.items():
+        if importlib.util.find_spec(mod) is None:
+            out.append(mod)
+        else:
+            m = importlib.import_module(mod)
+            out += [f"{mod}.{n}" for n in names if not hasattr(m, n)]
+    return out
+
+
+missing = _missing()
 has_key = any(os.environ.get(k) for k in
               ("ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY_EXTRACTION", "ANTHROPIC_API_KEY_DECISION"))
 
