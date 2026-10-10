@@ -108,7 +108,7 @@ The agent's thinking is written down for every case, in three places:
   handover note when a person must take over.
 
 The rule underneath all three: *the model suggests, code checks.* Identity comes from the channel;
-amounts, dates and limits are compared in code; a money action needs verified identity, the right
+amounts, dates and limits are compared in code; a money action needs verified or authenticated identity, the right
 mandate, no open conflict and its prior checks in the trace; and no reply may claim "paid",
 "received" or "refunded" unless a tool confirmed it.
 
@@ -246,7 +246,7 @@ No model training, classifiers, vector database or GPU. Every dependency is pinn
 - There is no live bank system. On unseen cases a check the agent asks for is recorded as
   **requested, pending result**, never as done. On practice cases the mock journal answers only
   from the bank's own later replies in the same case, and only when the matching tool is called.
-- A money or account change is never needed so urgently that it should skip verified identity.
+- A money or account change needs a verified or authenticated customer (a verified call, or a secure portal or chat login). An unverified sender can never trigger one; the agent asks them to use a verified channel.
 - Doing nothing, asking or escalating is a correct outcome when acting would be unsafe.
 
 ## Known limitations
