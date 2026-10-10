@@ -196,3 +196,36 @@ def test_readme_among_unnumbered_loose_files_is_not_a_case(tmp_path):
     (tmp_path / "README.md").write_text("About this dataset.")
     cases = case_dirs(normalise_input(tmp_path))
     assert len(cases) == 2 and not any("About this dataset" in (c / "index.md").read_text() for c in cases.values())
+
+
+def test_stray_case_files_are_copied_into_attachments(tmp_path, capsys):
+    src = tmp_path / "cases"
+    case = practice_case(src, "5")
+    (case / "tools.json").write_text('{"tools": []}')
+    (case / "statement.pdf").write_bytes(b"%PDF-1.4 x")
+    (case / "attachments" / "bank" / "q3").mkdir(parents=True)
+    (case / "attachments" / "bank" / "q3" / "rows.csv").write_text("a,b\n")
+    (case / "attachments" / "letter.txt").write_text("hi")
+    out = normalise_input(src)
+    att = out / "5" / "attachments"
+    assert sorted(p.name for p in att.iterdir() if p.is_file()) == [
+        "bank_q3_rows.csv", "letter.txt", "statement.pdf", "tools.json"]
+    assert (out / "5" / "tools.json").is_file()  # the original stays where it was
+    assert (att / "bank" / "q3" / "rows.csv").is_file()
+    assert not (src / "5" / "attachments" / "tools.json").exists()  # the input is never changed
+    assert "3 file(s) copied into attachments/" in capsys.readouterr().out
+
+
+def test_clean_case_folders_are_not_copied(tmp_path):
+    case = practice_case(tmp_path, "6")
+    (case / "attachments").mkdir()
+    (case / "attachments" / "letter.txt").write_text("hi")
+    assert normalise_input(tmp_path) == tmp_path
+
+
+def test_a_single_case_folder_is_not_unwrapped(tmp_path):
+    case = practice_case(tmp_path / "only", "9")
+    (case / "attachments").mkdir()
+    (case / "attachments" / "a.txt").write_text("x")
+    out = normalise_input(tmp_path / "only")
+    assert set(case_dirs(out)) == {"9"}
