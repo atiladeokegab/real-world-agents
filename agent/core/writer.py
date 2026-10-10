@@ -58,7 +58,13 @@ def _put(path: Path, text: str) -> None:
 
 
 def _bullets(items) -> str:
-    return "\n".join(f"- {i}" for i in items) or NONE
+    return "\n".join(f"- {i}" for i in items if i is not None and i != "") or NONE
+
+
+def verdict_text(v) -> str:
+    """'rule on field (event): message', leaving out whatever the verdict doesn't have (never "None")."""
+    return (f"{v.rule or 'rejected'}" + (f" on {v.field}" if v.field else "") + (f" ({v.event})" if v.event else "")
+            + (f": {v.message}" if v.message else ""))
 
 
 def _n(k: int, word: str) -> str:
@@ -172,7 +178,7 @@ def _actions(results: list[ToolResult], rejected: list[tuple[Proposal, Verdict]]
         lines.append(f"`{r.tool}({_short(r.params, 120)})` — **{OUTCOME[r.status]}**{detail}")
     for p, v in rejected:
         if p.action == "tool_call":
-            lines.append(f"`{p.tool}({_short(p.params, 120)})` — **not done**, rejected by the verifier ({v.rule}).")
+            lines.append(f"`{p.tool}({_short(p.params, 120)})` — **not done**, rejected by the verifier ({v.rule or 'rejected'}).")
     return lines
 
 
@@ -223,7 +229,7 @@ def write(out: Path, case: Case, case_object: CaseObject, findings: list[Finding
     not_done = [f"{a.text} ({a.id}) — because this run did not close it"
                 for a in case_object.asks if a.id not in addressed]
     not_done += [f"{p.action}{' ' + p.tool if p.tool else ''} — because the verifier rejected it "
-                 f"({v.rule}: {v.message})" for p, v in rejected]
+                 f"({verdict_text(v)})" for p, v in rejected]
     not_done += [f"`{r.tool}` — because it {r.status.replace('_', ' ')}" for r in results
                  if r.status in ("timeout", "error")]
     if note:
@@ -270,7 +276,7 @@ def write(out: Path, case: Case, case_object: CaseObject, findings: list[Finding
               f"Authority: role {case.authority.role or 'none recorded'}",
               f"Risk level: {_risk(list(dict.fromkeys([r.tool for r in results] + ([proposal.tool] if proposal.tool else []))))}",
               f"Completion: {closed} of {_n(len(case_object.asks), 'ask')} closed"]
-    checks += [f"Verifier: ✗ {v.rule} on {v.field} ({v.event}): {v.message}" for _, v in rejected]
+    checks += [f"Verifier: ✗ {verdict_text(v)}" for _, v in rejected]
     checks.append("Verifier: ✓ approved the final proposal" if state != "escalated" or not rejected
                   else "Verifier: rejected twice, so the case was escalated")
     reasoning = [f"# Reasoning — Case {case.case_id}", "",
@@ -281,7 +287,7 @@ def write(out: Path, case: Case, case_object: CaseObject, findings: list[Finding
                  "## Policy checks", "", _bullets(checks), "",
                  "## Exception and handling", "", _handling(proposal.exception_type), "",
                  "## Alternatives rejected", "", _bullets(
-                     f"{p.action}{' ' + p.tool if p.tool else ''} — {v.rule}: {v.message}" for p, v in rejected), "",
+                     f"{p.action}{' ' + p.tool if p.tool else ''} — {verdict_text(v)}" for p, v in rejected), "",
                  "## Uncertainties", "", _bullets(list(case_object.unknowns) + list(proposal.uncertainties))]
 
     run = {"track": case.track, "case_id": case.case_id, "action": proposal.action,

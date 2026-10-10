@@ -165,11 +165,9 @@ def main(argv=None) -> int:
         match = re.search(r"[0-9]+", case.name)
         if match:
             number = str(int(match.group()))
-            if number in used:
-                print(f"ERROR: duplicate case number {number} in {args.cases_dir}", file=sys.stderr)
-                return 1
-            numbers[case] = number
-            used.add(number)
+            if number not in used:  # a repeat gets a free number below: never drop a whole run over a name clash
+                numbers[case] = number
+                used.add(number)
     next_number = 1
     for case in cases:
         if case not in numbers:
@@ -177,6 +175,8 @@ def main(argv=None) -> int:
                 next_number += 1
             numbers[case] = str(next_number)
             used.add(numbers[case])
+            if re.search(r"[0-9]+", case.name):
+                print(f"WARNING: duplicate case number in {case.name!r}; numbered {numbers[case]}", file=sys.stderr)
     if args.limit is not None:
         cases = cases[:args.limit]
     for case in cases:
@@ -209,7 +209,10 @@ def main(argv=None) -> int:
         head = ""
     if head:
         print(f"HEAD {head}")
-    write_index(args.out, head, {numbers[case]: secs for case, _, secs, _ in results})
+    try:  # the index is a convenience: it must never cost the run its answers or its exit code
+        write_index(args.out, head, {numbers[case]: secs for case, _, secs, _ in results})
+    except Exception as exc:
+        print(f"WARNING: could not write {args.out / 'README.md'}: {type(exc).__name__}: {exc}", file=sys.stderr)
     return 1 if missing else 0
 
 

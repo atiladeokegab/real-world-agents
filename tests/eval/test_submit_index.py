@@ -53,3 +53,28 @@ def test_index_reads_only_and_never_crashes_on_broken_files(tmp_path):
     assert "| [7](7/ANSWER.md) | unknown | unknown | unknown | unknown | unknown | unknown |" in index
     assert "notes" not in index and "Commit" not in index
     assert (tmp_path / "7" / "run.json").read_text() == "{not json"
+
+
+def test_index_failure_only_warns(tmp_path, monkeypatch, capsys):
+    submit = import_module("eval.submit")
+    cases = tmp_path / "cases"
+    (cases / "001").mkdir(parents=True)
+    (cases / "001" / "index.md").write_text("# Case 001\n")
+    out = tmp_path / "answers"
+
+    def fake_run(case, folder):
+        folder.mkdir(parents=True)
+        (folder / "ANSWER.md").write_text("# Answer — Case 001\n\n## Decision\n\nDONE — Replied.\n")
+        (folder / "REASONING.md").write_text("# Reasoning\n")
+        return case, 0, 1.0, ""
+
+    def broken_index(*a, **k):
+        raise RuntimeError("disk full")
+
+    monkeypatch.setattr(submit, "run_case", fake_run)
+    monkeypatch.setattr(submit, "write_index", broken_index)
+    monkeypatch.setattr(submit.subprocess, "run", lambda *a, **k: SimpleNamespace(stdout="abc123\n"))
+    assert submit.main([str(cases), "--out", str(out)]) == 0
+    assert "WARNING: could not write" in capsys.readouterr().err
+    assert (out / "1" / "ANSWER.md").read_text().endswith("DONE — Replied.\n")
+    assert not (out / "README.md").exists()

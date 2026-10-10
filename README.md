@@ -162,10 +162,19 @@ read through, then rejected the first reply draft and accepted the second. The r
 
 ## Results
 
-Results from our own Reality Test on the 50 practice cases: see eval report (numbers added after
-the final eval run). The report comes from
-`uv run python -m eval --inject --judgement --report eval-report.md`: the practice cases cut at
-their decision points, the same cases with faults injected, and hand-labelled judgement cases.
+Our own numbers on the 50 practice cases, cut at the decision point, model `claude-opus-5-5`
+(eval round 3b). These are practice-case numbers, not the unseen Reality Test.
+
+| Metric | Value |
+|---|---|
+| Action match | 84% |
+| Clean-case escalation (first decision, low is good) | 14% |
+| Judgement pass rate (identity removed, hidden instructions, contradicted amounts, distress, role violation, ambiguous reference) | 9/10 |
+| System-failure fallbacks in the 50 cases | 0 |
+| Mean seconds per case | 32.9 |
+
+Reproduce: `uv run python -m eval --judgement --report <file>`. Limitation: change requests are
+mostly handed over or requested rather than executed; see Known limitations.
 
 ## How to run it
 
@@ -255,6 +264,8 @@ No model training, classifiers, vector database or GPU. Every dependency is pinn
   Banking & Financial Services track.
 - The bank's systems are mocked; a real deployment needs adapters to the real journals.
 - One model for every stage; we did not have time to measure a cheaper model per stage.
+- Change requests (risk 3) are mostly handed over or requested rather than executed; the
+  read/write match against the bank's actions is 58%.
 - Each case runs once; we cut running each case twice and comparing for time.
 - The voice entry point turns speech into a case; it does not hold a live conversation.
 - How it fails safe: any crash, timeout or API failure writes an escalated answer with everything
@@ -280,7 +291,8 @@ system and not edited by hand, are in [ANSWERS/](ANSWERS/): one folder per case,
 ## Demo video
 
 [media/demo.mp4](media/demo.mp4): 57 seconds, narrated, with subtitles. The problem, what Scale is,
-how it works, the real run of practice case 044 in the reviewer UI (the reply it actually sent),
+how it works, a real run of practice case 044, shown in our design mockup (docs/mockup/; the live reviewer view
+is listed under next steps), with the reply it actually sent,
 and the verifier blocking a money move on a sample case, then the handover note. Shots of case 044
 come from real runs and are labelled "REAL RUN"; the sample case is labelled "UI SAMPLE CASE".
 Made with Remotion; voiceover, music and sound effects generated with ElevenLabs.
