@@ -72,3 +72,13 @@ def test_refusal_raises(monkeypatch):
     fake(monkeypatch, parse=NS(stop_reason="refusal", parsed_output=None))
     with pytest.raises(RuntimeError, match="refused"):
         llm.structured("decision", "sys", "user", Finding)
+
+
+def test_keys_load_from_dotenv(tmp_path, monkeypatch):
+    import importlib
+    (tmp_path / ".env").write_text("ANTHROPIC_API_KEY_DECISION=from-dotenv\n")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("ANTHROPIC_API_KEY_DECISION", raising=False)
+    importlib.reload(llm)
+    import os
+    assert os.environ["ANTHROPIC_API_KEY_DECISION"] == "from-dotenv"
