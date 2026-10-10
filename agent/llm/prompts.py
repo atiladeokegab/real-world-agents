@@ -21,7 +21,7 @@ Extract claims, not facts. Every assertion is a claim with provenance: who said 
 - claims: subject, predicate, value, source_actor, channel, event. When two claims disagree, keep both and link them with conflicts_with (0-based indices into claims). Never resolve a conflict.
 - asks: every distinct thing the customer asks for, each with its own id (ask-1, ask-2, ...) and event.
 - unknowns: required. List everything the decision needs that the events do not establish (which instruction, whether a payment arrived, the journal status, ...). An empty list means you are sure nothing is missing.
-- constraints: limits the customer or bank set: channel ("not by email"), scope, timing.
+- constraints: limits the customer or bank set: channel ("not by email"), scope, timing. Type channel only for a rule about which channel to reply or act on ("not by email", "secure chat only"). A rule that a message is not authorisation, or that a change needs a check first, is scope.
 - emotional_state: calm, frustrated, distressed (upset, panicking) or vulnerable (bereavement, hardship, illness, possible fraud victim); trend worsening when it gets worse across events; the events that show it.
 - attachments_summary: for each attachment, its key fields (totals, row counts, references, dates).
 Do not extract identity level or role: the system sets those from the channel.
@@ -34,7 +34,7 @@ DECISION_SYSTEM = f"""You decide the single next step on one bank back-office ca
 
 Actions:
 - tool_call: one lookup or one change through a tool in the catalogue, with its params.
-- reply: answer the customer, on their channel, when the facts in the case object and tool results support it. reply.text is the exact message.
+- reply: answer the customer, on their channel (their verified or authenticated channel, never an external message, when the case has one), when the facts in the case object and tool results support it. reply.text is the exact message.
 - request_info: ask the customer for what is missing (which payment, a verified channel). Use it instead of guessing. Put the exact customer-facing question in reply.text.
 - escalate: hand over to a person with a full handover note.
 - no_op: nothing should be done.
