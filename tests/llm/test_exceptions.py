@@ -1,8 +1,11 @@
+import sys
+import types
+
 import pytest
 
 from agent.llm import handover
 from agent.llm.contracts import CaseObject, Proposal, ToolResult
-from agent.llm.exceptions import EXCEPTIONS, handling_for, normalise, sentiment_escalation
+from agent.llm.exceptions import EXCEPTIONS, handling_for, normalise, sentiment_escalation, tool_risk
 
 from .cases import FINDING_DUP, case_006
 
@@ -56,6 +59,21 @@ def test_each_exception_type_maps_to_its_handling(name, proposal, expected):
         assert out.reply.text.startswith("To make sure we act on the right request")
         assert "uncert" not in out.reply.text and out.reply.text.endswith(".")
         assert out.tool is None
+
+
+def test_tool_risk_counts_write_words_on_read_named_tools(monkeypatch):
+    fake = types.SimpleNamespace(CATALOGUE={
+        "transfer_journal": types.SimpleNamespace(risk=1),
+        "transfer_journal.return_request": types.SimpleNamespace(risk=3),
+    })
+    monkeypatch.setitem(sys.modules, "agent.tools", fake)
+    monkeypatch.setattr(sys.modules["agent"], "tools", fake, raising=False)
+    assert tool_risk("transfer_journal", {"action": "lookup"}) == 1
+    assert tool_risk("transfer_journal", {"action": "cancel"}) == 3
+    assert tool_risk("transfer_journal.return_request", {}) == 3
+    proposal = {"action": "tool_call", "tool": "transfer_journal",
+                "params": {"action": "cancel", "ref": "T2"}, "exception_type": "conflicting_records"}
+    assert run(proposal).action == "escalate"
 
 
 def test_read_failure_retries_once_then_escalates():
