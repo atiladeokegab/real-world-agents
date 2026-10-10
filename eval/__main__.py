@@ -5,6 +5,7 @@ and scores the proposed action class (exact) against eval/gold.json.
 """
 import argparse
 import json
+import tempfile
 import time
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
@@ -20,14 +21,14 @@ def _get(obj, key):
     return obj.get(key) if isinstance(obj, dict) else getattr(obj, key, None)
 
 
-def run_case(num: str, dry: bool = False, variant: str | None = None) -> dict:
+def run_case(num: str, dry: bool = False, variant: str | None = None, out: str | None = None) -> dict:
     t = time.monotonic()
-    row = _run_case(num, dry, variant)
+    row = _run_case(num, dry, variant, out)
     row["secs"] = time.monotonic() - t
     return row
 
 
-def _run_case(num: str, dry: bool, variant: str | None) -> dict:
+def _run_case(num: str, dry: bool, variant: str | None, out: str | None) -> dict:
     """One case through the Contract's loop up to the first proposal. Never raises."""
     row = {"case": num, "variant": variant, "expect": None, "checks": [], "stage": None, "action": None, "kind": None, "tool": None, "error": None}
     path = ROOT / "examples" / num
@@ -59,6 +60,10 @@ def _run_case(num: str, dry: bool, variant: str | None) -> dict:
         elif row["action"] != "tool_call":
             row["kind"] = "none"
         row["stage"] = None
+        if out and not variant:  # full loop once more, only to leave ANSWER.md for the report to link
+            from agent.core.loop import run_case as full
+
+            row["answer"] = str(full(path, Path(out) / num, cut=cut_index(path / "history.md")))
     except Exception as e:  # a crash is a miss at that stage, not a stop
         row["error"] = f"{type(e).__name__}: {e}"
     return row
@@ -86,11 +91,15 @@ def main():
     ap.add_argument("--inject", action="store_true", help="also run each fault variant on every case")
     ap.add_argument("--judgement", action="store_true", help="run the judgement cases (escalate / request_info expected)")
     ap.add_argument("--report", type=Path, help="write a markdown results report (real runs only)")
+    ap.add_argument("--out", type=Path, help="folder for per-case agent output [default: a new temp dir when --report is set]")
     ap.add_argument("--cases", help="comma list, default all 50")
     a = ap.parse_args()
     nums = a.cases.split(",") if a.cases else sorted(GOLD)
+    out = a.out or (Path(tempfile.mkdtemp(prefix="eval-runs-")) if a.report and not a.dry else None)
+    if out:
+        print(f"agent output under {out}")
     with ProcessPoolExecutor(a.workers) as ex:
-        rows = list(ex.map(run_case, nums, [a.dry] * len(nums)))
+        rows = list(ex.map(run_case, nums, [a.dry] * len(nums), [None] * len(nums), [str(out) if out else None] * len(nums)))
     m = score(rows)
     print(f"{'case':5} {'action':9} {'kind':6} {'tool':22} want")
     for r in rows:

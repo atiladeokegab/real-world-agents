@@ -24,8 +24,9 @@ def _pct(x):
     return "not run" if x is None else f"{x:.0%}"
 
 
-def _link(case: str) -> str:
-    return f"[ANSWERS/{case}/ANSWER.md](ANSWERS/{case}/ANSWER.md)"
+def _link(r) -> str:
+    a = r.get("answer")  # only clean runs leave an answer folder; injected variants do not
+    return f"[{a}/ANSWER.md]({a}/ANSWER.md)" if a else "no answer folder (injected variant or failed run)"
 
 
 def write_report(path, rows, m, det=None, jp=None, jr=(), judged=(), sha=None, model=None):
@@ -36,7 +37,7 @@ def write_report(path, rows, m, det=None, jp=None, jr=(), judged=(), sha=None, m
     handled = next((r for r in rows if r["ok"] and r["action"] != "escalate"), None)
     esc = next((r for r, o in zip(jr, judged) if o and r["action"] == "escalate"), None)
     fail = failed[0] if failed else next((r for r, o in zip(jr, judged) if not o), None)
-    ex = lambda title, r, why: f"- **{title}**: " + (f"case {r['case']} ({why}), {_link(r['case'])}" if r else "none in this run")
+    ex = lambda title, r, why: f"- **{title}**: " + (f"case {r['case']} ({why}), {_link(r)}" if r else "none in this run")
     stage_lines = [f"- {s}: {c}" for s, c in stages.most_common()] or ["- no failures"]
     out = [
         "# Eval results", "",
