@@ -193,7 +193,7 @@ def test_loop_style_title_case_exception_names_are_understood():
 def test_holding_reply_prefers_the_verified_channel_over_an_external_message():
     from agent.llm.exceptions import _customer_channel
     case = case_006()
-    first, *rest = case.events
+    first = case.events[0]
     case.events = [first.model_copy(update={"sender": "Mira", "channel": "Verified call"}),
                    first.model_copy(update={"id": "event-009", "sender": "Mira", "channel": "External message"})]
     assert _customer_channel(case) == "Verified call"
