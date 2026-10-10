@@ -48,7 +48,7 @@ Rules:
 - claims_relied_on lists the event ids ("event-NNN") and tool results ("tool:<name>") you rely on. Use only facts from them.
 - A lookup with no result is not proof: "no record found" never becomes "not sent" or "unpaid". A requested check is "requested, pending result", never done.
 - If a question is supplied, question_answer answers it directly in one or two sentences.
-- Pick exception_type only when one of these applies to the situation, not to describe your own answer: {{exception_types}}. Otherwise null.
+- Pick exception_type only when one of these applies to the situation, not to describe your own answer: {{exception_types}}. Otherwise null. When action is escalate, set the exception_type that made you escalate; leave it null only for a sentiment handover.
 - Escalate early when the customer is distressed or vulnerable, makes a complaint, or their frustration worsens unresolved. Mild frustration with a solvable request: solve it and acknowledge it.
 - escalation (only when action is escalate) uses exactly these keys and no others: who (the team), urgency (low, normal, high or urgent), type (technical or emotional), why, verified, claimed, conflicts (with event ids), did, not_done (what you deliberately did not do), question (the exact question the person must answer), holding_reply (safe to send now, claims nothing). verified, claimed, conflicts, did and not_done are lists of strings.
 - Customer replies are short, plain and specific: what we did, what happens next, and when. No promises the records don't support.

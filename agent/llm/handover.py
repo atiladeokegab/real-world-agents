@@ -69,7 +69,9 @@ def build(data: dict, case, case_object, findings, results, kind: str, why: str 
                 note[key] = value
     note["type"] = "emotional" if kind == "emotional" else (note.get("type") or "technical")
     note["who"] = note.get("who") or (EMOTIONAL_TEAM if note["type"] == "emotional" else _team(data, results))
-    note["why"] = note.get("why") or why or (data.get("exception_type") or "the agent could not safely finish this case")
+    first_uncertainty = next(iter(data.get("uncertainties") or []), None)
+    note["why"] = (note.get("why") or why or data.get("exception_type") or first_uncertainty
+                   or "the agent could not safely finish this case")
 
     urgency = note.get("urgency") if note.get("urgency") in _URGENCY else "normal"
     state = _get(case_object, "emotional_state") or {}

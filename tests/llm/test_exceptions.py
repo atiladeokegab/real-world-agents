@@ -98,6 +98,11 @@ def test_handover_keeps_string_lists_whole_and_maps_invented_keys():
     assert not {"claimed_only", "actions_taken", "deliberately_not_done", "question_for_human"} & set(note)
 
 
+def test_untyped_escalation_gives_a_specific_why():
+    out = run({"action": "escalate", "uncertainties": ["journal shows two references; customer says one"]})
+    assert out.escalation["why"] == "journal shows two references; customer says one"
+
+
 def test_read_failure_retries_once_then_escalates():
     failed = ToolResult(tool="transfer_journal", status="timeout")
     assert run({**READ, "exception_type": "read_failure"}, results=[failed]).action == "tool_call"
