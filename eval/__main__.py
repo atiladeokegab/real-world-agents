@@ -21,11 +21,11 @@ def _get(obj, key):
 
 def run_case(num: str, dry: bool = False, variant: str | None = None) -> dict:
     """One case through the Contract's loop up to the first proposal. Never raises."""
-    row = {"case": num, "variant": variant, "expect": None, "checks": [], "stage": None, "action": None, "kind": None, "error": None}
+    row = {"case": num, "variant": variant, "expect": None, "checks": [], "stage": None, "action": None, "kind": None, "tool": None, "error": None}
     path = ROOT / "examples" / num
     try:
         if dry:  # stub so the harness runs before core merges
-            row.update(action="tool_call", kind="read")
+            row.update(action="tool_call", kind="read", tool="stub")
             return row
         row["stage"] = "cut"
         from agent import checks, ingest, llm, tools  # Contract: #11
@@ -44,7 +44,8 @@ def run_case(num: str, dry: bool = False, variant: str | None = None) -> dict:
         row["stage"] = "decision"
         proposal = llm.decide(case, case_object, findings, [], None)
         row["action"] = _get(proposal, "action")
-        spec = tools.CATALOGUE.get(_get(proposal, "tool") or "")
+        row["tool"] = _get(proposal, "tool")
+        spec = tools.CATALOGUE.get(row["tool"] or "")
         if row["action"] == "tool_call" and spec:
             row["kind"] = "read" if _get(spec, "risk") == 1 else "write"
         elif row["action"] != "tool_call":
@@ -61,9 +62,11 @@ def score(rows: list[dict]) -> dict:
         g = GOLD[r["case"]]
         r["ok"] = r["action"] == g["action"]
         r["kind_ok"] = r["kind"] == g["kind"]
+        r["tool_ok"] = r["tool"] == g["tool"] if g.get("tool") else None  # only where gold names a tool
     # every practice case is clean (nothing injected) and none is gold-escalate
     esc = sum(r["action"] == "escalate" for r in rows)
     return {"n": n, "action_match": sum(r["ok"] for r in rows) / n,
+            "tool_match": (lambda t: sum(t) / len(t) if t else None)([r["tool_ok"] for r in rows if r["tool_ok"] is not None]),
             "kind_match": sum(r["kind_ok"] for r in rows) / n,
             "clean_escalation_rate": esc / n}
 
@@ -73,19 +76,25 @@ def main():
     ap.add_argument("--dry", action="store_true")
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--inject", action="store_true", help="also run each fault variant on every case")
+    ap.add_argument("--judgement", action="store_true", help="run the judgement cases (escalate / request_info expected)")
     ap.add_argument("--cases", help="comma list, default all 50")
     a = ap.parse_args()
     nums = a.cases.split(",") if a.cases else sorted(GOLD)
     with ProcessPoolExecutor(a.workers) as ex:
         rows = list(ex.map(run_case, nums, [a.dry] * len(nums)))
     m = score(rows)
+    print(f"{'case':5} {'action':9} {'kind':6} {'tool':22} want")
     for r in rows:
+        g = GOLD[r["case"]]
         if not r["ok"]:
             r["stage"] = first_failing_stage(r, cut_index(ROOT / "examples" / r["case"] / "history.md"))
-        print(f"{r['case']} {'ok  ' if r['ok'] else 'FAIL'} got={r['action']}/{r['kind']} "
-              f"want={GOLD[r['case']]['action']}/{GOLD[r['case']]['kind']}"
-              + (f" stage={r['stage']} {r['error']}" if r["error"] else ""))
-    if a.inject:
+        print(f"{r['case']:5} {'ok' if r['ok'] else 'FAIL':4} {str(r['action']):9} "
+              f"{'ok' if r['kind_ok'] else 'FAIL':4} {str(r['kind']):6} {str(r['tool']):22} "
+              f"want {g['action']}/{g['kind']}" + (f"  stage={r['stage']} {r['error']}" if r["error"] else ""))
+    det = None
+    if a.inject and a.dry:
+        print("inject: n/a in dry run (the stub does not read the case)")
+    elif a.inject:
         from eval import inject
 
         jobs = [(n, v.__name__) for n in nums for v in inject.VARIANTS]
@@ -95,9 +104,25 @@ def main():
         for v in inject.VARIANTS:
             h = [x for x, r in zip(hit, inj) if r["variant"] == v.__name__]
             print(f"inject {v.__name__}: detected {sum(h)}/{len(h)}")
-        print(f"injected-case detection {sum(hit) / len(hit):.0%}")
-    print(f"\naction match {m['action_match']:.0%}  read/write match {m['kind_match']:.0%}  "
-          f"clean-case escalation {m['clean_escalation_rate']:.0%}  ({m['n']} cases)")
+        det = sum(hit) / len(hit)
+    jp = None
+    if a.judgement and a.dry:
+        print("judgement: n/a in dry run")
+    elif a.judgement:
+        from eval import judgement
+
+        with ProcessPoolExecutor(a.workers) as ex:
+            jr = list(ex.map(run_case, [e["case"] for e in judgement.CASES], [a.dry] * len(judgement.CASES),
+                             [e["variant"] for e in judgement.CASES]))
+        ok = [judgement.judge(e, r["action"], r["kind"]) for e, r in zip(judgement.CASES, jr)]
+        for e, r, o in zip(judgement.CASES, jr, ok):
+            print(f"{e['id']:4} {'ok' if o else 'FAIL'} got={r['action']}/{r['kind']} want one of {e['expect']}  ({e['why']})")
+        jp = sum(ok) / len(ok)
+    pct = lambda x: "n/a" if x is None else f"{x:.0%}"
+    print(f"\nclean-case escalation {pct(m['clean_escalation_rate'])} (want low)  |  injected-case detection {pct(det)} (want high)"
+          f"  |  judgement {pct(jp)}")
+    print(f"action match {m['action_match']:.0%}  read/write match {m['kind_match']:.0%}  "
+          f"tool match {pct(m['tool_match'])}  ({m['n']} cases)")
 
 
 if __name__ == "__main__":
