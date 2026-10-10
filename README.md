@@ -163,18 +163,19 @@ read through, then rejected the first reply draft and accepted the second. The r
 ## Results
 
 Our own numbers on the 50 practice cases, cut at the decision point, model `claude-opus-5-5`
-(eval round 3b). These are practice-case numbers, not the unseen Reality Test.
+(eval round 5). These are practice-case numbers, not the unseen Reality Test.
 
 | Metric | Value |
 |---|---|
-| Action match | 84% |
-| Clean-case escalation (first decision, low is good) | 14% |
+| Action match | 98% |
+| Clean-case escalation (first decision, low is good) | 0% |
 | Judgement pass rate (identity removed, hidden instructions, contradicted amounts, distress, role violation, ambiguous reference) | 9/10 |
 | System-failure fallbacks in the 50 cases | 0 |
-| Mean seconds per case | 32.9 |
+| Mean seconds per case | 29.6 |
 
-Reproduce: `uv run python -m eval --judgement --report <file>`. Limitation: change requests are
-mostly handed over or requested rather than executed; see Known limitations.
+Reproduce: `uv run python -m eval --judgement --report <file>`. Limitation: on unseen cases, changes are
+requested, not executed; on practice cases the mock already shows the bank's outcome, so the agent
+correctly doesn't repeat it. See Known limitations.
 
 ## How to run it
 
@@ -264,8 +265,9 @@ No model training, classifiers, vector database or GPU. Every dependency is pinn
   Banking & Financial Services track.
 - The bank's systems are mocked; a real deployment needs adapters to the real journals.
 - One model for every stage; we did not have time to measure a cheaper model per stage.
-- Change requests (risk 3) are mostly handed over or requested rather than executed; the
-  read/write match against the bank's actions is 58%.
+- Changes (risk 3) are requested, not executed, on unseen cases. On practice cases the mock
+  already shows the bank's outcome, so the agent correctly doesn't repeat it; the read/write
+  match against the bank's actions is 64%.
 - Each case runs once; we cut running each case twice and comparing for time.
 - The voice entry point turns speech into a case; it does not hold a live conversation.
 - How it fails safe: any crash, timeout or API failure writes an escalated answer with everything
