@@ -24,12 +24,16 @@ load_dotenv(find_dotenv(usecwd=True))
 TRACE: ContextVar[list | None] = ContextVar("TRACE", default=None)
 
 
+def api_key(stage: str) -> str | None:
+    """The key a stage calls Claude with. Other stages (e.g. ingest's fallback parse) share the
+    extraction key unless given their own."""
+    return (os.environ.get(f"ANTHROPIC_API_KEY_{stage.upper()}") or os.environ.get("ANTHROPIC_API_KEY")
+            or os.environ.get("ANTHROPIC_API_KEY_EXTRACTION")) or None
+
+
 def _client(stage: str) -> anthropic.Anthropic:
-    # Other stages (e.g. ingest's fallback parse) share the extraction key unless given their own.
-    key = (os.environ.get(f"ANTHROPIC_API_KEY_{stage.upper()}") or os.environ.get("ANTHROPIC_API_KEY")
-           or os.environ.get("ANTHROPIC_API_KEY_EXTRACTION"))
     # The SDK retries 429/5xx with exponential backoff; 6 retries rides out a busy minute.
-    return anthropic.Anthropic(api_key=key, max_retries=6)
+    return anthropic.Anthropic(api_key=api_key(stage), max_retries=6)
 
 
 def _constrainable(schema) -> bool:

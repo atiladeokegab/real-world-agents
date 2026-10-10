@@ -12,6 +12,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+from agent.core.llm import api_key
 from agent.core.writer import STATES, write_fallback
 
 
@@ -93,6 +94,15 @@ def fill_missing(case: Path, out: Path, error: str) -> bool:
     return True
 
 
+def wrote_fallback(folder: Path) -> bool:
+    """run.json says the agent wrote its own system-failure fallback (the rule write_index uses)."""
+    try:
+        result = json.loads((folder / "run.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return isinstance(result, dict) and bool(result.get("fallback"))
+
+
 def decision(answer: Path) -> str:
     lines = answer.read_text(encoding="utf-8", errors="replace").splitlines()
     for index, line in enumerate(lines):
@@ -152,6 +162,11 @@ def main(argv=None) -> int:
         parser.error(f"not a directory: {args.cases_dir}")
     if args.workers < 1 or (args.limit is not None and args.limit < 1):
         parser.error("--workers and --limit must be positive")
+    # Without a key every case fails in a second and still "answers" with SYSTEM FAILURE: stop first.
+    for stage in ("extraction", "decision"):
+        if not api_key(stage):
+            print(f"ERROR: no Anthropic key for {stage}; set it in .env", file=sys.stderr)
+            return 1
 
     cases = sorted((p for p in args.cases_dir.iterdir()
                     if p.is_dir() and not p.name.startswith((".", "_")) and any(f.is_file() for f in p.iterdir())),
@@ -195,6 +210,7 @@ def main(argv=None) -> int:
         except Exception as exc:
             fallback = False
             print(f"{name}: fallback failed: {exc}")
+        fallback = fallback or wrote_fallback(folder)  # the agent's own fallback counts too, as in README.md
         fallback_count += fallback
         answer = folder / "ANSWER.md"
         reasoning = folder / "REASONING.md"
