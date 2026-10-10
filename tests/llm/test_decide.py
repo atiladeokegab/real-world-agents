@@ -106,3 +106,9 @@ def test_prompt_forbids_no_op_while_an_ask_is_unanswered(fake_llm):
     system = fake_llm.calls[0]["system"]
     assert "Never no_op while an ask is unanswered" in system
     assert 'A pending result is not a finished check: never write "checked"' in system
+
+
+def test_prompt_acts_after_a_pending_read(fake_llm):
+    fake_llm.answers.append(LOOKUP)
+    decide(case_006(), CASE_OBJECT, [], [])
+    assert "the required read came back pending, propose the matching action next" in fake_llm.calls[0]["system"]
