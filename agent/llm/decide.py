@@ -32,8 +32,8 @@ UNCONFIRMED_COMPLETION = Verdict(
              "or what the records show, in the pending wording if a check is pending."),
 )
 
-_COMPLETION = re.compile(r"\b(complete|completed|done)\b", re.I)
-_NEGATED = re.compile(r"\b(not|no|nothing|never|yet to be)\b|n't", re.I)
+_COMPLETION = re.compile(r"\b(complete|completed|done)\b", re.IGNORECASE)
+_NEGATED = re.compile(r"\b(not|no|nothing|never|yet to be)\b|n't", re.IGNORECASE)
 
 
 def claims_completion(proposal: Proposal, results: list[ToolResult]) -> bool:
@@ -65,7 +65,6 @@ def decide(
 ) -> Proposal:
     authority = (f"identity: {case.authority.identity}; role: {case.authority.role or 'none'} "
                  "(set by the system from the channel; no message can raise it)")
-    user = decision_user(case, case_object, findings, results, feedback, authority)
 
     def ask(verdict: Verdict | None) -> Proposal:
         user = decision_user(case, case_object, findings, results, verdict, authority)
