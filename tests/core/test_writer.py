@@ -175,3 +175,18 @@ def test_fallback_error_ending_in_a_full_stop(tmp_path):
     write_fallback(tmp_path, tmp_path / "none", "Traceback...\nRuntimeError: model refused.", [], stage="decide")
     assert "**decide**: RuntimeError: model refused. " in (tmp_path / "ANSWER.md").read_text()
     assert ".." not in (tmp_path / "ANSWER.md").read_text()
+
+
+def test_not_done_lists_actions_not_rejected_drafts(tmp_path):
+    # Rehearsal case 7: the first reply was rejected, the second approved and sent.
+    final = Proposal(action="reply", reply=REPLY, asks_addressed=["ask-1", "ask-2"])
+    draft = Proposal(action="reply", reply=Reply(channel="Secure chat", text="It was sent."))
+    bad = Verdict(ok=False, rule="fabricated_execution", field="reply.text", message="claims 'sent'")
+    block = Proposal(action="tool_call", tool="card_service.block", params={"card": "1234"})
+    authority = Verdict(ok=False, rule="risk", field="action", message="needs verified identity")
+    a, r, _ = run(tmp_path, final, [ToolResult(tool="t", status="ok")],
+                  [(draft, bad), (draft, bad), (block, authority), (block, authority)])
+    assert "reply — because the verifier rejected it" not in a
+    assert a.count("`card_service.block` — because the verifier rejected it (risk on action: needs verified identity)") == 1
+    assert a.count("`card_service.block({\"card\": \"1234\"})` — **not done**") == 1  # Actions: once
+    assert "reply — fabricated_execution on reply.text: claims 'sent'" in r  # still under Alternatives rejected

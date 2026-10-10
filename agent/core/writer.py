@@ -181,10 +181,11 @@ def _actions(results: list[ToolResult], rejected: list[tuple[Proposal, Verdict]]
     for r in results:
         detail = f" → {_short(r.data)}" if r.status == "ok" and r.data else ""
         lines.append(f"`{r.tool}({_short(r.params, 120)})` — **{OUTCOME[r.status]}**{detail}")
+    ran = [(r.tool, r.params) for r in results]
     for p, v in rejected:
-        if p.action == "tool_call":
+        if p.action == "tool_call" and (p.tool, p.params) not in ran:  # rejected, and never run later
             lines.append(f"`{p.tool}({_short(p.params, 120)})` — **not done**, rejected by the verifier ({v.rule or 'rejected'}).")
-    return lines
+    return list(dict.fromkeys(lines))
 
 
 def _decision(state: str, proposal: Proposal, results: list[ToolResult], note: dict | None) -> str:
@@ -234,13 +235,17 @@ def write(out: Path, case: Case, case_object: CaseObject, findings: list[Finding
     addressed = set(proposal.asks_addressed)
     not_done = [f"{_clause(a.text)} ({a.id}) — because this run did not close it"
                 for a in case_object.asks if a.id not in addressed]
-    not_done += [f"{p.action}{' ' + p.tool if p.tool else ''} — because the verifier rejected it "
-                 f"({verdict_text(v)})" for p, v in rejected]
+    # Only changes or lookups really not made. A rejected reply/request_info draft is not an action
+    # (the final reply went out); it stays under REASONING.md "Alternatives rejected".
+    ran = [(r.tool, r.params) for r in results]
+    not_done += [f"`{p.tool}` — because the verifier rejected it ({verdict_text(v)})" for p, v in rejected
+                 if p.action == "tool_call" and (p.tool, p.params) not in ran]
     not_done += [f"`{r.tool}` — because it {r.status.replace('_', ' ')}" for r in results
                  if r.status in ("timeout", "error")]
     if note:
         not_done += [i if "because" in str(i) else f"{_clause(i)} — because the case was handed to a person"
                      for i in (note.get("not_done") or [])]
+    not_done = list(dict.fromkeys(not_done))
 
     cited = set(proposal.claims_relied_on)
     evidence = [f"`{c}`" for c in proposal.claims_relied_on]
