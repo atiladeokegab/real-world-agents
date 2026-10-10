@@ -32,7 +32,7 @@ def build_case(text: str, caller: str = "Caller", verified: bool = False, root: 
 
 
 def customer_reply(answer_dir: Path) -> str:
-    m = re.search(r"## Customer message\n(?:Channel:[^\n]*\n\n)?(.*?)(?:\n## |\Z)", (answer_dir / "ANSWER.md").read_text(encoding="utf-8"), re.S)
+    m = re.search(r"## Customer (?:reply|message)\n\n?(?:Channel:[^\n]*\n\n)?(.*?)\n*(?:\n## |\Z)", (answer_dir / "ANSWER.md").read_text(encoding="utf-8"), re.S)  # new and old heading
     return m.group(1).strip() if m else ""
 
 
