@@ -11,3 +11,8 @@ def test_outcome_scoring():
     assert score_outcome("005", "Return request done, money is back.", [ok])  # forbidden claim
     assert score_outcome("001", "It was sent.", [ok])  # write not needed
     assert score_outcome("001", "It was sent.", [], escalated=True)
+
+
+def test_required_statements_avoid_design_banned_words():
+    banned = ("paid", "received", "credited", "refunded", "resolved", "downloaded")  # docs/design.md Copy
+    assert not [(c, r) for c, lab in LABELS.items() for r in lab["required"] if any(b in r for b in banned)]
