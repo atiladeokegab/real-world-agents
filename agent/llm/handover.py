@@ -32,6 +32,10 @@ def request_info_reply(question: str) -> str:
     return copy.REQUEST_INFO_REPLY.format(question=question.rstrip("?."))
 
 
+def pending_reply(team: str, check: str) -> str:
+    return copy.PENDING_REPLY.format(team=team, check=check.rstrip("."))
+
+
 def _team(data: dict, results) -> str:
     tools = [data.get("tool")] + [_get(r, "tool") for r in reversed(results)]
     for t in tools:

@@ -59,7 +59,7 @@ def test_each_exception_type_maps_to_its_handling(name, proposal, expected):
     assert out.action == expected
     if expected == "request_info":
         assert out.reply.text.startswith("To make sure we act on the right request")
-        assert "uncert" not in out.reply.text and out.reply.text.endswith(".")
+        assert "uncert" not in out.reply.text and "please confirm: " in out.reply.text
         assert out.tool is None
 
 
@@ -173,7 +173,8 @@ def test_escalation_always_carries_the_full_handover_note():
     assert note["question"].startswith("Please establish")
     assert note["holding_reply"] and "£" not in note["holding_reply"]
     md = handover.render(note)
-    assert md.startswith("## Handover note") and "**Question for you:**" in md
+    assert md.startswith("## Handover") and "**Question for you:**" in md
+    assert "**We did:**" in md and "**We did not:**" in md and "**Safe to send now:**" in md
 
 
 def test_model_handover_fields_are_kept():
