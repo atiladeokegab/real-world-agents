@@ -183,3 +183,13 @@ def test_prompt_forbids_complete_without_a_result(fake_llm):
     fake_llm.answers.append(LOOKUP)
     decide(case_006(), CASE_OBJECT, [], [])
     assert '"complete", "completed" or "done" unless' in fake_llm.calls[0]["system"]
+
+
+
+def test_prompt_routes_profile_changes_to_the_secure_process(fake_llm):
+    fake_llm.answers.append(LOOKUP)
+    decide(case_006(), CASE_OBJECT, [], [])
+    system = fake_llm.calls[0]["system"]
+    assert "propose profile_service.change (recorded as requested, pending result)" in system
+    assert "confirm the new detail in the secure portal's profile-change process" in system
+    assert 'Never write "verified", "approved", "updated" or "changed" about the change itself.' in system
