@@ -39,5 +39,6 @@ def customer_reply(answer_dir: Path) -> str:
 def handle(text: str, caller: str = "Caller", verified: bool = False, out: Path | None = None, run_case=None) -> str:
     if run_case is None:
         from agent.core.loop import run_case  # lazy: the loop may land after this module
-    case = build_case(text, caller, verified)
-    return customer_reply(Path(run_case(case, out)))
+    out = Path(out) if out else Path(tempfile.mkdtemp(prefix="voice-out-"))
+    out.mkdir(parents=True, exist_ok=True)
+    return customer_reply(Path(run_case(build_case(text, caller, verified, root=out), out / "answer")))
