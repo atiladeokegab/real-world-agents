@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Harrow &amp; Vale</title>
+<title>Scale</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -132,6 +132,28 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .status-card.wait { background: #FBEFD8; color: #6B4510; }
 .status-card.person { background: #E8ECF7; color: #26386E; }
 .why { font-size: 12px; color: var(--ink-3); align-self: flex-start; padding-left: 4px; }
+.hist { align-self: flex-start; width: 92%; background: var(--paper); border-radius: 18px; border-bottom-left-radius: 6px; padding: 12px 14px; }
+.hist .t { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.hist .t small { margin-left: auto; font: 11px var(--mono); color: var(--ink-3); font-weight: 400; }
+.ev { position: relative; padding: 7px 0 7px 16px; border-left: 2px solid var(--line); margin-left: 4px; animation: evin .35s ease both; }
+.ev::before { content: ""; position: absolute; left: -6px; top: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--paper); border: 2px solid var(--ink-3); }
+.ev.ok::before, .ev.result::before { border-color: var(--ok); background: var(--ok); }
+.ev.blocked::before, .ev.flag::before { border-color: var(--warn); background: var(--warn); }
+.ev.ask::before { border-color: var(--green-3); }
+.ev.escalate::before { border-color: #3B5BC0; background: #3B5BC0; }
+.ev .m { font: 10.5px/1.4 var(--mono); color: var(--ink-3); }
+.ev .n { font-size: 13px; color: var(--ink); margin-top: 1px; }
+.ev.blocked .n { color: var(--warn); }
+@keyframes evin { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+details.reason { align-self: flex-start; width: 92%; font-size: 12.5px; color: var(--ink-2); }
+details.reason summary { cursor: pointer; color: var(--green-3); font-weight: 600; padding: 2px 4px; }
+details.reason pre { white-space: pre-wrap; font: 11.5px/1.5 var(--mono); background: var(--paper); border-radius: 12px; padding: 12px; margin-top: 6px; max-height: 260px; overflow: auto; }
+.sheet .head .tog { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,.12); color: #fff; font-size: 16px; }
+.sheet .head .tog[aria-pressed="false"] { opacity: .5; }
+.composer .mic { background: var(--paper); color: var(--green); border: 1px solid var(--line); }
+.composer .mic.rec { background: var(--warn); color: #fff; border-color: var(--warn); animation: pulse 1.2s infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 8px rgba(192,65,44,.15); } }
+.b.bot .play { margin-left: 6px; font-size: 12px; color: var(--green-3); }
 .chips { display: flex; gap: 8px; overflow-x: auto; padding: 0 14px 10px; scrollbar-width: none; }
 .chips button { white-space: nowrap; padding: 8px 12px; border-radius: 99px; background: var(--paper); border: 1px solid var(--line); font-size: 13px; }
 .composer { display: flex; gap: 8px; padding: 10px 14px 28px; background: var(--paper); border-top: 1px solid var(--line); }
@@ -142,7 +164,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 </style>
 </head>
 <body>
-<div class="phone" aria-label="Harrow and Vale mobile banking">
+<div class="phone" aria-label="Scale mobile banking">
   <!-- HOME -->
   <section class="screen" id="home" aria-label="Home">
     <div class="hero">
@@ -154,7 +176,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
       <div class="balance">
         <div class="lbl">Current account</div>
         <div class="amt">£2,184<span>.36</span></div>
-        <div class="acct">Harrow &amp; Vale · ···· 4821</div>
+        <div class="acct">Scale · ···· 4821</div>
       </div>
       <div class="actions">
         <button><i>↗</i>Pay</button><button><i>⇄</i>Transfer</button><button><i>▭</i>Cards</button><button><i>≡</i>Statements</button>
@@ -178,19 +200,20 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
     <button class="on" data-go="home"><i>⌂</i>Home</button><button><i>↗</i>Payments</button><button><i>▭</i>Cards</button><button><i>☺</i>Profile</button>
   </nav>
 
-  <button class="fab" id="fab" aria-label="Open the assistant"><i>✦</i>Ask H&amp;V</button>
+  <button class="fab" id="fab" aria-label="Open the assistant"><i>✦</i>Ask Scale</button>
 
   <!-- CHAT -->
   <section class="sheet" id="sheet" aria-label="Assistant" aria-hidden="true">
     <div class="head">
       <div class="avatar">✦</div>
-      <div><b>H&amp;V Assistant</b><small>Checks your records before it answers</small></div>
-      <button class="x" id="close" aria-label="Close the assistant">✕</button>
+      <div><b>Scale Assistant</b><small>Checks your records before it answers</small></div>
+      <button class="tog" id="voice" aria-pressed="true" aria-label="Read replies aloud" style="margin-left:auto">🔊</button>
+      <button class="x" id="close" aria-label="Close the assistant" style="margin-left:8px">✕</button>
     </div>
     <div class="msgs" id="msgs" aria-live="polite"></div>
     <div class="chips" id="chips"></div>
     <form class="composer" id="composer">
-      <input id="input" autocomplete="off" placeholder="Message H&amp;V…" aria-label="Your message" maxlength="1000">
+      <input id="input" autocomplete="off" placeholder="Message Scale…" aria-label="Your message" maxlength="1000">
       <button id="send" aria-label="Send">↑</button>
     </form>
   </section>
@@ -200,17 +223,70 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 const ACTIVITY = [
   { id: "alder", icon: "🪵", name: "Alder & Reed Workshop", sub: "Transfer · Today, 10:12", amount: -420, status: "sent",
     ref: "Bookcase", account: "Alder & Reed Workshop · 20-14-77 ···· 3390", detail: true },
-  { id: "tesco", icon: "🛒", name: "Tesco Express", sub: "Card · Today, 08:41", amount: -12.85 },
+  { id: "fern", icon: "📚", name: "Fern & Finch Books", sub: "Card · Today, 09:03", amount: -38.4 },
   { id: "salary", icon: "💼", name: "Kestrel Loom Ltd", sub: "Salary · Yesterday", amount: 2450, in: true },
   { id: "pottery", icon: "🏺", name: "Fernlea Pottery Studio", sub: "Standing order · 18 Jul", amount: -65 },
-  { id: "tfl", icon: "🚇", name: "Transport for London", sub: "Card · 18 Jul", amount: -7.6 },
-  { id: "energy", icon: "⚡", name: "Brightwell Energy", sub: "Direct Debit · 17 Jul", amount: -58.2 },
+  { id: "gym", icon: "🏋️", name: "Northmere Fitness", sub: "Direct Debit · 17 Jul", amount: -42 },
+  { id: "tfl", icon: "🚇", name: "Transport for London", sub: "Card · 16 Jul", amount: -7.6 },
 ];
 const CHIPS = [
   "Has my friend's £150 for the kiln arrived?",
   "Was my £420 payment to Alder & Reed sent?",
-  "Cancel my Brightwell Energy Direct Debit",
+  "Cancel my Northmere Fitness Direct Debit",
   "I don't recognise a card payment",
+];
+
+// Scripted conversations, worded from the organisers' practice cases (Banking 002, 001, 015, 023).
+const SCRIPTS = [
+  { id: "kiln", match: /kiln|150|friend|arriv|incoming|received/i,
+    ack: "I'll check what's come into your account.",
+    events: [
+      ["Internal note", "Scale identity check", "Scale service agent", "Message came through the signed-in app: authenticated.", "check"],
+      ["Internal note", "Scale service agent", "Scale incoming-payment journal", "I'm checking incoming credits recorded for Elowen Marsh's account now. I'll report only what Scale's records show.", "ask"],
+      ["Internal note", "Scale safety check", "Scale service agent", "Approved: a read of her own account.", "ok"],
+      ["Internal note", "Scale incoming-payment system", "Scale service agent", "No incoming payment found for the account at the time of this check.", "result"],
+      ["Internal note", "Scale safety check", "Scale service agent", "Reply approved: it says only what the records show, not whether the sender paid.", "ok"],
+    ],
+    reply: "I checked the incoming payments recorded for your account, and no incoming payment was found at the time of the check. This confirms only what we can see. I can't tell from our records whether the sender made or completed the payment.",
+    status: "done", title: "Answered", sub: "Ask your friend for their payment reference if it still doesn't show",
+    reasoning: "Facts: the customer is signed in (authenticated). The incoming-payment journal shows no incoming payment at the time of the check.\nClaim: the friend said they sent it. Not verified.\nRule applied: a missing record is not proof the money wasn't sent, so the reply doesn't say it.\nNot done: chasing the sender's bank. We can't see it." },
+  { id: "alder", match: /420|alder|reed|bookcase|sent\?|was my .* sent/i,
+    ack: "Let me check that transfer for you.",
+    events: [
+      ["Internal note", "Scale identity check", "Scale service agent", "Message came through the signed-in app: authenticated.", "check"],
+      ["Internal note", "Scale service agent", "Scale transfer journal", "I'm checking the journal entry for the one-off £420 transfer to Alder & Reed Workshop. Please return the recorded transfer status.", "ask"],
+      ["Internal note", "Scale safety check", "Scale service agent", "Approved: a read of her own transfer.", "ok"],
+      ["Internal note", "Scale transfer journal", "Scale service agent", "Transfer status: SENT. This is Scale's outgoing-transfer record; recipient-bank receipt or credit is not confirmed.", "result"],
+      ["Internal note", "Scale safety check", "Scale service agent", "First draft said “received”. Not approved: no record confirms it. Rewritten.", "blocked"],
+      ["Internal note", "Scale safety check", "Scale service agent", "Reply approved.", "ok"],
+    ],
+    reply: "Your £420 transfer to Alder & Reed Workshop is recorded as sent in our transfer journal. That confirms it left Scale. It doesn't confirm that their bank has received or credited it.",
+    status: "done", title: "Answered", sub: "If they say it hasn't arrived, ask their bank to check",
+    reasoning: "Facts: the transfer journal records the £420 transfer as SENT.\nNot confirmed: receipt or credit by the recipient's bank.\nSafety check: the first draft used “received”; blocked because no record confirms it, then rewritten.\nNot done: contacting the recipient's bank." },
+  { id: "dd", match: /direct debit|northmere|gym|mandate|cancel/i,
+    ack: "I can help with that. Checking the Direct Debit now.",
+    events: [
+      ["Internal note", "Scale identity check", "Scale service agent", "Signed in with Face ID: verified. A cancellation is a change, so this matters.", "check"],
+      ["Internal note", "Scale service agent", "Scale case record", "I reviewed the collection-stage information. I can't rule out a collection already being processed, so that needs separate reconciliation.", "flag"],
+      ["Internal note", "Scale safety check", "Scale service agent", "Approved: verified customer, her own mandate, no open conflict.", "ok"],
+      ["Internal note", "Scale service agent", "Scale Direct Debit service", "I have submitted Elowen Marsh's instruction to cancel the Northmere Fitness mandate. This records her instruction; I am not authorising it on her behalf.", "ask"],
+      ["Internal note", "Scale Direct Debit service", "Scale service agent", "Direct Debit mandate: Northmere Fitness — Cancelled.", "result"],
+    ],
+    reply: "Your Northmere Fitness Direct Debit is now cancelled, so it can't be used for future collections. This stops your bank paying them. It doesn't end your agreement with Northmere, and a collection already in progress may still go through.",
+    status: "done", title: "Done: mandate cancelled", sub: "Nothing else needed from you",
+    reasoning: "Facts: the customer is verified (Face ID). The mandate was active.\nCheck: a collection could already be in progress. Flagged, not hidden.\nAction: one change, cancel the mandate, submitted once.\nNot done: cancelling her contract with Northmere. That's between her and them." },
+  { id: "card", match: /recognise|recognize|card payment|fern|finch|38|fraud|didn't make/i,
+    ack: "Sorry to hear that. Let me look into it with our card team.",
+    events: [
+      ["Internal note", "Scale identity check", "Scale service agent", "Message came through the signed-in app: authenticated.", "check"],
+      ["Internal note", "Scale evidence check", "Scale service agent", "Card purchase found: Fern & Finch Books, £38.40, today 09:03. She says she doesn't recognise it.", "flag"],
+      ["Internal note", "Scale service agent", "Scale card team", "I'm opening a case for review of the Fern & Finch Books purchase for £38.40. The customer says she does not recognise it; no conclusion about the merchant or the purchase has been reached.", "escalate"],
+      ["Internal note", "Scale card team", "Scale service agent", "Case registered for the specified card purchase. Registration records the enquiry only; it is not a finding of fraud or a decision to refund.", "result"],
+      ["Internal note", "Scale safety check", "Scale service agent", "Reply approved: no fraud finding or refund promised.", "ok"],
+    ],
+    reply: "I've registered your enquiry about the £38.40 Fern & Finch Books purchase with our card team. We haven't yet established who made it, whether it was fraud, or whether a refund is due. If you're worried, you can freeze your card in Cards; no card change has been made.",
+    status: "person", title: "Passed to our card team", sub: "They'll reply here",
+    reasoning: "Facts: the purchase is posted on her account. She says she doesn't recognise it.\nNot established: who made it, fraud, or refund.\nHandover: card team, with the purchase details and her claim.\nNot done: refunding or replacing the card. Neither has been decided." },
 ];
 
 const $ = (s) => document.querySelector(s);
@@ -228,10 +304,10 @@ function renderActivity() {
 
 function renderDetail(t) {
   $("#detail-body").innerHTML = `
-    <div class="pay-head"><div class="ic">${t.icon}</div><div class="amt">${money(t.amount)}</div><div class="to">to ${esc(t.name)}</div><span class="pill sent">✓ Sent by H&amp;V</span></div>
+    <div class="pay-head"><div class="ic">${t.icon}</div><div class="amt">${money(t.amount)}</div><div class="to">to ${esc(t.name)}</div><span class="pill sent">✓ Sent by Scale</span></div>
     <div class="section"><h2>Where it is</h2><div class="card"><ol class="steps">
       <li><span class="dot">✓</span><div><b>You set up the payment</b><p>Today, 10:11 · reference “${esc(t.ref)}”</p></div></li>
-      <li><span class="dot">✓</span><div><b>Sent by Harrow &amp; Vale</b><p>Today, 10:12 · left your account</p></div></li>
+      <li><span class="dot">✓</span><div><b>Sent by Scale</b><p>Today, 10:12 · left your account</p></div></li>
       <li><span class="dot unk">?</span><div><b>Received by their bank</b><p>Not something we can see from here</p></div></li>
     </ol></div></div>
     <div class="section"><h2>Details</h2><div class="card rows">
@@ -278,6 +354,9 @@ function closeChat() {
   $("#sheet").setAttribute("aria-hidden", "true");
 }
 
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const now = () => new Date().toTimeString().slice(0, 8);
+
 async function send(text) {
   text = text.trim();
   if (!text || busy) return;
@@ -285,54 +364,58 @@ async function send(text) {
   $("#send").disabled = true;
   $("#chips").innerHTML = "";
   bubble("b me", esc(text));
-  history.push({ role: "user", content: text });
-  try {
-    const res = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: history, context }) });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "The assistant is unavailable right now.");
-    bubble("b bot", esc(data.reply));
-    history.push({ role: "assistant", content: data.reply });
-    if (data.job) await follow(data.job);
-  } catch (err) {
-    bubble("b bot err", esc(err.message || "Something went wrong. Please try again."));
-  } finally {
-    busy = false;
-    $("#send").disabled = false;
+  const script = SCRIPTS.find((x) => x.match.test(text));
+  await wait(700);
+  if (!script) {
+    bubble("b bot", "I can check payments, transfers, Direct Debits and card purchases on your account. What would you like me to look into?");
+    $("#chips").innerHTML = CHIPS.map((c) => `<button type="button">${esc(c)}</button>`).join("");
+  } else {
+    bubble("b bot", esc(script.ack));
+    await play(script);
   }
+  busy = false;
+  $("#send").disabled = false;
 }
 
-async function follow(job) {
-  const card = bubble("work", `<div class="t"><span class="spin"></span>Checking your account</div><ul></ul>`);
-  for (;;) {
-    await new Promise((r) => setTimeout(r, 900));
-    let data;
-    try {
-      data = await (await fetch(`/api/job/${job}`)).json();
-    } catch {
-      continue;
-    }
-    const steps = data.steps || [];
-    card.querySelector("ul").innerHTML = steps.map((s, i) =>
-      `<li class="${s.blocked ? "blocked" : ""} ${!data.done && i === steps.length - 1 ? "now" : ""}">${esc(s.label)}</li>`).join("");
+async function play(script) {
+  const card = bubble("hist", `<div class="t"><span class="spin"></span><span class="lbl">Working on your request</span><small>case history</small></div><div class="evs"></div>`);
+  const list = card.querySelector(".evs");
+  await wait(600);
+  for (const [channel, frm, to, note, kind] of script.events) {
+    list.insertAdjacentHTML("beforeend", `<div class="ev ${kind}"><div class="m">${now()} · ${esc(channel)} · ${esc(frm)} → ${esc(to)}</div><div class="n">${esc(note)}</div></div>`);
     $("#msgs").scrollTop = $("#msgs").scrollHeight;
-    if (data.done) {
-      card.querySelector(".t").innerHTML = "✓ Checked";
-      showResult(data.result || {});
-      return;
-    }
+    await wait(kind === "result" || kind === "blocked" ? 1500 : 1100);
   }
+  list.insertAdjacentHTML("beforeend", `<div class="ev ok"><div class="m">${now()} · Secure chat · Scale service agent → Elowen Marsh</div><div class="n">Replied below.</div></div>`);
+  card.querySelector(".t .spin").replaceWith(Object.assign(document.createElement("span"), { textContent: "✓" }));
+  card.querySelector(".lbl").textContent = "Done";
+  await wait(500);
+  showResult(script);
 }
 
 function showResult(r) {
   bubble("b bot", esc(r.reply));
-  history.push({ role: "assistant", content: r.reply });
-  const person = r.escalated;
-  const pending = !person && /request/i.test(r.state || "");
-  const cls = person ? "person" : pending ? "wait" : "done";
-  const title = person ? "Passed to a person" : pending ? "Requested, waiting on our team" : "Answered";
-  const sub = person ? `${r.team ? esc(r.team) + " · " : ""}they'll reply here` : pending ? "We'll update you here" : "Nothing else needed from you";
-  bubble(`status-card ${cls}`, `<i>${person ? "👤" : pending ? "⏳" : "✓"}</i><div><b>${title}</b>${sub}</div>`);
-  if (r.seconds) bubble("why", `Checked in ${Math.round(r.seconds)}s · every answer passes H&amp;V's safety checks`);
+  const icon = { done: "✓", wait: "⏳", person: "👤" }[r.status];
+  bubble(`status-card ${r.status}`, `<i>${icon}</i><div><b>${esc(r.title)}</b>${esc(r.sub)}</div>`);
+  const el = document.createElement("details");
+  el.className = "reason";
+  el.innerHTML = `<summary>Why this answer?</summary><pre>${esc(r.reasoning)}</pre>`;
+  $("#msgs").appendChild(el);
+  bubble("why", `Every answer passes Scale's safety checks before you see it`);
+  $("#msgs").scrollTop = $("#msgs").scrollHeight;
+  say(r.id);
+}
+
+/* ---------- voice (ElevenLabs) ---------- */
+let voiceOn = true;
+let player = null;
+async function say(id) {
+  if (!voiceOn || !id) return;
+  try {
+    if (player) player.pause();
+    player = new Audio(`audio/${id}.mp3`);
+    await player.play();
+  } catch { /* voice is a nice-to-have: the text reply is already on screen */ }
 }
 
 /* ---------- wiring ---------- */
@@ -348,6 +431,7 @@ document.addEventListener("click", (e) => {
 });
 $("#fab").addEventListener("click", () => openChat(null));
 $("#close").addEventListener("click", closeChat);
+$("#voice").addEventListener("click", () => { voiceOn = !voiceOn; $("#voice").setAttribute("aria-pressed", String(voiceOn)); $("#voice").textContent = voiceOn ? "🔊" : "🔈"; if (!voiceOn && player) player.pause(); });
 $("#composer").addEventListener("submit", (e) => { e.preventDefault(); const v = $("#input").value; $("#input").value = ""; send(v); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeChat(); });
 renderActivity();
