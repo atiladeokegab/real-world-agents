@@ -26,6 +26,22 @@ NOT_FOUND_IS_AN_ANSWER = Verdict(
 
 _FAILED = ("timeout", "error")
 
+UNCONFIRMED_COMPLETION = Verdict(
+    ok=False, rule="claims", field="reply.text",
+    message=("the reply says complete, completed or done, but no tool result confirms it. Say what was requested "
+             "or what the records show, in the pending wording if a check is pending."),
+)
+
+_COMPLETION = re.compile(r"\b(complete|completed|done)\b", re.I)
+_NEGATED = re.compile(r"\b(not|no|nothing|never|yet to be)\b|n't", re.I)
+
+
+def claims_completion(proposal: Proposal, results: list[ToolResult]) -> bool:
+    text = proposal.reply.text if proposal.reply else ""
+    if proposal.action not in ("reply", "request_info") or any(r.status == "ok" for r in results):
+        return False
+    return any(not _NEGATED.search(text[max(0, m.start() - 30):m.start()]) for m in _COMPLETION.finditer(text or ""))
+
 
 def misreads_not_found(proposal: Proposal, results: list[ToolResult]) -> bool:
     return (proposal.exception_type == "read_failure" and proposal.action != "tool_call"
@@ -72,6 +88,8 @@ def _problem(proposal: Proposal, case_object: CaseObject, results: list[ToolResu
     """A proposal the brain sends back once, and what it becomes if the retry repeats it (None: keep it)."""
     if leaves_customer_waiting(proposal, case_object):
         return NO_OP_UNANSWERED, _INCOMPLETE
+    if claims_completion(proposal, results):
+        return UNCONFIRMED_COMPLETION, _INCOMPLETE
     if misreads_not_found(proposal, results):
         return NOT_FOUND_IS_AN_ANSWER, None
     return None

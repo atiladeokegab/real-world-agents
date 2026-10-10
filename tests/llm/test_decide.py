@@ -136,3 +136,34 @@ def test_prompt_says_not_found_is_not_a_read_failure(fake_llm):
     fake_llm.answers.append(LOOKUP)
     decide(case_006(), CASE_OBJECT, [], [])
     assert "A not_found result is a normal answer, not a read_failure" in fake_llm.calls[0]["system"]
+
+
+
+def _reply(text):
+    return {"action": "reply", "reply": {"channel": "Secure chat", "text": text}, "asks_addressed": ["ask-1"]}
+
+
+def test_complete_claim_without_ok_result_is_retried(fake_llm):
+    fake_llm.answers += [_reply("Your change is complete."), _reply("We've asked Payments to check.")]
+    out = decide(case_006(), CASE_OBJECT, [], [])
+    assert out.reply.text == "We've asked Payments to check." and "rule: claims" in fake_llm.calls[1]["user"]
+
+
+def test_complete_claim_twice_escalates(fake_llm):
+    fake_llm.answers += [_reply("All done."), _reply("That is now completed.")]
+    out = decide(case_006(), CASE_OBJECT, [], NOT_FOUND)
+    assert out.action == "escalate" and out.exception_type == "incomplete_answer"
+    assert "completed" not in out.reply.text
+
+
+def test_complete_with_an_ok_result_or_negated_is_kept(fake_llm):
+    ok = [ToolResult(tool="transfer_journal", status="ok", data={"done": True})]
+    fake_llm.answers += [_reply("The cancellation is complete."), _reply("Nothing has been done yet.")]
+    assert decide(case_006(), CASE_OBJECT, [], ok).action == "reply"
+    assert decide(case_006(), CASE_OBJECT, [], []).action == "reply" and len(fake_llm.calls) == 2
+
+
+def test_prompt_forbids_complete_without_a_result(fake_llm):
+    fake_llm.answers.append(LOOKUP)
+    decide(case_006(), CASE_OBJECT, [], [])
+    assert '"complete", "completed" or "done" unless' in fake_llm.calls[0]["system"]
