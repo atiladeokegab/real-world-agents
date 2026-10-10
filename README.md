@@ -78,8 +78,8 @@ flowchart TD
 
 How a case flows: the loop in [agent/core/loop.py](agent/core/loop.py) runs ingest, the evidence
 checks and one extraction, then asks for one decision at a time. Each proposal goes through the
-verifier before anything runs. A rejection goes back to the model once, naming the exact rule,
-field and event; a second rejection escalates. At most 6 tool calls and 2 identical calls per
+verifier before anything runs. A rejection goes back to the model with the exact rule, field and
+event; a second rejection in the same turn escalates. At most 6 tool calls and 2 identical calls per
 case, 240 seconds per case; hitting any limit escalates with a handover note. Any crash writes the
 system-failure answer instead of a blank.
 
@@ -112,36 +112,6 @@ amounts, dates and limits are compared in code; a money action needs verified id
 mandate, no open conflict and its prior checks in the trace; and no reply may claim "paid",
 "received" or "refunded" unless a tool confirmed it.
 
-### A real run
-
-Practice case 044, cut at the decision point: the portal says the supplier batch is *Processed*,
-and the customer asks whether row SUP-17 was paid. Output of
-`uv run agent run --case examples/044 --cut 2`, unedited apart from the output path:
-
-```text
-ingest    2 events · 0 attachments · cut at event-002
-identity  authenticated Authorised business user · Secure chat
-evidence  1 finding · a collection-level status is asserted while a member line's status is unclear or contradicts it
-extract   1 ask · 8 unknowns · emotional state: calm
-decide    tool_call business_service ({"query": "Line-level status of row SUP-17 in batch 'Alderwick supplier payments…)
-verify    ✓ approved
-execute   business_service → done
-decide    reply · Secure chat
-verify    ✗ claim_linter: name 'I've' in the reply is not in a claim or a tool result
-decide    reply · Secure chat
-verify    ✓ approved
-write     ANSWERS/044/ ANSWER.md REASONING.md trace.log run.json
-● DONE  1 action · 0 escalations · 38.8s
-```
-
-Code flagged that a batch status says nothing about one row *before* the model read the case; the
-model proposed a line-level lookup instead of answering from the batch; the verifier let the
-read through, then rejected the first reply draft and accepted the second. The reply sent:
-
-> Row SUP-17 was not paid. Its status is Rejected, and the reason given is that the beneficiary
-> details did not match the receiving institution's records. The batch shows Processed, but that
-> does not mean every row in it was paid.
-
 ### Research basis
 
 Each safety rule comes from a published finding. Full mapping: [AGENT_SPEC.md §12](AGENT_SPEC.md).
@@ -159,6 +129,43 @@ Each safety rule comes from a published finding. Full mapping: [AGENT_SPEC.md §
 | Deng et al., [*DeFA*](https://arxiv.org/abs/2610.01256) | Failures traced back to the stage that caused them |
 | Liao et al., [*Error-propagation modeling*](https://arxiv.org/abs/2610.11600) | The decisive error is the earliest one whose fix recovers the case |
 | Zhu et al., [*AgentDebugX*](https://arxiv.org/abs/2607.18754) | Retries told exactly where the error is; fixed failures kept as regression tests |
+
+### A real run
+
+Practice case 044, cut at the decision point: the portal says the supplier batch is *Processed*,
+and the customer asks whether row SUP-17 was paid. Output of
+`uv run agent run --case examples/044 --cut 2 --out /tmp/demo/044`, unedited apart from the output path:
+
+```text
+ingest    2 events · 0 attachments · cut at event-002
+identity  authenticated Authorised business user · Secure chat
+evidence  1 finding · a collection-level status is asserted while a member line's status is unclear or contradicts it
+extract   1 ask · 8 unknowns · emotional state: calm
+decide    tool_call business_service ({"query": "Line-level status of row SUP-17 in batch 'Alderwick supplier payments…)
+verify    ✓ approved
+execute   business_service → done
+decide    reply · Secure chat
+verify    ✗ claim_linter: name 'I've' in the reply is not in a claim or a tool result
+decide    reply · Secure chat
+verify    ✓ approved
+write     /tmp/demo/044/ ANSWER.md REASONING.md trace.log run.json
+● DONE  1 action · 0 escalations · 38.8s
+```
+
+Code flagged that a batch status says nothing about one row *before* the model read the case; the
+model proposed a line-level lookup instead of answering from the batch; the verifier let the
+read through, then rejected the first reply draft and accepted the second. The reply sent:
+
+> Row SUP-17 was not paid. Its status is Rejected, and the reason given is that the beneficiary
+> details did not match the receiving institution's records. The batch shows Processed, but that
+> does not mean every row in it was paid.
+
+## Results
+
+Results from our own Reality Test on the 50 practice cases: see eval report (numbers added after
+the final eval run). The report comes from
+`uv run python -m eval --inject --judgement --report eval-report.md`: the practice cases cut at
+their decision points, the same cases with faults injected, and hand-labelled judgement cases.
 
 ## How to run it
 
@@ -190,12 +197,15 @@ Put real values in `.env` (git-ignored, never committed). `.env.example` lists e
 
 ### Running
 
+`ANSWERS/` holds only the Reality Test results; practice runs never write into `ANSWERS/`, so
+every practice example below writes to `/tmp/demo/`.
+
 ```bash
-# one case: writes ANSWERS/<case>/ANSWER.md, REASONING.md, trace.log, run.json
-uv run agent run --case examples/044
+# one case: writes ANSWER.md, REASONING.md, trace.log and run.json into the --out folder
+uv run agent run --case examples/044 --out /tmp/demo/044
 
 # a practice case cut at its decision point, with a question the answer must address
-uv run agent run --case examples/044 --cut 2 --question "Was row SUP-17 paid?"
+uv run agent run --case examples/044 --cut 2 --question "Was row SUP-17 paid?" --out /tmp/demo/044q
 
 # one line per answered case; exits 1 if any case has no ANSWER.md
 uv run agent collect --out ANSWERS
@@ -255,18 +265,11 @@ No model training, classifiers, vector database or GPU. Every dependency is pinn
 - Real adapters to a bank's payment, card and mandate journals, behind the same tool catalogue.
 - A reviewer view that reads `ANSWERS/` live, built from [docs/mockup/](docs/mockup/index.html):
   a case list and a case page with the handover note pinned.
+- Re-extraction on rejection: when the verifier rejects a field that came from extraction,
+  re-extract that field before the retry (AGENT_SPEC.md §4.6).
 - Running each case twice and escalating when the runs disagree.
 - Choosing the model per stage from measured results.
 - A live voice conversation that confirms identity before any change.
-
-## Our own Reality Test
-
-Before 16:30 we score the agent on the 50 practice cases, cut at their decision points, plus the
-same cases with faults injected (wrong amounts, contradictions, timeouts, hidden instructions) and
-hand-labelled judgement cases: `uv run python -m eval --inject --judgement --report eval-report.md`.
-The report is written only from a real run. Its headline numbers (action match, escalation rate
-on clean cases, detection rate on injected faults, blank answers) are added here from the final
-run before the 16:30 freeze.
 
 ## Reality Test results
 
@@ -280,7 +283,8 @@ _To be added before the 16:30 freeze: the path to the 60-second video in [media/
 
 ## Submission
 
-Team, track, members, the freeze commit and the LinkedIn and X post links: [SUBMISSION.md](SUBMISSION.md).
+Team, track and members: [HACKATHON.md](HACKATHON.md). The freeze commit and the LinkedIn and X
+post links are added before the 17:00 deadline.
 
 ## Licence
 
