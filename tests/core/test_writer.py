@@ -127,3 +127,11 @@ def test_exception_names_its_handling(monkeypatch):
     monkeypatch.setitem(sys.modules, "agent.llm", None)
     assert _handling("read_failure") == "read_failure"
     assert _handling(None) == "None."
+
+
+def test_voice_can_read_the_customer_reply(tmp_path):
+    # agent/voice reads the reply from this section; this is the pattern it needs.
+    import re
+    a, _, _ = run(tmp_path, Proposal(action="reply", reply=REPLY), [ToolResult(tool="t", status="ok")])
+    m = re.search(r"## Customer reply\n\n(?:Channel:[^\n]*\n\n)?(.*?)\n*(?:\n## |\Z)", a, re.S)
+    assert m.group(1) == "We've checked row SUP-17."

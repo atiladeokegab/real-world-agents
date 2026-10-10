@@ -19,6 +19,9 @@ def test_run_always_answers_and_collect_lists_it(tmp_path):
                         "--case", str(ROOT / "examples" / "044"), "--out", str(tmp_path / "044")],
                        capture_output=True, text=True, timeout=200, env=env)
     assert p.returncode == 0, p.stderr
+    lines = p.stdout.splitlines()  # §Screens: one line per stage, then the outcome line
+    assert lines[-2].startswith("write     ") and "ANSWER.md REASONING.md trace.log run.json" in lines[-2]
+    assert lines[-1].startswith("■ SYSTEM FAILURE  escalated with what we received · ")
     assert {f.name for f in (tmp_path / "044").iterdir()} >= {"ANSWER.md", "REASONING.md", "trace.log", "run.json"}
 
     (tmp_path / "045").mkdir()

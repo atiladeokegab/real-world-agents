@@ -326,7 +326,9 @@ def write_fallback(out: Path, case_path: Path, error: str, trace: list,
                "## Evidence used", "", NONE, "",
                "## Handover", "", _note(note), "",
                "## What failed", "",
-               f"**{where}**: {last}. The stages before it completed; their output and the full error are in `trace.log`."]
+               f"**{where}**: {last}. "
+               + ("No stage completed." if where == "ingest" else "The stages before it completed.")
+               + " Their output and the full error are in `trace.log`."]
     reasoning = [f"# Reasoning — Case {case_id}", "",
                  "## Facts and claims", "", "Not reached: the run failed before a decision.", "",
                  "## Findings", "", "Not reached.", "",
