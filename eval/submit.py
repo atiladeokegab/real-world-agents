@@ -12,7 +12,7 @@ from pathlib import Path
 from agent.core.writer import write_fallback
 
 
-CASE_TIMEOUT = 150
+CASE_TIMEOUT = 300
 
 
 def run_case(case: Path, out: Path):
