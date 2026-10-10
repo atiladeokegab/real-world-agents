@@ -14,7 +14,7 @@ PENDING_REPLY = "We've asked {team} to {check}. We'll reply here once they've co
 
 DEFAULT_TEAM = "the operations team"
 
-HANDOVER_HEADING = "## Handover note"
+HANDOVER_HEADING = "## Handover"
 HANDOVER_LABELS = {
     "who": "Take it",
     "urgency": "Urgency",
@@ -23,9 +23,9 @@ HANDOVER_LABELS = {
     "verified": "Verified",
     "claimed": "Only claimed",
     "conflicts": "Conflicts",
-    "did": "What the agent did",
-    "not_done": "What the agent did not do",
+    "did": "We did",
+    "not_done": "We did not",
     "question": "Question for you",
-    "holding_reply": "Holding reply (safe to send now)",
+    "holding_reply": "Safe to send now",
 }
 NONE = "none"

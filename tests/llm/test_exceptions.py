@@ -173,7 +173,8 @@ def test_escalation_always_carries_the_full_handover_note():
     assert note["question"].startswith("Please establish")
     assert note["holding_reply"] and "£" not in note["holding_reply"]
     md = handover.render(note)
-    assert md.startswith("## Handover note") and "**Question for you:**" in md
+    assert md.startswith("## Handover") and "**Question for you:**" in md
+    assert "**We did:**" in md and "**We did not:**" in md and "**Safe to send now:**" in md
 
 
 def test_model_handover_fields_are_kept():
