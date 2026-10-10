@@ -1,0 +1,16 @@
+{
+  "track": "Banking & Financial Services",
+  "case_id": "005",
+  "action": "escalate",
+  "escalated": true,
+  "exception_type": "missing_authority",
+  "outcome": "escalated",
+  "tool_calls": 0,
+  "fallback": false,
+  "model_calls": 2,
+  "input_tokens": 14007,
+  "output_tokens": 6501,
+  "seconds": 55.3,
+  "state": "escalated",
+  "summary": "handover to Personal Banking servicing \u2013 Direct Debit indemnity & customer support team, urgent"
+}

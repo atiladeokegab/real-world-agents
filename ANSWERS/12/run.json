@@ -1,0 +1,16 @@
+{
+  "track": "Banking & Financial Services",
+  "case_id": "012",
+  "action": "escalate",
+  "escalated": true,
+  "exception_type": "role_violation",
+  "outcome": "escalated",
+  "tool_calls": 0,
+  "fallback": false,
+  "model_calls": 2,
+  "input_tokens": 12221,
+  "output_tokens": 4811,
+  "seconds": 42.900000000000006,
+  "state": "escalated",
+  "summary": "handover to Business Banking Payments Controls / Fraud team, today"
+}

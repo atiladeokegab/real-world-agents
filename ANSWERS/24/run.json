@@ -1,0 +1,16 @@
+{
+  "track": "Banking & Financial Services",
+  "case_id": "024",
+  "action": "escalate",
+  "escalated": true,
+  "exception_type": "conflicting_records",
+  "outcome": "escalated",
+  "tool_calls": 0,
+  "fallback": false,
+  "model_calls": 4,
+  "input_tokens": 20848,
+  "output_tokens": 7715,
+  "seconds": 72.30000000000001,
+  "state": "escalated",
+  "summary": "handover to Brackenfold Bank safeguarding/fraud support, urgent"
+}

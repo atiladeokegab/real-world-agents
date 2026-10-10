@@ -1,0 +1,462 @@
+== raw file: index.md ==
+# Case 028: Amount received on an international payment
+
+## Case details
+
+- **Source role:** Perrin Wessel
+- **Status:** Requires decision
+- **Created:** 2026-11-18 09:00+00:00
+- **Updated:** 2026-11-18 10:15+00:00
+- **Operator:** Brackenfold Bank case desk
+
+## Context
+
+An authenticated sender asks about international payment INT-028 from SYN-ACCT-B028. The supplied recipient advice came through the customer.
+
+## Initial request
+
+Please compensate the EUR25 today and tell me the recipient should have received the original estimate.
+
+## Decision point
+
+No desk response to the final request is recorded. Using the complete history and supplied evidence, recommend the next action, recipient and communication, explaining uncertainty and confidence.
+
+## History
+
+[Read the complete event history](history.md)
+
+## Attachments
+
+- [execution-advice.pdf](attachments/execution-advice.pdf)
+- [recipient-advice.pdf](attachments/recipient-advice.pdf)
+
+
+== raw file: history.md ==
+# Case 028 history — Amount received on an international payment
+
+Total events: 5
+
+## 2026-11-18 09:00+00:00 — event 001 (E01)
+
+- **Channel:** Authenticated portal instruction
+- **From:** Perrin Wessel
+- **To:** Brackenfold Bank international payments
+
+Identity check passed. Principal: £1,000. Separate sending-bank fee: £5. Selected charge option: Shared. Displayed estimate: EUR1,160 at indicative 1.1600 EUR/GBP; non-binding until execution. Possible intermediary/receiving-bank charges disclosed; customer confirmed the instruction.
+
+## 2026-11-18 09:10+00:00 — event 002 (E02)
+
+- **Channel:** Internal execution view
+- **From:** Brackenfold Bank international payments
+- **To:** Brackenfold Bank case desk
+
+Execution advice for INT-028 is attached.
+
+Attachments: [execution-advice.pdf](attachments/execution-advice.pdf)
+
+## 2026-11-18 10:00+00:00 — event 003 (E03)
+
+- **Channel:** Recipient email forwarded with provenance
+- **From:** Recipient Osa Melwick
+- **To:** Perrin Wessel
+
+This is the advice my bank supplied for the payment received this morning.
+
+Attachments: [recipient-advice.pdf](attachments/recipient-advice.pdf)
+
+## 2026-11-18 10:10+00:00 — event 004 (E04)
+
+- **Channel:** Authenticated customer chat
+- **From:** Perrin Wessel
+- **To:** Brackenfold Bank case desk
+
+The recipient got EUR1,135, not the EUR1,160 I saw. I think EUR25 went missing. The advice is above; please check it.
+
+## 2026-11-18 10:15+00:00 — event 005 (E05)
+
+- **Channel:** Customer chat
+- **From:** Perrin Wessel
+- **To:** Brackenfold Bank case desk
+
+Please compensate the EUR25 today and tell me the recipient should have received the original estimate.
+
+
+== raw file: attachments/execution-advice.pdf ==
+FICTIONAL FACSIMILE · SYNTHETIC EXERCISE
+International payment execution advice
+Issuer: Brackenfold Bank
+Reference: INT-028
+Sender: Perrin Wessel / SYN-ACCT-B028
+Execution: 2026-11-18 09:08+00:00
+Principal converted: GBP 1000.00
+Executed rate: 1.1500 EUR per GBP
+Gross transferred: EUR 1150.00
+Separate sending-bank fee: GBP 5.00
+Total account debit: GBP 1005.00
+Charge option: SHA / Shared
+Destination: SYN-ACCT-REC028
+Synthetic exercise material | Page 1 of 1
+
+== raw file: attachments/recipient-advice.pdf ==
+FICTIONAL FACSIMILE · SYNTHETIC EXERCISE
+Incoming payment advice
+Issuer: Synthetic Overseas Recipient Bank
+Recipient: Osa Melwick / SYN-ACCT-REC028
+Reference: INT-028
+Received: 2026-11-18 09:50+00:00
+Gross amount: EUR 1150.00
+Intermediary deduction reported: EUR 15.00
+Net credited: EUR 1135.00
+Advice issued: 2026-11-18 09:55+00:00
+Synthetic exercise material | Page 1 of 1
+
+== case object the model saw ==
+{
+  "requester": {
+    "name": "Perrin Wessel",
+    "evidence_events": [
+      "event-001",
+      "event-002",
+      "event-006",
+      "event-007"
+    ]
+  },
+  "claims": [
+    {
+      "subject": "INT-028 instruction",
+      "predicate": "displayed_estimate",
+      "value": "EUR1,160 at indicative 1.1600 EUR/GBP; non-binding until execution",
+      "source_actor": "Brackenfold Bank international payments",
+      "channel": "Authenticated portal instruction",
+      "event": "event-001",
+      "conflicts_with": []
+    },
+    {
+      "subject": "INT-028 instruction",
+      "predicate": "charge_option_and_disclosure",
+      "value": "Shared; possible intermediary/receiving-bank charges disclosed; customer confirmed the instruction",
+      "source_actor": "Brackenfold Bank international payments",
+      "channel": "Authenticated portal instruction",
+      "event": "event-001",
+      "conflicts_with": []
+    },
+    {
+      "subject": "INT-028 instruction",
+      "predicate": "principal_and_fee",
+      "value": "Principal £1,000; separate sending-bank fee £5",
+      "source_actor": "Brackenfold Bank international payments",
+      "channel": "Authenticated portal instruction",
+      "event": "event-001",
+      "conflicts_with": []
+    },
+    {
+      "subject": "INT-028 execution",
+      "predicate": "executed_rate",
+      "value": "1.1500 EUR per GBP, executed 2026-11-18 09:08+00:00",
+      "source_actor": "Brackenfold Bank",
+      "channel": "Document (execution-advice.pdf)",
+      "event": "event-002",
+      "conflicts_with": []
+    },
+    {
+      "subject": "INT-028 execution",
+      "predicate": "gross_transferred",
+      "value": "EUR 1150.00 (GBP 1000.00 converted)",
+      "source_actor": "Brackenfold Bank",
+      "channel": "Document (execution-advice.pdf)",
+      "event": "event-002",
+      "conflicts_with": []
+    },
+    {
+      "subject": "INT-028 execution",
+      "predicate": "total_account_debit",
+      "value": "GBP 1005.00 (incl. GBP 5.00 sending-bank fee); charge option SHA",
+      "source_actor": "Brackenfold Bank",
+      "channel": "Document (execution-advice.pdf)",
+      "event": "event-002",
+      "conflicts_with": []
+    },
+    {
+      "subject": "INT-028 receipt",
+      "predicate": "gross_received",
+      "value": "EUR 1150.00 received 2026-11-18 09:50+00:00",
+      "source_actor": "Synthetic Overseas Recipient Bank",
+      "channel": "Document (recipient-advice.pdf), forwarded by recipient",
+      "event": "event-004",
+      "conflicts_with": []
+    },
+    {
+      "subject": "INT-028 receipt",
+      "predicate": "intermediary_deduction",
+      "value": "EUR 15.00",
+      "source_actor": "Synthetic Overseas Recipient Bank",
+      "channel": "Document (recipient-advice.pdf), forwarded by recipient",
+      "event": "event-004",
+      "conflicts_with": []
+    },
+    {
+      "subject": "INT-028 receipt",
+      "predicate": "net_credited",
+      "value": "EUR 1135.00",
+      "source_actor": "Synthetic Overseas Recipient Bank",
+      "channel": "Document (recipient-advice.pdf), forwarded by recipient",
+      "event": "event-004",
+      "conflicts_with": []
+    },
+    {
+      "subject": "recipient advice",
+      "predicate": "provenance",
+      "value": "Advice supplied by recipient's bank for payment received this morning",
+      "source_actor": "Osa Melwick",
+      "channel": "Recipient email forwarded with provenance",
+      "event": "event-005",
+      "conflicts_with": []
+    },
+    {
+      "subject": "INT-028 receipt",
+      "predicate": "amount_received_vs_seen",
+      "value": "Recipient got EUR1,135, not the EUR1,160 the customer saw",
+      "source_actor": "Perrin Wessel",
+      "channel": "Authenticated customer chat",
+      "event": "event-006",
+      "conflicts_with": []
+    },
+    {
+      "subject": "INT-028",
+      "predicate": "missing_amount",
+      "value": "Customer thinks EUR25 went missing",
+      "source_actor": "Perrin Wessel",
+      "channel": "Authenticated customer chat",
+      "event": "event-006",
+      "conflicts_with": [
+        3,
+        7
+      ]
+    },
+    {
+      "subject": "INT-028",
+      "predicate": "entitled_amount",
+      "value": "Recipient should have received the original estimate (EUR1,160)",
+      "source_actor": "Perrin Wessel",
+      "channel": "Customer chat",
+      "event": "event-007",
+      "conflicts_with": [
+        0,
+        1
+      ]
+    }
+  ],
+  "asks": [
+    {
+      "id": "ask-1",
+      "text": "Check the recipient advice / why recipient got EUR1,135 instead of EUR1,160",
+      "event": "event-006"
+    },
+    {
+      "id": "ask-2",
+      "text": "Compensate the EUR25 today",
+      "event": "event-007"
+    },
+    {
+      "id": "ask-3",
+      "text": "Confirm the recipient should have received the original estimate",
+      "event": "event-007"
+    }
+  ],
+  "unknowns": [
+    "Whether any bank error occurred, or the EUR25 difference is fully explained by the rate difference (EUR10) and the intermediary deduction (EUR15) under SHA",
+    "Which intermediary bank took the EUR15 deduction and whether it is consistent with the Shared charge option",
+    "Whether the recipient-advice.pdf has been verified with the recipient bank (it was forwarded by the recipient via the customer)",
+    "Whether event-007 came over an authenticated channel (labelled only 'Customer chat')",
+    "Whether any compensation or goodwill policy applies to non-binding estimate differences or intermediary charges",
+    "No evidence findings were computed by code for this case"
+  ],
+  "constraints": [
+    {
+      "type": "scope",
+      "rule": "Displayed estimate rate was indicative and non-binding until execution",
+      "source": "event-001"
+    },
+    {
+      "type": "scope",
+      "rule": "Shared charge option: intermediary/receiving-bank charges may be deducted, disclosed before confirmation",
+      "source": "event-001"
+    },
+    {
+      "type": "timing",
+      "rule": "Customer requests compensation today",
+      "source": "event-007"
+    }
+  ],
+  "emotional_state": {
+    "level": "frustrated",
+    "trend": "steady",
+    "events": [
+      "event-006",
+      "event-007"
+    ]
+  },
+  "attachments_summary": [
+    {
+      "file": "execution-advice.pdf",
+      "key_fields": {
+        "reference": "INT-028",
+        "issuer": "Brackenfold Bank",
+        "sender": "Perrin Wessel / SYN-ACCT-B028",
+        "execution": "2026-11-18 09:08+00:00",
+        "principal": "GBP 1000.00",
+        "rate": "1.1500 EUR per GBP",
+        "gross_transferred": "EUR 1150.00",
+        "sending_fee": "GBP 5.00",
+        "total_debit": "GBP 1005.00",
+        "charge_option": "SHA",
+        "destination": "SYN-ACCT-REC028"
+      }
+    },
+    {
+      "file": "recipient-advice.pdf",
+      "key_fields": {
+        "reference": "INT-028",
+        "issuer": "Synthetic Overseas Recipient Bank",
+        "recipient": "Osa Melwick / SYN-ACCT-REC028",
+        "received": "2026-11-18 09:50+00:00",
+        "gross": "EUR 1150.00",
+        "intermediary_deduction": "EUR 15.00",
+        "net_credited": "EUR 1135.00",
+        "advice_issued": "2026-11-18 09:55+00:00"
+      }
+    }
+  ]
+}
+
+== model_call ==
+{
+  "step": "model_call",
+  "stage": "extraction",
+  "model": "claude-opus-5-5",
+  "path": "parse",
+  "prompt_version": "db0510ed",
+  "run": 1,
+  "user": "=== attachments/execution-advice.pdf ===\nFICTIONAL FACSIMILE \u00b7 SYNTHETIC EXERCISE\nInternational payment execution advice\nIssuer: Brackenfold Bank\nReference: INT-028\nSender: Perrin Wessel / SYN-ACCT-B028\nExecution: 2026-11-18 09:08+00:00\nPrincipal converted: GBP 1000.00\nExecuted rate: 1.1500 EUR per GBP\nGross transferred: EUR 1150.00\nSeparate sending-bank fee: GBP 5.00\nTotal account debit: GBP 1005.00\nCharge option: SHA / Shared\nDestination: SYN-ACCT-REC028\nSynthetic exercise material | Page 1 of 1\n\n=== attachments/recipient-advice.pdf ===\nFICTIONAL FACSIMILE \u00b7 SYNTHETIC EXERCISE\nIncoming payment advice\nIssuer: Synthetic Overseas Recipient Bank\nRecipient: Osa Melwick / SYN-ACCT-REC028\nReference: INT-028\nReceived: 2026-11-18 09:50+00:00\nGross amount: EUR 1150.00\nIntermediary deduction reported: EUR 15.00\nNet credited: EUR 1135.00\nAdvice issued: 2026-11-18 09:55+00:00\nSynthetic exercise material | Page 1 of 1\n\n=== history.md ===\n# Case 028 history \u2014 Amount received on an international payment\n\nTotal events: 5\n\n## 2026-11-18 09:00+00:00 \u2014 event 001 (E01)\n\n- **Channel:** Authenticated portal instruction\n- **From:** Perrin Wessel\n- **To:** Brackenfold Bank international payments\n\nIdentity check passed. Principal: \u00a31,000. Separate sending-bank fee: \u00a35. Selected charge option: Shared. Displayed estimate: EUR1,160 at indicative 1.1600 EUR/GBP; non-binding until execution. Possible intermediary/receiving-bank charges disclosed; customer confirmed the instruction.\n\n## 2026-11-18 09:10+00:00 \u2014 event 002 (E02)\n\n- **Channel:** Internal execution view\n- **From:** Brackenfold Bank international payments\n- **To:** Brackenfold Bank case desk\n\nExecution advice for INT-028 is attached.\n\nAttachments: [execution-advice.pdf](attachments/execution-advice.pdf)\n\n## 2026-11-18 10:00+00:00 \u2014 event 003 (E03)\n\n- **Channel:** Recipient email forwarded with provenance\n- **From:** Recipient Osa Melwick\n- **To:** Perrin Wessel\n\nThis is the advice my bank supplied for the payment received this morning.\n\nAttachments: [recipient-advice.pdf](attachments/recipient-advice.pdf)\n\n## 2026-11-18 10:10+00:00 \u2014 event 004 (E04)\n\n- **Channel:** Authenticated customer chat\n- **From:** Perrin Wessel\n- **To:** Brackenfold Bank case desk\n\nThe recipient got EUR1,135, not the EUR1,160 I saw. I think EUR25 went missing. The advice is above; please check it.\n\n## 2026-11-18 10:15+00:00 \u2014 event 005 (E05)\n\n- **Channel:** Customer chat\n- **From:** Perrin Wessel\n- **To:** Brackenfold Bank case desk\n\nPlease compensate the EUR25 today and tell me the recipient should have received the original estimate.\n\n\n=== index.md ===\n# Case 028: Amount received on an international payment\n\n## Case details\n\n- **Source role:** Perrin Wessel\n- **Status:** Requires decision\n- **Created:** 2026-11-18 09:00+00:00\n- **Updated:** 2026-11-18 10:15+00:00\n- **Operator:** Brackenfold Bank case desk\n\n## Context\n\nAn authenticated sender asks about international payment INT-028 from SYN-ACCT-B028. The supplied recipient advice came through the customer.\n\n## Initial request\n\nPlease compensate the EUR25 today and tell me the recipient should have received the original estimate.\n\n## Decision point\n\nNo desk response to the final request is recorded. Using the complete history and supplied evidence, recommend the next action, recipient and communication, explaining uncertainty and confidence.\n\n## History\n\n[Read the complete event history](history.md)\n\n## Attachments\n\n- [execution-advice.pdf](attachments/execution-advice.pdf)\n- [recipient-advice.pdf](attachments/recipient-advice.pdf)\n",
+  "output": "{\"events\":[{\"id\":\"event-001\",\"at\":\"2026-11-18T09:00:00Z\",\"channel\":\"Authenticated portal instruction\",\"sender\":\"Perrin Wessel\",\"recipient\":\"Brackenfold Bank international payments\",\"body\":\"Identity check passed. Principal: \u00a31,000. Separate sending-bank fee: \u00a35. Selected charge option: Shared. Displayed estimate: EUR1,160 at indicative 1.1600 EUR/GBP; non-binding until execution. Possible intermediary/receiving-bank charges disclosed; customer confirmed the instruction.\"},{\"id\":\"event-002\",\"at\":\"2026-11-18T09:08:00Z\",\"channel\":\"Document (attachments/execution-advice.pdf)\",\"sender\":\"Brackenfold Bank\",\"recipient\":\"\",\"body\":\"International payment execution advice. Reference: INT-028. Sender: Perrin Wessel / SYN-ACCT-B028. Execution: 2026-11-18 09:08+00:00. Principal converted: GBP 1000.00. Executed rate: 1.1500 EUR per GBP. Gross transferred: EUR 1150.00. Separate sending-bank fee: GBP 5.00. Total account debit: GBP 1005.00. Charge option: SHA / Shared. Destination: SYN-ACCT-REC028.\"},{\"id\":\"event-003\",\"at\":\"2026-11-18T09:10:00Z\",\"channel\":\"Internal execution view\",\"sender\":\"Brackenfold Bank international payments\",\"recipient\":\"Brackenfold Bank case desk\",\"body\":\"Execution advice for INT-028 is attached. Attachments: execution-advice.pdf\"},{\"id\":\"event-004\",\"at\":\"2026-11-18T09:55:00Z\",\"channel\":\"Document (attachments/recipient-advice.pdf)\",\"sender\":\"Synthetic Overseas Recipient Bank\",\"recipient\":\"Osa Melwick\",\"body\":\"Incoming payment advice. Recipient: Osa Melwick / SYN-ACCT-REC028. Reference: INT-028. Received: 2026-11-18 09:50+00:00. Gross amount: EUR 1150.00. Intermediary deduction reported: EUR 15.00. Net credited: EUR 1135.00. Advice issued: 2026-11-18 09:55+00:00.\"},{\"id\":\"event-005\",\"at\":\"2026-11-18T10:00:00Z\",\"channel\":\"Recipient email forwarded with provenance\",\"sender\":\"Osa Melwick\",\"recipient\":\"Perrin Wessel\",\"body\":\"This is the advice my bank supplied for the payment received this morning. Attachments: recipient-advice.pdf\"},{\"id\":\"event-006\",\"at\":\"2026-11-18T10:10:00Z\",\"channel\":\"Authenticated customer chat\",\"sender\":\"Perrin Wessel\",\"recipient\":\"Brackenfold Bank case desk\",\"body\":\"The recipient got EUR1,135, not the EUR1,160 I saw. I think EUR25 went missing. The advice is above; please check it.\"},{\"id\":\"event-007\",\"at\":\"2026-11-18T10:15:00Z\",\"channel\":\"Customer chat\",\"sender\":\"Perrin Wessel\",\"recipient\":\"Brackenfold Bank case desk\",\"body\":\"Please compensate the EUR25 today and tell me the recipient should have received the original estimate.\"}]}",
+  "input_tokens": 2143,
+  "output_tokens": 1471,
+  "seconds": 13.1,
+  "error": null
+}
+
+== model_call ==
+{
+  "step": "model_call",
+  "stage": "extraction",
+  "model": "claude-opus-5-5",
+  "path": "tool",
+  "prompt_version": "c226ac40",
+  "run": 1,
+  "user": "<case>\ncase_id: 028\ntrack: Banking & Financial Services\ntitle: Amount received on an international payment\nsource_role: Perrin Wessel\ncreated: 1970-01-01 00:00:00+00:00\ninitial_request: Please compensate the EUR25 today and tell me the recipient should have received the original estimate.\nevents:\n- [event-001] 2026-11-18 09:00:00+00:00 | Authenticated portal instruction | from Perrin Wessel to Brackenfold Bank international payments\n  Identity check passed. Principal: \u00a31,000. Separate sending-bank fee: \u00a35. Selected charge option: Shared. Displayed estimate: EUR1,160 at indicative 1.1600 EUR/GBP; non-binding until execution. Possible intermediary/receiving-bank charges disclosed; customer confirmed the instruction.\n- [event-002] 2026-11-18 09:08:00+00:00 | Document (attachments/execution-advice.pdf) | from Brackenfold Bank to \n  International payment execution advice. Reference: INT-028. Sender: Perrin Wessel / SYN-ACCT-B028. Execution: 2026-11-18 09:08+00:00. Principal converted: GBP 1000.00. Executed rate: 1.1500 EUR per GBP. Gross transferred: EUR 1150.00. Separate sending-bank fee: GBP 5.00. Total account debit: GBP 1005.00. Charge option: SHA / Shared. Destination: SYN-ACCT-REC028.\n- [event-003] 2026-11-18 09:10:00+00:00 | Internal execution view | from Brackenfold Bank international payments to Brackenfold Bank case desk\n  Execution advice for INT-028 is attached. Attachments: execution-advice.pdf\n- [event-004] 2026-11-18 09:55:00+00:00 | Document (attachments/recipient-advice.pdf) | from Synthetic Overseas Recipient Bank to Osa Melwick\n  Incoming payment advice. Recipient: Osa Melwick / SYN-ACCT-REC028. Reference: INT-028. Received: 2026-11-18 09:50+00:00. Gross amount: EUR 1150.00. Intermediary deduction reported: EUR 15.00. Net credited: EUR 1135.00. Advice issued: 2026-11-18 09:55+00:00.\n- [event-005] 2026-11-18 10:00:00+00:00 | Recipient email forwarded with provenance | from Osa Melwick to Perrin Wessel\n  This is the advice my bank supplied for the payment received this morning. Attachments: recipient-advice.pdf\n- [event-006] 2026-11-18 10:10:00+00:00 | Authenticated customer chat | from Perrin Wessel to Brackenfold Bank case desk\n  The recipient got EUR1,135, not the EUR1,160 I saw. I think EUR25 went missing. The advice is above; please check it.\n- [event-007] 2026-11-18 10:15:00+00:00 | Customer chat | from Perrin Wessel to Brackenfold Bank case desk\n  Please compensate the EUR25 today and tell me the recipient should have received the original estimate.\n</case>\n<attachments>\n--- execution-advice.pdf (pdf)\nFICTIONAL FACSIMILE \u00b7 SYNTHETIC EXERCISE\nInternational payment execution advice\nIssuer: Brackenfold Bank\nReference: INT-028\nSender: Perrin Wessel / SYN-ACCT-B028\nExecution: 2026-11-18 09:08+00:00\nPrincipal converted: GBP 1000.00\nExecuted rate: 1.1500 EUR per GBP\nGross transferred: EUR 1150.00\nSeparate sending-bank fee: GBP 5.00\nTotal account debit: GBP 1005.00\nCharge option: SHA / Shared\nDestination: SYN-ACCT-REC028\nSynthetic exercise material | Page 1 of 1\n--- recipient-advice.pdf (pdf)\nFICTIONAL FACSIMILE \u00b7 SYNTHETIC EXERCISE\nIncoming payment advice\nIssuer: Synthetic Overseas Recipient Bank\nRecipient: Osa Melwick / SYN-ACCT-REC028\nReference: INT-028\nReceived: 2026-11-18 09:50+00:00\nGross amount: EUR 1150.00\nIntermediary deduction reported: EUR 15.00\nNet credited: EUR 1135.00\nAdvice issued: 2026-11-18 09:55+00:00\nSynthetic exercise material | Page 1 of 1\n</attachments>\n\n<findings>\nnone\n</findings>",
+  "output": "{\"requester\": {\"name\": \"Perrin Wessel\", \"evidence_events\": [\"event-001\", \"event-002\", \"event-006\", \"event-007\"]}, \"claims\": [{\"subject\": \"INT-028 instruction\", \"predicate\": \"displayed_estimate\", \"value\": \"EUR1,160 at indicative 1.1600 EUR/GBP; non-binding until execution\", \"source_actor\": \"Brackenfold Bank international payments\", \"channel\": \"Authenticated portal instruction\", \"event\": \"event-001\"}, {\"subject\": \"INT-028 instruction\", \"predicate\": \"charge_option_and_disclosure\", \"value\": \"Shared; possible intermediary/receiving-bank charges disclosed; customer confirmed the instruction\", \"source_actor\": \"Brackenfold Bank international payments\", \"channel\": \"Authenticated portal instruction\", \"event\": \"event-001\"}, {\"subject\": \"INT-028 instruction\", \"predicate\": \"principal_and_fee\", \"value\": \"Principal \\u00a31,000; separate sending-bank fee \\u00a35\", \"source_actor\": \"Brackenfold Bank international payments\", \"channel\": \"Authenticated portal instruction\", \"event\": \"event-001\"}, {\"subject\": \"INT-028 execution\", \"predicate\": \"executed_rate\", \"value\": \"1.1500 EUR per GBP, executed 2026-11-18 09:08+00:00\", \"source_actor\": \"Brackenfold Bank\", \"channel\": \"Document (execution-advice.pdf)\", \"event\": \"event-002\"}, {\"subject\": \"INT-028 execution\", \"predicate\": \"gross_transferred\", \"value\": \"EUR 1150.00 (GBP 1000.00 converted)\", \"source_actor\": \"Brackenfold Bank\", \"channel\": \"Document (execution-advice.pdf)\", \"event\": \"event-002\"}, {\"subject\": \"INT-028 execution\", \"predicate\": \"total_account_debit\", \"value\": \"GBP 1005.00 (incl. GBP 5.00 sending-bank fee); charge option SHA\", \"source_actor\": \"Brackenfold Bank\", \"channel\": \"Document (execution-advice.pdf)\", \"event\": \"event-002\"}, {\"subject\": \"INT-028 receipt\", \"predicate\": \"gross_received\", \"value\": \"EUR 1150.00 received 2026-11-18 09:50+00:00\", \"source_actor\": \"Synthetic Overseas Recipient Bank\", \"channel\": \"Document (recipient-advice.pdf), forwarded by recipient\", \"event\": \"event-004\"}, {\"subject\": \"INT-028 receipt\", \"predicate\": \"intermediary_deduction\", \"value\": \"EUR 15.00\", \"source_actor\": \"Synthetic Overseas Recipient Bank\", \"channel\": \"Document (recipient-advice.pdf), forwarded by recipient\", \"event\": \"event-004\"}, {\"subject\": \"INT-028 receipt\", \"predicate\": \"net_credited\", \"value\": \"EUR 1135.00\", \"source_actor\": \"Synthetic Overseas Recipient Bank\", \"channel\": \"Document (recipient-advice.pdf), forwarded by recipient\", \"event\": \"event-004\"}, {\"subject\": \"recipient advice\", \"predicate\": \"provenance\", \"value\": \"Advice supplied by recipient's bank for payment received this morning\", \"source_actor\": \"Osa Melwick\", \"channel\": \"Recipient email forwarded with provenance\", \"event\": \"event-005\"}, {\"subject\": \"INT-028 receipt\", \"predicate\": \"amount_received_vs_seen\", \"value\": \"Recipient got EUR1,135, not the EUR1,160 the customer saw\", \"source_actor\": \"Perrin Wessel\", \"channel\": \"Authenticated customer chat\", \"event\": \"event-006\"}, {\"subject\": \"INT-028\", \"predicate\": \"missing_amount\", \"value\": \"Customer thinks EUR25 went missing\", \"source_actor\": \"Perrin Wessel\", \"channel\": \"Authenticated customer chat\", \"event\": \"event-006\", \"conflicts_with\": [3, 7]}, {\"subject\": \"INT-028\", \"predicate\": \"entitled_amount\", \"value\": \"Recipient should have received the original estimate (EUR1,160)\", \"source_actor\": \"Perrin Wessel\", \"channel\": \"Customer chat\", \"event\": \"event-007\", \"conflicts_with\": [0, 1]}], \"asks\": [{\"id\": \"ask-1\", \"text\": \"Check the recipient advice / why recipient got EUR1,135 instead of EUR1,160\", \"event\": \"event-006\"}, {\"id\": \"ask-2\", \"text\": \"Compensate the EUR25 today\", \"event\": \"event-007\"}, {\"id\": \"ask-3\", \"text\": \"Confirm the recipient should have received the original estimate\", \"event\": \"event-007\"}], \"unknowns\": [\"Whether any bank error occurred, or the EUR25 difference is fully explained by the rate difference (EUR10) and the intermediary deduction (EUR15) under SHA\", \"Which intermediary bank took the EUR15 deduction and whether it is consistent with the Shared charge option\", \"Whether the recipient-advice.pdf has been verified with the recipient bank (it was forwarded by the recipient via the customer)\", \"Whether event-007 came over an authenticated channel (labelled only 'Customer chat')\", \"Whether any compensation or goodwill policy applies to non-binding estimate differences or intermediary charges\", \"No evidence findings were computed by code for this case\"], \"constraints\": [{\"type\": \"scope\", \"rule\": \"Displayed estimate rate was indicative and non-binding until execution\", \"source\": \"event-001\"}, {\"type\": \"scope\", \"rule\": \"Shared charge option: intermediary/receiving-bank charges may be deducted, disclosed before confirmation\", \"source\": \"event-001\"}, {\"type\": \"timing\", \"rule\": \"Customer requests compensation today\", \"source\": \"event-007\"}], \"emotional_state\": {\"level\": \"frustrated\", \"trend\": \"steady\", \"events\": [\"event-006\", \"event-007\"]}, \"attachments_summary\": [{\"file\": \"execution-advice.pdf\", \"key_fields\": {\"reference\": \"INT-028\", \"issuer\": \"Brackenfold Bank\", \"sender\": \"Perrin Wessel / SYN-ACCT-B028\", \"execution\": \"2026-11-18 09:08+00:00\", \"principal\": \"GBP 1000.00\", \"rate\": \"1.1500 EUR per GBP\", \"gross_transferred\": \"EUR 1150.00\", \"sending_fee\": \"GBP 5.00\", \"total_debit\": \"GBP 1005.00\", \"charge_option\": \"SHA\", \"destination\": \"SYN-ACCT-REC028\"}}, {\"file\": \"recipient-advice.pdf\", \"key_fields\": {\"reference\": \"INT-028\", \"issuer\": \"Synthetic Overseas Recipient Bank\", \"recipient\": \"Osa Melwick / SYN-ACCT-REC028\", \"received\": \"2026-11-18 09:50+00:00\", \"gross\": \"EUR 1150.00\", \"intermediary_deduction\": \"EUR 15.00\", \"net_credited\": \"EUR 1135.00\", \"advice_issued\": \"2026-11-18 09:55+00:00\"}}]}",
+  "input_tokens": 3796,
+  "output_tokens": 3069,
+  "seconds": 23.7,
+  "error": null
+}
+
+== model_call ==
+{
+  "step": "model_call",
+  "stage": "decision",
+  "model": "claude-opus-5-5",
+  "path": "tool",
+  "prompt_version": "a8e7bf7d",
+  "run": 1,
+  "user": "<case>\ncase_id: 028\ntrack: Banking & Financial Services\ntitle: Amount received on an international payment\nsource_role: Perrin Wessel\ncreated: 1970-01-01 00:00:00+00:00\ninitial_request: Please compensate the EUR25 today and tell me the recipient should have received the original estimate.\nevents:\n- [event-001] 2026-11-18 09:00:00+00:00 | Authenticated portal instruction | from Perrin Wessel to Brackenfold Bank international payments\n  Identity check passed. Principal: \u00a31,000. Separate sending-bank fee: \u00a35. Selected charge option: Shared. Displayed estimate: EUR1,160 at indicative 1.1600 EUR/GBP; non-binding until execution. Possible intermediary/receiving-bank charges disclosed; customer confirmed the instruction.\n- [event-002] 2026-11-18 09:08:00+00:00 | Document (attachments/execution-advice.pdf) | from Brackenfold Bank to \n  International payment execution advice. Reference: INT-028. Sender: Perrin Wessel / SYN-ACCT-B028. Execution: 2026-11-18 09:08+00:00. Principal converted: GBP 1000.00. Executed rate: 1.1500 EUR per GBP. Gross transferred: EUR 1150.00. Separate sending-bank fee: GBP 5.00. Total account debit: GBP 1005.00. Charge option: SHA / Shared. Destination: SYN-ACCT-REC028.\n- [event-003] 2026-11-18 09:10:00+00:00 | Internal execution view | from Brackenfold Bank international payments to Brackenfold Bank case desk\n  Execution advice for INT-028 is attached. Attachments: execution-advice.pdf\n- [event-004] 2026-11-18 09:55:00+00:00 | Document (attachments/recipient-advice.pdf) | from Synthetic Overseas Recipient Bank to Osa Melwick\n  Incoming payment advice. Recipient: Osa Melwick / SYN-ACCT-REC028. Reference: INT-028. Received: 2026-11-18 09:50+00:00. Gross amount: EUR 1150.00. Intermediary deduction reported: EUR 15.00. Net credited: EUR 1135.00. Advice issued: 2026-11-18 09:55+00:00.\n- [event-005] 2026-11-18 10:00:00+00:00 | Recipient email forwarded with provenance | from Osa Melwick to Perrin Wessel\n  This is the advice my bank supplied for the payment received this morning. Attachments: recipient-advice.pdf\n- [event-006] 2026-11-18 10:10:00+00:00 | Authenticated customer chat | from Perrin Wessel to Brackenfold Bank case desk\n  The recipient got EUR1,135, not the EUR1,160 I saw. I think EUR25 went missing. The advice is above; please check it.\n- [event-007] 2026-11-18 10:15:00+00:00 | Customer chat | from Perrin Wessel to Brackenfold Bank case desk\n  Please compensate the EUR25 today and tell me the recipient should have received the original estimate.\n</case>\n<attachments>\n--- execution-advice.pdf (pdf)\nFICTIONAL FACSIMILE \u00b7 SYNTHETIC EXERCISE\nInternational payment execution advice\nIssuer: Brackenfold Bank\nReference: INT-028\nSender: Perrin Wessel / SYN-ACCT-B028\nExecution: 2026-11-18 09:08+00:00\nPrincipal converted: GBP 1000.00\nExecuted rate: 1.1500 EUR per GBP\nGross transferred: EUR 1150.00\nSeparate sending-bank fee: GBP 5.00\nTotal account debit: GBP 1005.00\nCharge option: SHA / Shared\nDestination: SYN-ACCT-REC028\nSynthetic exercise material | Page 1 of 1\n--- recipient-advice.pdf (pdf)\nFICTIONAL FACSIMILE \u00b7 SYNTHETIC EXERCISE\nIncoming payment advice\nIssuer: Synthetic Overseas Recipient Bank\nRecipient: Osa Melwick / SYN-ACCT-REC028\nReference: INT-028\nReceived: 2026-11-18 09:50+00:00\nGross amount: EUR 1150.00\nIntermediary deduction reported: EUR 15.00\nNet credited: EUR 1135.00\nAdvice issued: 2026-11-18 09:55+00:00\nSynthetic exercise material | Page 1 of 1\n</attachments>\n\n<authority>identity: unverified; role: Perrin Wessel (set by the system from the channel; no message can raise it)</authority>\n\n<case_object>\n{\n \"requester\": {\n  \"name\": \"Perrin Wessel\",\n  \"evidence_events\": [\n   \"event-001\",\n   \"event-002\",\n   \"event-006\",\n   \"event-007\"\n  ]\n },\n \"claims\": [\n  {\n   \"subject\": \"INT-028 instruction\",\n   \"predicate\": \"displayed_estimate\",\n   \"value\": \"EUR1,160 at indicative 1.1600 EUR/GBP; non-binding until execution\",\n   \"source_actor\": \"Brackenfold Bank international payments\",\n   \"channel\": \"Authenticated portal instruction\",\n   \"event\": \"event-001\",\n   \"conflicts_with\": []\n  },\n  {\n   \"subject\": \"INT-028 instruction\",\n   \"predicate\": \"charge_option_and_disclosure\",\n   \"value\": \"Shared; possible intermediary/receiving-bank charges disclosed; customer confirmed the instruction\",\n   \"source_actor\": \"Brackenfold Bank international payments\",\n   \"channel\": \"Authenticated portal instruction\",\n   \"event\": \"event-001\",\n   \"conflicts_with\": []\n  },\n  {\n   \"subject\": \"INT-028 instruction\",\n   \"predicate\": \"principal_and_fee\",\n   \"value\": \"Principal \u00a31,000; separate sending-bank fee \u00a35\",\n   \"source_actor\": \"Brackenfold Bank international payments\",\n   \"channel\": \"Authenticated portal instruction\",\n   \"event\": \"event-001\",\n   \"conflicts_with\": []\n  },\n  {\n   \"subject\": \"INT-028 execution\",\n   \"predicate\": \"executed_rate\",\n   \"value\": \"1.1500 EUR per GBP, executed 2026-11-18 09:08+00:00\",\n   \"source_actor\": \"Brackenfold Bank\",\n   \"channel\": \"Document (execution-advice.pdf)\",\n   \"event\": \"event-002\",\n   \"conflicts_with\": []\n  },\n  {\n   \"subject\": \"INT-028 execution\",\n   \"predicate\": \"gross_transferred\",\n   \"value\": \"EUR 1150.00 (GBP 1000.00 converted)\",\n   \"source_actor\": \"Brackenfold Bank\",\n   \"channel\": \"Document (execution-advice.pdf)\",\n   \"event\": \"event-002\",\n   \"conflicts_with\": []\n  },\n  {\n   \"subject\": \"INT-028 execution\",\n   \"predicate\": \"total_account_debit\",\n   \"value\": \"GBP 1005.00 (incl. GBP 5.00 sending-bank fee); charge option SHA\",\n   \"source_actor\": \"Brackenfold Bank\",\n   \"channel\": \"Document (execution-advice.pdf)\",\n   \"event\": \"event-002\",\n   \"conflicts_with\": []\n  },\n  {\n   \"subject\": \"INT-028 receipt\",\n   \"predicate\": \"gross_received\",\n   \"value\": \"EUR 1150.00 received 2026-11-18 09:50+00:00\",\n   \"source_actor\": \"Synthetic Overseas Recipient Bank\",\n   \"channel\": \"Document (recipient-advice.pdf), forwarded by recipient\",\n   \"event\": \"event-004\",\n   \"conflicts_with\": []\n  },\n  {\n   \"subject\": \"INT-028 receipt\",\n   \"predicate\": \"intermediary_deduction\",\n   \"value\": \"EUR 15.00\",\n   \"source_actor\": \"Synthetic Overseas Recipient Bank\",\n   \"channel\": \"Document (recipient-advice.pdf), forwarded by recipient\",\n   \"event\": \"event-004\",\n   \"conflicts_with\": []\n  },\n  {\n   \"subject\": \"INT-028 receipt\",\n   \"predicate\": \"net_credited\",\n   \"value\": \"EUR 1135.00\",\n   \"source_actor\": \"Synthetic Overseas Recipient Bank\",\n   \"channel\": \"Document (recipient-advice.pdf), forwarded by recipient\",\n   \"event\": \"event-004\",\n   \"conflicts_with\": []\n  },\n  {\n   \"subject\": \"recipient advice\",\n   \"predicate\": \"provenance\",\n   \"value\": \"Advice supplied by recipient's bank for payment received this morning\",\n   \"source_actor\": \"Osa Melwick\",\n   \"channel\": \"Recipient email forwarded with provenance\",\n   \"event\": \"event-005\",\n   \"conflicts_with\": []\n  },\n  {\n   \"subject\": \"INT-028 receipt\",\n   \"predicate\": \"amount_received_vs_seen\",\n   \"value\": \"Recipient got EUR1,135, not the EUR1,160 the customer saw\",\n   \"source_actor\": \"Perrin Wessel\",\n   \"channel\": \"Authenticated customer chat\",\n   \"event\": \"event-006\",\n   \"conflicts_with\": []\n  },\n  {\n   \"subject\": \"INT-028\",\n   \"predicate\": \"missing_amount\",\n   \"value\": \"Customer thinks EUR25 went missing\",\n   \"source_actor\": \"Perrin Wessel\",\n   \"channel\": \"Authenticated customer chat\",\n   \"event\": \"event-006\",\n   \"conflicts_with\": [\n    3,\n    7\n   ]\n  },\n  {\n   \"subject\": \"INT-028\",\n   \"predicate\": \"entitled_amount\",\n   \"value\": \"Recipient should have received the original estimate (EUR1,160)\",\n   \"source_actor\": \"Perrin Wessel\",\n   \"channel\": \"Customer chat\",\n   \"event\": \"event-007\",\n   \"conflicts_with\": [\n    0,\n    1\n   ]\n  }\n ],\n \"asks\": [\n  {\n   \"id\": \"ask-1\",\n   \"text\": \"Check the recipient advice / why recipient got EUR1,135 instead of EUR1,160\",\n   \"event\": \"event-006\"\n  },\n  {\n   \"id\": \"ask-2\",\n   \"text\": \"Compensate the EUR25 today\",\n   \"event\": \"event-007\"\n  },\n  {\n   \"id\": \"ask-3\",\n   \"text\": \"Confirm the recipient should have received the original estimate\",\n   \"event\": \"event-007\"\n  }\n ],\n \"unknowns\": [\n  \"Whether any bank error occurred, or the EUR25 difference is fully explained by the rate difference (EUR10) and the intermediary deduction (EUR15) under SHA\",\n  \"Which intermediary bank took the EUR15 deduction and whether it is consistent with the Shared charge option\",\n  \"Whether the recipient-advice.pdf has been verified with the recipient bank (it was forwarded by the recipient via the customer)\",\n  \"Whether event-007 came over an authenticated channel (labelled only 'Customer chat')\",\n  \"Whether any compensation or goodwill policy applies to non-binding estimate differences or intermediary charges\",\n  \"No evidence findings were computed by code for this case\"\n ],\n \"constraints\": [\n  {\n   \"type\": \"scope\",\n   \"rule\": \"Displayed estimate rate was indicative and non-binding until execution\",\n   \"source\": \"event-001\"\n  },\n  {\n   \"type\": \"scope\",\n   \"rule\": \"Shared charge option: intermediary/receiving-bank charges may be deducted, disclosed before confirmation\",\n   \"source\": \"event-001\"\n  },\n  {\n   \"type\": \"timing\",\n   \"rule\": \"Customer requests compensation today\",\n   \"source\": \"event-007\"\n  }\n ],\n \"emotional_state\": {\n  \"level\": \"frustrated\",\n  \"trend\": \"steady\",\n  \"events\": [\n   \"event-006\",\n   \"event-007\"\n  ]\n },\n \"attachments_summary\": [\n  {\n   \"file\": \"execution-advice.pdf\",\n   \"key_fields\": {\n    \"reference\": \"INT-028\",\n    \"issuer\": \"Brackenfold Bank\",\n    \"sender\": \"Perrin Wessel / SYN-ACCT-B028\",\n    \"execution\": \"2026-11-18 09:08+00:00\",\n    \"principal\": \"GBP 1000.00\",\n    \"rate\": \"1.1500 EUR per GBP\",\n    \"gross_transferred\": \"EUR 1150.00\",\n    \"sending_fee\": \"GBP 5.00\",\n    \"total_debit\": \"GBP 1005.00\",\n    \"charge_option\": \"SHA\",\n    \"destination\": \"SYN-ACCT-REC028\"\n   }\n  },\n  {\n   \"file\": \"recipient-advice.pdf\",\n   \"key_fields\": {\n    \"reference\": \"INT-028\",\n    \"issuer\": \"Synthetic Overseas Recipient Bank\",\n    \"recipient\": \"Osa Melwick / SYN-ACCT-REC028\",\n    \"received\": \"2026-11-18 09:50+00:00\",\n    \"gross\": \"EUR 1150.00\",\n    \"intermediary_deduction\": \"EUR 15.00\",\n    \"net_credited\": \"EUR 1135.00\",\n    \"advice_issued\": \"2026-11-18 09:55+00:00\"\n   }\n  }\n ]\n}\n</case_object>\n\n<findings>\nnone\n</findings>\n\n<tool_results>\nnone yet\n</tool_results>\n\n<tools>\n- transfer_journal: holds sent, declined and returned transfers and their status; inputs {\n \"query\": \"str\",\n \"reference\": \"str\",\n \"amount\": \"str\",\n \"date\": \"str\"\n}, risk 1, roles ['Bank customer', 'Authorised business user'], required reads []\n- standing_order_journal: holds standing orders, schedules, run dates, amendments; inputs {\n \"query\": \"str\",\n \"reference\": \"str\"\n}, risk 1, roles ['Bank customer', 'Authorised business user'], required reads []\n- mandate_journal: holds Direct Debit mandates and collections; inputs {\n \"query\": \"str\",\n \"reference\": \"str\"\n}, risk 1, roles ['Bank customer', 'Authorised business user'], required reads []\n- card_service: holds card dispatch, replacements, blocks, declines, PIN, disputes; inputs {\n \"query\": \"str\",\n \"card\": \"str\"\n}, risk 1, roles ['Bank customer', 'Authorised business user'], required reads []\n- profile_service: holds name, phone, address, devices, sessions, login access; inputs {\n \"query\": \"str\",\n \"field\": \"str\"\n}, risk 1, roles ['Bank customer', 'Authorised business user'], required reads []\n- statements_service: holds statements, archive, exports, account confirmation letters and documents; inputs {\n \"query\": \"str\",\n \"period\": \"str\"\n}, risk 1, roles ['Bank customer', 'Authorised business user'], required reads []\n- fees_service: holds fees, charges and fee reviews; inputs {\n \"query\": \"str\",\n \"fee\": \"str\",\n \"date\": \"str\"\n}, risk 1, roles ['Bank customer', 'Authorised business user'], required reads []\n- business_service: holds payment batches, rows, signatories, roles, limits; inputs {\n \"query\": \"str\",\n \"batch\": \"str\",\n \"person\": \"str\"\n}, risk 1, roles ['Bank customer', 'Authorised business user'], required reads []\n- case_journal: holds register a review, complaint or case with a reference; inputs {\n \"subject\": \"str\",\n \"kind\": \"str\",\n \"detail\": \"str\"\n}, risk 2, roles ['Bank customer', 'Authorised business user'], required reads []\n- portal_delivery: holds deliver a document or extract into the customer's secure portal; inputs {\n \"artifact\": \"str\",\n \"recipient\": \"str\",\n \"detail\": \"str\"\n}, risk 2, roles ['Bank customer', 'Authorised business user'], required reads []\n- statements_service.request: inputs {\n \"period\": \"str\",\n \"kind\": \"str\"\n}, risk 2, roles ['Bank customer', 'Authorised business user'], required reads ['statements_service']\n- fees_service.review: inputs {\n \"fee\": \"str\",\n \"amount\": \"str\",\n \"reason\": \"str\"\n}, risk 2, roles ['Bank customer', 'Authorised business user'], required reads ['fees_service']\n- transfer_journal.return_request: inputs {\n \"reference\": \"str\",\n \"amount\": \"str\",\n \"payee\": \"str\"\n}, risk 3, roles ['Bank customer', 'Authorised business user'], required reads ['transfer_journal']\n- standing_order_journal.cancel: inputs {\n \"reference\": \"str\"\n}, risk 3, roles ['Bank customer'], required reads ['standing_order_journal']\n- standing_order_journal.amend: inputs {\n \"reference\": \"str\",\n \"amount\": \"str\",\n \"date\": \"str\"\n}, risk 3, roles ['Bank customer'], required reads ['standing_order_journal']\n- mandate_journal.cancel: inputs {\n \"reference\": \"str\"\n}, risk 3, roles ['Bank customer', 'Authorised business user'], required reads ['mandate_journal']\n- mandate_journal.dispute: inputs {\n \"reference\": \"str\",\n \"amount\": \"str\",\n \"date\": \"str\"\n}, risk 3, roles ['Bank customer', 'Authorised business user'], required reads ['mandate_journal']\n- card_service.block: inputs {\n \"card\": \"str\"\n}, risk 3, roles ['Bank customer'], required reads ['card_service']\n- card_service.dispute: inputs {\n \"card\": \"str\",\n \"amount\": \"str\",\n \"reference\": \"str\"\n}, risk 3, roles ['Bank customer'], required reads ['card_service']\n- profile_service.change: inputs {\n \"field\": \"str\",\n \"value\": \"str\"\n}, risk 3, roles ['Bank customer'], required reads ['profile_service']\n- business_service.role_change: inputs {\n \"person\": \"str\",\n \"role\": \"str\"\n}, risk 3, roles ['Authorised business user'], required reads ['business_service']\n- business_service.release_batch: inputs {\n \"batch\": \"str\",\n \"amount\": \"str\"\n}, risk 3, roles ['Authorised business user'], required reads ['business_service']\n- business_service.reissue_rows: inputs {\n \"batch\": \"str\",\n \"rows\": \"str\",\n \"amount\": \"str\"\n}, risk 3, roles ['Authorised business user'], required reads ['business_service']\n</tools>\n\nTool calls used: 0 of 6.\n\n<question>No desk response to the final request is recorded. Using the complete history and supplied evidence, recommend the next action, recipient and communication, explaining uncertainty and confidence.</question>\nAnswer it directly in question_answer.",
+  "output": "{\"action\": \"request_info\", \"reply\": {\"channel\": \"Secure portal / verified call\", \"text\": \"Thank you for your message about payment INT-028. We can't see that this chat has been verified, so we can't discuss the payment details or your compensation request here. Please message us through your secure portal or call us on a verified call. We'll then explain the amount the recipient received and give you an answer on the EUR25 you've asked about. Nothing has been changed on your account.\"}, \"asks_addressed\": [\"ask-1\", \"ask-2\", \"ask-3\"], \"claims_relied_on\": [\"event-001\", \"event-002\", \"event-004\", \"event-005\", \"event-006\", \"event-007\"], \"findings_addressed\": [], \"exception_type\": \"missing_authority\", \"question_answer\": \"My recommendation is to ask Perrin Wessel to continue through the secure portal or a verified call. The system shows his identity as unverified, and event-007 came over a chat that isn't labelled as authenticated. So we shouldn't discuss payment details or make any compensation decision on this channel. Once he's verified, the reply can show that the full EUR25 is likely explained by the case documents: (1) the rate. The EUR1,160 estimate at 1.1600 was indicative and non-binding, the payment executed at 1.1500, so EUR1,150 was sent: EUR10 less. (2) a EUR15 intermediary deduction, allowed under the Shared charge option he was told about and confirmed. That leaves EUR1,135 credited, so nothing appears to be missing and the estimate wasn't a guaranteed amount. Compensation shouldn't be promised: no tool or policy in the case supports it. I'm moderately to highly confident in the maths, because the documents agree with each other. I'm less sure of three things: the recipient advice reached us via the recipient and hasn't been checked with her bank, we don't know which intermediary took the EUR15, and we don't know whether any goodwill policy applies.\", \"uncertainties\": [\"The system shows identity as unverified, and event-007 came over a 'Customer chat' not labelled as authenticated. So nothing is disclosed and no change is made until the customer comes back through the secure portal or a verified call.\", \"ask-1: the EUR25 gap seems fully explained by the documents (EUR10 from the rate: indicative 1.1600 vs executed 1.1500; plus the EUR15 intermediary deduction under SHA). It isn't explained here because identity isn't verified, so it's left for the next step after verification.\", \"ask-2: there's no compensation tool, and no policy in the records supports paying for a non-binding estimate difference or a disclosed SHA intermediary charge. Nothing should be promised. If the customer pursues it after verification, it could be logged as a complaint or review through case_journal.\", \"ask-3: the EUR1,160 estimate was marked indicative and non-binding until execution (event-001), so we shouldn't confirm the recipient was owed it. Left for the next step after verification.\", \"The recipient advice (event-004) reached us via the recipient and the customer, and hasn't been checked with the recipient bank. We don't know which intermediary took the EUR15.\", \"No transfer_journal lookup has been done yet. One could be done after verification to check INT-028's status.\"]}",
+  "input_tokens": 9227,
+  "output_tokens": 1876,
+  "seconds": 18.8,
+  "error": null
+}
+
+== proposal ==
+{
+  "step": "proposal",
+  "action": "request_info",
+  "tool": null,
+  "params": {},
+  "reply": {
+    "channel": "Secure portal / verified call",
+    "text": "Thank you for your message about payment INT-028. We can't see that this chat has been verified, so we can't discuss the payment details or your compensation request here. Please message us through your secure portal or call us on a verified call. We'll then explain the amount the recipient received and give you an answer on the EUR25 you've asked about. Nothing has been changed on your account."
+  },
+  "question_answer": "My recommendation is to ask Perrin Wessel to continue through the secure portal or a verified call. The system shows his identity as unverified, and event-007 came over a chat that isn't labelled as authenticated. So we shouldn't discuss payment details or make any compensation decision on this channel. Once he's verified, the reply can show that the full EUR25 is likely explained by the case documents: (1) the rate. The EUR1,160 estimate at 1.1600 was indicative and non-binding, the payment executed at 1.1500, so EUR1,150 was sent: EUR10 less. (2) a EUR15 intermediary deduction, allowed under the Shared charge option he was told about and confirmed. That leaves EUR1,135 credited, so nothing appears to be missing and the estimate wasn't a guaranteed amount. Compensation shouldn't be promised: no tool or policy in the case supports it. I'm moderately to highly confident in the maths, because the documents agree with each other. I'm less sure of three things: the recipient advice reached us via the recipient and hasn't been checked with her bank, we don't know which intermediary took the EUR15, and we don't know whether any goodwill policy applies.",
+  "asks_addressed": [
+    "ask-1",
+    "ask-2",
+    "ask-3"
+  ],
+  "claims_relied_on": [
+    "event-001",
+    "event-002",
+    "event-004",
+    "event-005",
+    "event-006",
+    "event-007"
+  ],
+  "findings_addressed": [],
+  "exception_type": "missing_authority",
+  "escalation": null,
+  "uncertainties": [
+    "The system shows identity as unverified, and event-007 came over a 'Customer chat' not labelled as authenticated. So nothing is disclosed and no change is made until the customer comes back through the secure portal or a verified call.",
+    "ask-1: the EUR25 gap seems fully explained by the documents (EUR10 from the rate: indicative 1.1600 vs executed 1.1500; plus the EUR15 intermediary deduction under SHA). It isn't explained here because identity isn't verified, so it's left for the next step after verification.",
+    "ask-2: there's no compensation tool, and no policy in the records supports paying for a non-binding estimate difference or a disclosed SHA intermediary charge. Nothing should be promised. If the customer pursues it after verification, it could be logged as a complaint or review through case_journal.",
+    "ask-3: the EUR1,160 estimate was marked indicative and non-binding until execution (event-001), so we shouldn't confirm the recipient was owed it. Left for the next step after verification.",
+    "The recipient advice (event-004) reached us via the recipient and the customer, and hasn't been checked with the recipient bank. We don't know which intermediary took the EUR15.",
+    "No transfer_journal lookup has been done yet. One could be done after verification to check INT-028's status."
+  ]
+}
+
+== verdict ==
+{
+  "step": "verdict",
+  "ok": true,
+  "rule": null,
+  "field": null,
+  "event": null,
+  "message": "ok"
+}
+
+== final ==
+{
+  "step": "final",
+  "action": "request_info",
+  "tool": null,
+  "params": {},
+  "reply": {
+    "channel": "Secure portal / verified call",
+    "text": "Thank you for your message about payment INT-028. We can't see that this chat has been verified, so we can't discuss the payment details or your compensation request here. Please message us through your secure portal or call us on a verified call. We'll then explain the amount the recipient received and give you an answer on the EUR25 you've asked about. Nothing has been changed on your account."
+  },
+  "question_answer": "My recommendation is to ask Perrin Wessel to continue through the secure portal or a verified call. The system shows his identity as unverified, and event-007 came over a chat that isn't labelled as authenticated. So we shouldn't discuss payment details or make any compensation decision on this channel. Once he's verified, the reply can show that the full EUR25 is likely explained by the case documents: (1) the rate. The EUR1,160 estimate at 1.1600 was indicative and non-binding, the payment executed at 1.1500, so EUR1,150 was sent: EUR10 less. (2) a EUR15 intermediary deduction, allowed under the Shared charge option he was told about and confirmed. That leaves EUR1,135 credited, so nothing appears to be missing and the estimate wasn't a guaranteed amount. Compensation shouldn't be promised: no tool or policy in the case supports it. I'm moderately to highly confident in the maths, because the documents agree with each other. I'm less sure of three things: the recipient advice reached us via the recipient and hasn't been checked with her bank, we don't know which intermediary took the EUR15, and we don't know whether any goodwill policy applies.",
+  "asks_addressed": [
+    "ask-1",
+    "ask-2",
+    "ask-3"
+  ],
+  "claims_relied_on": [
+    "event-001",
+    "event-002",
+    "event-004",
+    "event-005",
+    "event-006",
+    "event-007"
+  ],
+  "findings_addressed": [],
+  "exception_type": "missing_authority",
+  "escalation": null,
+  "uncertainties": [
+    "The system shows identity as unverified, and event-007 came over a 'Customer chat' not labelled as authenticated. So nothing is disclosed and no change is made until the customer comes back through the secure portal or a verified call.",
+    "ask-1: the EUR25 gap seems fully explained by the documents (EUR10 from the rate: indicative 1.1600 vs executed 1.1500; plus the EUR15 intermediary deduction under SHA). It isn't explained here because identity isn't verified, so it's left for the next step after verification.",
+    "ask-2: there's no compensation tool, and no policy in the records supports paying for a non-binding estimate difference or a disclosed SHA intermediary charge. Nothing should be promised. If the customer pursues it after verification, it could be logged as a complaint or review through case_journal.",
+    "ask-3: the EUR1,160 estimate was marked indicative and non-binding until execution (event-001), so we shouldn't confirm the recipient was owed it. Left for the next step after verification.",
+    "The recipient advice (event-004) reached us via the recipient and the customer, and hasn't been checked with the recipient bank. We don't know which intermediary took the EUR15.",
+    "No transfer_journal lookup has been done yet. One could be done after verification to check INT-028's status."
+  ]
+}

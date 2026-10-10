@@ -1,0 +1,16 @@
+{
+  "track": "Banking & Financial Services",
+  "case_id": "030",
+  "action": "escalate",
+  "escalated": true,
+  "exception_type": "missing_authority",
+  "outcome": "escalated",
+  "tool_calls": 1,
+  "fallback": false,
+  "model_calls": 4,
+  "input_tokens": 22875,
+  "output_tokens": 7262,
+  "seconds": 66.5,
+  "state": "escalated",
+  "summary": "handover to Brackenfold Bank security service (lost-device / session control), with standing-order payment support copied, urgent"
+}

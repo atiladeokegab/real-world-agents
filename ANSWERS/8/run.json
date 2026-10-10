@@ -1,0 +1,16 @@
+{
+  "track": "Banking & Financial Services",
+  "case_id": "008",
+  "action": "escalate",
+  "escalated": true,
+  "exception_type": "conflicting_records",
+  "outcome": "escalated",
+  "tool_calls": 0,
+  "fallback": false,
+  "model_calls": 2,
+  "input_tokens": 12964,
+  "output_tokens": 4494,
+  "seconds": 38.7,
+  "state": "escalated",
+  "summary": "handover to Fraud & Scams (APP / payment redirection) team, today"
+}

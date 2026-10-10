@@ -1,0 +1,16 @@
+{
+  "track": "Banking & Financial Services",
+  "case_id": "016",
+  "action": "request_info",
+  "escalated": false,
+  "exception_type": "missing_authority",
+  "outcome": "answered",
+  "tool_calls": 0,
+  "fallback": false,
+  "model_calls": 2,
+  "input_tokens": 11944,
+  "output_tokens": 4425,
+  "seconds": 40.3,
+  "state": "info",
+  "summary": "1 question to the customer"
+}

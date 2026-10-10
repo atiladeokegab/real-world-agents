@@ -1,0 +1,16 @@
+{
+  "track": "Banking & Financial Services",
+  "case_id": "029",
+  "action": "escalate",
+  "escalated": true,
+  "exception_type": "missing_authority",
+  "outcome": "escalated",
+  "tool_calls": 0,
+  "fallback": false,
+  "model_calls": 3,
+  "input_tokens": 14963,
+  "output_tokens": 7025,
+  "seconds": 60.699999999999996,
+  "state": "escalated",
+  "summary": "handover to Recovery team (hold review and recovery decision for IN-029 / HOLD-029), with a hardship review requested for the customer, today"
+}

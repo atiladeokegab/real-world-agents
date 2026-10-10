@@ -1,0 +1,16 @@
+{
+  "track": "Banking & Financial Services",
+  "case_id": "007",
+  "action": "escalate",
+  "escalated": true,
+  "exception_type": "quiet_wrong_value",
+  "outcome": "escalated",
+  "tool_calls": 0,
+  "fallback": false,
+  "model_calls": 2,
+  "input_tokens": 14554,
+  "output_tokens": 6056,
+  "seconds": 53.8,
+  "state": "escalated",
+  "summary": "handover to the operations team, routine"
+}

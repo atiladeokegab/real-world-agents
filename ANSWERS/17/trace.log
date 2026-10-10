@@ -1,0 +1,442 @@
+== raw file: index.md ==
+# Statement balance query
+
+## Case details
+
+- **Source role:** Bank customer
+- **Status:** Requires decision
+- **Created:** 2026-09-30 (day precision)
+- **Updated:** 2026-09-30 (day precision)
+- **Bank:** Harrow & Vale Bank plc
+- **Channel:** Business banking chat
+- **Contact start:** 09:40 local UK time (individual message times not recorded)
+
+## Initial request
+
+Hi, we're £1,750 out on yesterday's balancing and we think a credit is missing from your statement. Our download shows £30,078.94 of credits but the closing balance only works if credits were £31,828.94. Can you investigate a missing payment? Round number — we think something's been lost.
+
+## History
+
+[Read the complete event history](history.md).
+
+## Attachments
+
+- [the customer's reconciliation working](attachments/bookkeeper_reconciliation_2026-09-29.csv)
+- [the customer's download](attachments/export_2026-09-29_1315.csv)
+- [bank's end-of-day view](attachments/full_day_2026-09-29.csv)
+
+
+== raw file: history.md ==
+# Statement balance query — history
+
+Total events: 4
+
+The opening internal note is a snapshot available to the servicing agent at the time of contact; any earlier dates within it refer to records, not to the creation time of this note. Events on the same day without individual timestamps follow the source conversation order.
+
+<a id="event-001"></a>
+## 2026-09-30 (individual event time not recorded) — event 001
+
+- **Channel:** Internal account view
+- **From:** Harrow & Vale Bank plc (case record)
+- **To:** Servicing agent (Harrow & Vale Bank plc)
+
+Customer: **Bright Sparks Electrical Ltd** — business current account SYN-SC-17-1 / SYN-ACCT-17-1. The bookkeeper reconciles daily from a CSV export downloaded from Business Online.
+
+Their figures for 29 Sep: opening £32,113.84 (their 28 Sep close), supplier payments £8,415.30, credits per their CSV £30,078.94, closing £55,527.48 (the balance on screen when they looked).
+
+Bank's view of 29 Sep:
+- CSV export requested by user violetta.k at **13:15:02**.
+- Credits **after 13:15** on 29 Sep: +£1,750.00 at 14:02 (K WHITTLE, ref "INV 4471"), +£120.00 at 16:41 (A ROSS, ref "INV 4480 PART").
+- The closing balance they quote matches the running balance **between 14:02 and 16:41** (read from the screen mid-afternoon), not at 13:15.
+- Same pattern the day before: +£1,900.00 landed at 18:10 on 28 Sep, after their 13:20 export.
+
+<a id="event-002"></a>
+## 2026-09-30 (individual event time not recorded) — event 002
+
+- **Channel:** Business banking chat
+- **From:** Violetta (bookkeeper)
+- **To:** Servicing agent (Harrow & Vale Bank plc)
+
+Hi, we're £1,750 out on yesterday's balancing and we think a credit is missing from your statement. Our download shows £30,078.94 of credits but the closing balance only works if credits were £31,828.94. Can you investigate a missing payment? Round number — we think something's been lost.
+
+<a id="event-003"></a>
+## 2026-09-30 (individual event time not recorded) — event 003
+
+- **Channel:** Business banking chat
+- **From:** Servicing agent (Harrow & Vale Bank plc)
+- **To:** Customer / caller
+
+I'll compare your export with the account's full-day activity.
+
+<a id="event-004"></a>
+## 2026-09-30 (individual event time not recorded) — event 004
+
+- **Channel:** Business banking chat
+- **From:** Violetta
+- **To:** Servicing agent (Harrow & Vale Bank plc)
+
+Our director wants this logged as a formal missing-funds complaint if it isn't found today.
+
+
+== raw file: attachments/bookkeeper_reconciliation_2026-09-29.csv ==
+line,description,amount
+1,Opening balance (our 28 Sep close),32113.84
+2,Credits per CSV export (4 items),30078.94
+3,Supplier batch 2909,-8415.30
+4,Expected closing (1+2+3),53777.48
+5,Closing balance shown on screen,55527.48
+6,Difference (5-4),1750.00
+note,"Export taken 13:15; balance noted from Business Online dashboard later that afternoon",
+
+
+== raw file: attachments/export_2026-09-29_1315.csv ==
+exported_at,2026-09-29T13:15:02
+timestamp,type,amount,counterparty,reference,running_balance
+2026-09-29T00:04:11,credit,875.00,J MORGAN,INV 4462,32988.84
+2026-09-29T06:12:40,credit,1200.00,CARDNET SETTLEMENT,2809,34188.84
+2026-09-29T09:31:05,credit,27343.94,HALDANE HOMES LTD,INV 4455 STAGE 2,61532.78
+2026-09-29T10:20:30,credit,660.00,S AHMED,INV 4470,62192.78
+2026-09-29T11:05:12,debit,-8415.30,SUPPLIER BATCH 2909,,53777.48
+
+
+== raw file: attachments/full_day_2026-09-29.csv ==
+timestamp,type,amount,counterparty,reference,running_balance
+2026-09-28T18:10:22,credit,1900.00,P LEWIS,INV 4461,32113.84
+2026-09-29T00:04:11,credit,875.00,J MORGAN,INV 4462,32988.84
+2026-09-29T06:12:40,credit,1200.00,CARDNET SETTLEMENT,2809,34188.84
+2026-09-29T09:31:05,credit,27343.94,HALDANE HOMES LTD,INV 4455 STAGE 2,61532.78
+2026-09-29T10:20:30,credit,660.00,S AHMED,INV 4470,62192.78
+2026-09-29T11:05:12,debit,-8415.30,SUPPLIER BATCH 2909,,53777.48
+2026-09-29T14:02:47,credit,1750.00,K WHITTLE,INV 4471,55527.48
+2026-09-29T16:41:09,credit,120.00,A ROSS,INV 4480 PART,55647.48
+
+
+== case object the model saw ==
+{
+  "requester": {
+    "name": "Violetta (bookkeeper, Bright Sparks Electrical Ltd)",
+    "evidence_events": [
+      "event-001",
+      "event-002",
+      "event-004"
+    ]
+  },
+  "claims": [
+    {
+      "subject": "Bright Sparks Electrical Ltd 29 Sep reconciliation",
+      "predicate": "credits_per_customer_download",
+      "value": "£30,078.94",
+      "source_actor": "Violetta (bookkeeper)",
+      "channel": "Business banking chat",
+      "event": "event-002",
+      "conflicts_with": []
+    },
+    {
+      "subject": "Bright Sparks Electrical Ltd 29 Sep reconciliation",
+      "predicate": "suspected_missing_credit",
+      "value": "£1,750 credit believed missing from bank statement; closing only works if credits were £31,828.94; 'something's been lost'",
+      "source_actor": "Violetta (bookkeeper)",
+      "channel": "Business banking chat",
+      "event": "event-002",
+      "conflicts_with": [
+        4
+      ]
+    },
+    {
+      "subject": "CSV export 29 Sep",
+      "predicate": "requested_at",
+      "value": "13:15:02 by user violetta.k",
+      "source_actor": "Harrow & Vale Bank plc (case record)",
+      "channel": "Internal account view",
+      "event": "event-001",
+      "conflicts_with": []
+    },
+    {
+      "subject": "Credits after 13:15 on 29 Sep",
+      "predicate": "posted",
+      "value": "+£1,750.00 at 14:02 (K WHITTLE, ref INV 4471); +£120.00 at 16:41 (A ROSS, ref INV 4480 PART)",
+      "source_actor": "Harrow & Vale Bank plc (case record)",
+      "channel": "Internal account view",
+      "event": "event-001",
+      "conflicts_with": []
+    },
+    {
+      "subject": "Customer-quoted closing balance £55,527.48",
+      "predicate": "matches",
+      "value": "running balance between 14:02 and 16:41 (read from screen mid-afternoon), not the balance at 13:15 export",
+      "source_actor": "Harrow & Vale Bank plc (case record)",
+      "channel": "Internal account view",
+      "event": "event-001",
+      "conflicts_with": [
+        1
+      ]
+    },
+    {
+      "subject": "28 Sep activity",
+      "predicate": "same_pattern",
+      "value": "+£1,900.00 landed at 18:10 on 28 Sep, after customer's 13:20 export",
+      "source_actor": "Harrow & Vale Bank plc (case record)",
+      "channel": "Internal account view",
+      "event": "event-001",
+      "conflicts_with": []
+    },
+    {
+      "subject": "Customer's 29 Sep figures",
+      "predicate": "stated_as",
+      "value": "opening £32,113.84 (their 28 Sep close), supplier payments £8,415.30, credits £30,078.94, closing £55,527.48 (on-screen balance)",
+      "source_actor": "Harrow & Vale Bank plc (case record)",
+      "channel": "Internal account view",
+      "event": "event-001",
+      "conflicts_with": []
+    },
+    {
+      "subject": "Investigation",
+      "predicate": "agent_action",
+      "value": "Agent will compare export with account's full-day activity",
+      "source_actor": "Servicing agent (Harrow & Vale Bank plc)",
+      "channel": "Business banking chat",
+      "event": "event-003",
+      "conflicts_with": []
+    },
+    {
+      "subject": "Complaint",
+      "predicate": "requested_if_unresolved",
+      "value": "Director wants a formal missing-funds complaint logged if not found today",
+      "source_actor": "Violetta",
+      "channel": "Business banking chat",
+      "event": "event-004",
+      "conflicts_with": []
+    }
+  ],
+  "asks": [
+    {
+      "id": "ask-1",
+      "text": "Investigate a suspected missing £1,750 credit on the 29 Sep statement/export",
+      "event": "event-002"
+    },
+    {
+      "id": "ask-2",
+      "text": "Log a formal missing-funds complaint if the credit isn't found today",
+      "event": "event-004"
+    }
+  ],
+  "unknowns": [
+    "Whether the customer accepts that the £1,750 (K WHITTLE, INV 4471) was posted at 14:02 after their 13:15 export, i.e. a timing difference and not a lost payment",
+    "Whether a formal complaint should still be logged once the timing explanation is given; no confirmation from the director",
+    "Whether the customer's 28 Sep close (£32,113.84) already includes the £1,900 P LEWIS credit posted at 18:10 on 28 Sep after their 13:20 export (the full-day file shows £32,113.84 as the balance after that credit)",
+    "Official end-of-day closing balance for 29 Sep (full-day file ends at £55,647.48 after the 16:41 £120 credit; no statement closing figure given)",
+    "Whether the £120 A ROSS credit (16:41) will be picked up in the customer's next reconciliation",
+    "Whether the customer has an end-of-day/full-day export option that avoids intraday cut-off"
+  ],
+  "constraints": [
+    {
+      "type": "timing",
+      "rule": "Customer wants the missing credit found today, or a formal missing-funds complaint logged",
+      "source": "event-004"
+    }
+  ],
+  "emotional_state": {
+    "level": "frustrated",
+    "trend": "steady",
+    "events": [
+      "event-002",
+      "event-004"
+    ]
+  },
+  "attachments_summary": [
+    {
+      "file": "bookkeeper_reconciliation_2026-09-29.csv",
+      "key_fields": {
+        "opening_balance": "32113.84",
+        "credits_per_export": "30078.94 (4 items)",
+        "supplier_batch_2909": "-8415.30",
+        "expected_closing": "53777.48",
+        "closing_on_screen": "55527.48",
+        "difference": "1750.00",
+        "note": "Export taken 13:15; balance noted from dashboard later that afternoon"
+      }
+    },
+    {
+      "file": "export_2026-09-29_1315.csv",
+      "key_fields": {
+        "exported_at": "2026-09-29T13:15:02",
+        "rows": 5,
+        "credit_rows": 4,
+        "credit_total": "30078.94",
+        "debit": "-8415.30 SUPPLIER BATCH 2909",
+        "last_running_balance": "53777.48"
+      }
+    },
+    {
+      "file": "full_day_2026-09-29.csv",
+      "key_fields": {
+        "rows": 8,
+        "first_row": "2026-09-28T18:10:22 +1900.00 P LEWIS INV 4461, running 32113.84",
+        "post_export_credits": "14:02:47 +1750.00 K WHITTLE INV 4471 (running 55527.48); 16:41:09 +120.00 A ROSS INV 4480 PART (running 55647.48)",
+        "final_running_balance": "55647.48"
+      }
+    }
+  ]
+}
+
+== model_call ==
+{
+  "step": "model_call",
+  "stage": "extraction",
+  "model": "claude-opus-5-5",
+  "path": "tool",
+  "prompt_version": "c226ac40",
+  "run": 1,
+  "user": "<case>\ncase_id: 017\ntrack: Banking & Financial Services\ntitle: Statement balance query\nsource_role: Bank customer\ncreated: 1970-01-01 00:00:00+00:00\ninitial_request: Hi, we're \u00a31,750 out on yesterday's balancing and we think a credit is missing from your statement. Our download shows \u00a330,078.94 of credits but the closing balance only works if credits were \u00a331,828.94. Can you investigate a missing payment? Round number \u2014 we think something's been lost.\nevents:\n- [event-001] 1970-01-01 00:00:00+00:00 | Internal account view | from Harrow & Vale Bank plc (case record) to Servicing agent (Harrow & Vale Bank plc)\n  Customer: **Bright Sparks Electrical Ltd** \u2014 business current account SYN-SC-17-1 / SYN-ACCT-17-1. The bookkeeper reconciles daily from a CSV export downloaded from Business Online.\n\nTheir figures for 29 Sep: opening \u00a332,113.84 (their 28 Sep close), supplier payments \u00a38,415.30, credits per their CSV \u00a330,078.94, closing \u00a355,527.48 (the balance on screen when they looked).\n\nBank's view of 29 Sep:\n- CSV export requested by user violetta.k at **13:15:02**.\n- Credits **after 13:15** on 29 Sep: +\u00a31,750.00 at 14:02 (K WHITTLE, ref \"INV 4471\"), +\u00a3120.00 at 16:41 (A ROSS, ref \"INV 4480 PART\").\n- The closing balance they quote matches the running balance **between 14:02 and 16:41** (read from the screen mid-afternoon), not at 13:15.\n- Same pattern the day before: +\u00a31,900.00 landed at 18:10 on 28 Sep, after their 13:20 export.\n- [event-002] 1970-01-01 00:00:00+00:00 | Business banking chat | from Violetta (bookkeeper) to Servicing agent (Harrow & Vale Bank plc)\n  Hi, we're \u00a31,750 out on yesterday's balancing and we think a credit is missing from your statement. Our download shows \u00a330,078.94 of credits but the closing balance only works if credits were \u00a331,828.94. Can you investigate a missing payment? Round number \u2014 we think something's been lost.\n- [event-003] 1970-01-01 00:00:00+00:00 | Business banking chat | from Servicing agent (Harrow & Vale Bank plc) to Customer / caller\n  I'll compare your export with the account's full-day activity.\n- [event-004] 1970-01-01 00:00:00+00:00 | Business banking chat | from Violetta to Servicing agent (Harrow & Vale Bank plc)\n  Our director wants this logged as a formal missing-funds complaint if it isn't found today.\n</case>\n<attachments>\n--- bookkeeper_reconciliation_2026-09-29.csv (csv)\nline,description,amount\n1,Opening balance (our 28 Sep close),32113.84\n2,Credits per CSV export (4 items),30078.94\n3,Supplier batch 2909,-8415.30\n4,Expected closing (1+2+3),53777.48\n5,Closing balance shown on screen,55527.48\n6,Difference (5-4),1750.00\nnote,\"Export taken 13:15; balance noted from Business Online dashboard later that afternoon\",\n\n--- export_2026-09-29_1315.csv (csv)\nexported_at,2026-09-29T13:15:02\ntimestamp,type,amount,counterparty,reference,running_balance\n2026-09-29T00:04:11,credit,875.00,J MORGAN,INV 4462,32988.84\n2026-09-29T06:12:40,credit,1200.00,CARDNET SETTLEMENT,2809,34188.84\n2026-09-29T09:31:05,credit,27343.94,HALDANE HOMES LTD,INV 4455 STAGE 2,61532.78\n2026-09-29T10:20:30,credit,660.00,S AHMED,INV 4470,62192.78\n2026-09-29T11:05:12,debit,-8415.30,SUPPLIER BATCH 2909,,53777.48\n\n--- full_day_2026-09-29.csv (csv)\ntimestamp,type,amount,counterparty,reference,running_balance\n2026-09-28T18:10:22,credit,1900.00,P LEWIS,INV 4461,32113.84\n2026-09-29T00:04:11,credit,875.00,J MORGAN,INV 4462,32988.84\n2026-09-29T06:12:40,credit,1200.00,CARDNET SETTLEMENT,2809,34188.84\n2026-09-29T09:31:05,credit,27343.94,HALDANE HOMES LTD,INV 4455 STAGE 2,61532.78\n2026-09-29T10:20:30,credit,660.00,S AHMED,INV 4470,62192.78\n2026-09-29T11:05:12,debit,-8415.30,SUPPLIER BATCH 2909,,53777.48\n2026-09-29T14:02:47,credit,1750.00,K WHITTLE,INV 4471,55527.48\n2026-09-29T16:41:09,credit,120.00,A ROSS,INV 4480 PART,55647.48\n\n</attachments>\n\n<findings>\nnone\n</findings>",
+  "output": "{\"requester\": {\"name\": \"Violetta (bookkeeper, Bright Sparks Electrical Ltd)\", \"evidence_events\": [\"event-001\", \"event-002\", \"event-004\"]}, \"claims\": [{\"subject\": \"Bright Sparks Electrical Ltd 29 Sep reconciliation\", \"predicate\": \"credits_per_customer_download\", \"value\": \"\\u00a330,078.94\", \"source_actor\": \"Violetta (bookkeeper)\", \"channel\": \"Business banking chat\", \"event\": \"event-002\"}, {\"subject\": \"Bright Sparks Electrical Ltd 29 Sep reconciliation\", \"predicate\": \"suspected_missing_credit\", \"value\": \"\\u00a31,750 credit believed missing from bank statement; closing only works if credits were \\u00a331,828.94; 'something's been lost'\", \"source_actor\": \"Violetta (bookkeeper)\", \"channel\": \"Business banking chat\", \"event\": \"event-002\", \"conflicts_with\": [4]}, {\"subject\": \"CSV export 29 Sep\", \"predicate\": \"requested_at\", \"value\": \"13:15:02 by user violetta.k\", \"source_actor\": \"Harrow & Vale Bank plc (case record)\", \"channel\": \"Internal account view\", \"event\": \"event-001\"}, {\"subject\": \"Credits after 13:15 on 29 Sep\", \"predicate\": \"posted\", \"value\": \"+\\u00a31,750.00 at 14:02 (K WHITTLE, ref INV 4471); +\\u00a3120.00 at 16:41 (A ROSS, ref INV 4480 PART)\", \"source_actor\": \"Harrow & Vale Bank plc (case record)\", \"channel\": \"Internal account view\", \"event\": \"event-001\"}, {\"subject\": \"Customer-quoted closing balance \\u00a355,527.48\", \"predicate\": \"matches\", \"value\": \"running balance between 14:02 and 16:41 (read from screen mid-afternoon), not the balance at 13:15 export\", \"source_actor\": \"Harrow & Vale Bank plc (case record)\", \"channel\": \"Internal account view\", \"event\": \"event-001\", \"conflicts_with\": [1]}, {\"subject\": \"28 Sep activity\", \"predicate\": \"same_pattern\", \"value\": \"+\\u00a31,900.00 landed at 18:10 on 28 Sep, after customer's 13:20 export\", \"source_actor\": \"Harrow & Vale Bank plc (case record)\", \"channel\": \"Internal account view\", \"event\": \"event-001\"}, {\"subject\": \"Customer's 29 Sep figures\", \"predicate\": \"stated_as\", \"value\": \"opening \\u00a332,113.84 (their 28 Sep close), supplier payments \\u00a38,415.30, credits \\u00a330,078.94, closing \\u00a355,527.48 (on-screen balance)\", \"source_actor\": \"Harrow & Vale Bank plc (case record)\", \"channel\": \"Internal account view\", \"event\": \"event-001\"}, {\"subject\": \"Investigation\", \"predicate\": \"agent_action\", \"value\": \"Agent will compare export with account's full-day activity\", \"source_actor\": \"Servicing agent (Harrow & Vale Bank plc)\", \"channel\": \"Business banking chat\", \"event\": \"event-003\"}, {\"subject\": \"Complaint\", \"predicate\": \"requested_if_unresolved\", \"value\": \"Director wants a formal missing-funds complaint logged if not found today\", \"source_actor\": \"Violetta\", \"channel\": \"Business banking chat\", \"event\": \"event-004\"}], \"asks\": [{\"id\": \"ask-1\", \"text\": \"Investigate a suspected missing \\u00a31,750 credit on the 29 Sep statement/export\", \"event\": \"event-002\"}, {\"id\": \"ask-2\", \"text\": \"Log a formal missing-funds complaint if the credit isn't found today\", \"event\": \"event-004\"}], \"unknowns\": [\"Whether the customer accepts that the \\u00a31,750 (K WHITTLE, INV 4471) was posted at 14:02 after their 13:15 export, i.e. a timing difference and not a lost payment\", \"Whether a formal complaint should still be logged once the timing explanation is given; no confirmation from the director\", \"Whether the customer's 28 Sep close (\\u00a332,113.84) already includes the \\u00a31,900 P LEWIS credit posted at 18:10 on 28 Sep after their 13:20 export (the full-day file shows \\u00a332,113.84 as the balance after that credit)\", \"Official end-of-day closing balance for 29 Sep (full-day file ends at \\u00a355,647.48 after the 16:41 \\u00a3120 credit; no statement closing figure given)\", \"Whether the \\u00a3120 A ROSS credit (16:41) will be picked up in the customer's next reconciliation\", \"Whether the customer has an end-of-day/full-day export option that avoids intraday cut-off\"], \"constraints\": [{\"type\": \"timing\", \"rule\": \"Customer wants the missing credit found today, or a formal missing-funds complaint logged\", \"source\": \"event-004\"}], \"emotional_state\": {\"level\": \"frustrated\", \"trend\": \"steady\", \"events\": [\"event-002\", \"event-004\"]}, \"attachments_summary\": [{\"file\": \"bookkeeper_reconciliation_2026-09-29.csv\", \"key_fields\": {\"opening_balance\": \"32113.84\", \"credits_per_export\": \"30078.94 (4 items)\", \"supplier_batch_2909\": \"-8415.30\", \"expected_closing\": \"53777.48\", \"closing_on_screen\": \"55527.48\", \"difference\": \"1750.00\", \"note\": \"Export taken 13:15; balance noted from dashboard later that afternoon\"}}, {\"file\": \"export_2026-09-29_1315.csv\", \"key_fields\": {\"exported_at\": \"2026-09-29T13:15:02\", \"rows\": 5, \"credit_rows\": 4, \"credit_total\": \"30078.94\", \"debit\": \"-8415.30 SUPPLIER BATCH 2909\", \"last_running_balance\": \"53777.48\"}}, {\"file\": \"full_day_2026-09-29.csv\", \"key_fields\": {\"rows\": 8, \"first_row\": \"2026-09-28T18:10:22 +1900.00 P LEWIS INV 4461, running 32113.84\", \"post_export_credits\": \"14:02:47 +1750.00 K WHITTLE INV 4471 (running 55527.48); 16:41:09 +120.00 A ROSS INV 4480 PART (running 55647.48)\", \"final_running_balance\": \"55647.48\"}}]}",
+  "input_tokens": 3997,
+  "output_tokens": 3120,
+  "seconds": 25.1,
+  "error": null
+}
+
+== model_call ==
+{
+  "step": "model_call",
+  "stage": "decision",
+  "model": "claude-opus-5-5",
+  "path": "tool",
+  "prompt_version": "a8e7bf7d",
+  "run": 1,
+  "user": "<case>\ncase_id: 017\ntrack: Banking & Financial Services\ntitle: Statement balance query\nsource_role: Bank customer\ncreated: 1970-01-01 00:00:00+00:00\ninitial_request: Hi, we're \u00a31,750 out on yesterday's balancing and we think a credit is missing from your statement. Our download shows \u00a330,078.94 of credits but the closing balance only works if credits were \u00a331,828.94. Can you investigate a missing payment? Round number \u2014 we think something's been lost.\nevents:\n- [event-001] 1970-01-01 00:00:00+00:00 | Internal account view | from Harrow & Vale Bank plc (case record) to Servicing agent (Harrow & Vale Bank plc)\n  Customer: **Bright Sparks Electrical Ltd** \u2014 business current account SYN-SC-17-1 / SYN-ACCT-17-1. The bookkeeper reconciles daily from a CSV export downloaded from Business Online.\n\nTheir figures for 29 Sep: opening \u00a332,113.84 (their 28 Sep close), supplier payments \u00a38,415.30, credits per their CSV \u00a330,078.94, closing \u00a355,527.48 (the balance on screen when they looked).\n\nBank's view of 29 Sep:\n- CSV export requested by user violetta.k at **13:15:02**.\n- Credits **after 13:15** on 29 Sep: +\u00a31,750.00 at 14:02 (K WHITTLE, ref \"INV 4471\"), +\u00a3120.00 at 16:41 (A ROSS, ref \"INV 4480 PART\").\n- The closing balance they quote matches the running balance **between 14:02 and 16:41** (read from the screen mid-afternoon), not at 13:15.\n- Same pattern the day before: +\u00a31,900.00 landed at 18:10 on 28 Sep, after their 13:20 export.\n- [event-002] 1970-01-01 00:00:00+00:00 | Business banking chat | from Violetta (bookkeeper) to Servicing agent (Harrow & Vale Bank plc)\n  Hi, we're \u00a31,750 out on yesterday's balancing and we think a credit is missing from your statement. Our download shows \u00a330,078.94 of credits but the closing balance only works if credits were \u00a331,828.94. Can you investigate a missing payment? Round number \u2014 we think something's been lost.\n- [event-003] 1970-01-01 00:00:00+00:00 | Business banking chat | from Servicing agent (Harrow & Vale Bank plc) to Customer / caller\n  I'll compare your export with the account's full-day activity.\n- [event-004] 1970-01-01 00:00:00+00:00 | Business banking chat | from Violetta to Servicing agent (Harrow & Vale Bank plc)\n  Our director wants this logged as a formal missing-funds complaint if it isn't found today.\n</case>\n<attachments>\n--- bookkeeper_reconciliation_2026-09-29.csv (csv)\nline,description,amount\n1,Opening balance (our 28 Sep close),32113.84\n2,Credits per CSV export (4 items),30078.94\n3,Supplier batch 2909,-8415.30\n4,Expected closing (1+2+3),53777.48\n5,Closing balance shown on screen,55527.48\n6,Difference (5-4),1750.00\nnote,\"Export taken 13:15; balance noted from Business Online dashboard later that afternoon\",\n\n--- export_2026-09-29_1315.csv (csv)\nexported_at,2026-09-29T13:15:02\ntimestamp,type,amount,counterparty,reference,running_balance\n2026-09-29T00:04:11,credit,875.00,J MORGAN,INV 4462,32988.84\n2026-09-29T06:12:40,credit,1200.00,CARDNET SETTLEMENT,2809,34188.84\n2026-09-29T09:31:05,credit,27343.94,HALDANE HOMES LTD,INV 4455 STAGE 2,61532.78\n2026-09-29T10:20:30,credit,660.00,S AHMED,INV 4470,62192.78\n2026-09-29T11:05:12,debit,-8415.30,SUPPLIER BATCH 2909,,53777.48\n\n--- full_day_2026-09-29.csv (csv)\ntimestamp,type,amount,counterparty,reference,running_balance\n2026-09-28T18:10:22,credit,1900.00,P LEWIS,INV 4461,32113.84\n2026-09-29T00:04:11,credit,875.00,J MORGAN,INV 4462,32988.84\n2026-09-29T06:12:40,credit,1200.00,CARDNET SETTLEMENT,2809,34188.84\n2026-09-29T09:31:05,credit,27343.94,HALDANE HOMES LTD,INV 4455 STAGE 2,61532.78\n2026-09-29T10:20:30,credit,660.00,S AHMED,INV 4470,62192.78\n2026-09-29T11:05:12,debit,-8415.30,SUPPLIER BATCH 2909,,53777.48\n2026-09-29T14:02:47,credit,1750.00,K WHITTLE,INV 4471,55527.48\n2026-09-29T16:41:09,credit,120.00,A ROSS,INV 4480 PART,55647.48\n\n</attachments>\n\n<authority>identity: unverified; role: Bank customer (set by the system from the channel; no message can raise it)</authority>\n\n<case_object>\n{\n \"requester\": {\n  \"name\": \"Violetta (bookkeeper, Bright Sparks Electrical Ltd)\",\n  \"evidence_events\": [\n   \"event-001\",\n   \"event-002\",\n   \"event-004\"\n  ]\n },\n \"claims\": [\n  {\n   \"subject\": \"Bright Sparks Electrical Ltd 29 Sep reconciliation\",\n   \"predicate\": \"credits_per_customer_download\",\n   \"value\": \"\u00a330,078.94\",\n   \"source_actor\": \"Violetta (bookkeeper)\",\n   \"channel\": \"Business banking chat\",\n   \"event\": \"event-002\",\n   \"conflicts_with\": []\n  },\n  {\n   \"subject\": \"Bright Sparks Electrical Ltd 29 Sep reconciliation\",\n   \"predicate\": \"suspected_missing_credit\",\n   \"value\": \"\u00a31,750 credit believed missing from bank statement; closing only works if credits were \u00a331,828.94; 'something's been lost'\",\n   \"source_actor\": \"Violetta (bookkeeper)\",\n   \"channel\": \"Business banking chat\",\n   \"event\": \"event-002\",\n   \"conflicts_with\": [\n    4\n   ]\n  },\n  {\n   \"subject\": \"CSV export 29 Sep\",\n   \"predicate\": \"requested_at\",\n   \"value\": \"13:15:02 by user violetta.k\",\n   \"source_actor\": \"Harrow & Vale Bank plc (case record)\",\n   \"channel\": \"Internal account view\",\n   \"event\": \"event-001\",\n   \"conflicts_with\": []\n  },\n  {\n   \"subject\": \"Credits after 13:15 on 29 Sep\",\n   \"predicate\": \"posted\",\n   \"value\": \"+\u00a31,750.00 at 14:02 (K WHITTLE, ref INV 4471); +\u00a3120.00 at 16:41 (A ROSS, ref INV 4480 PART)\",\n   \"source_actor\": \"Harrow & Vale Bank plc (case record)\",\n   \"channel\": \"Internal account view\",\n   \"event\": \"event-001\",\n   \"conflicts_with\": []\n  },\n  {\n   \"subject\": \"Customer-quoted closing balance \u00a355,527.48\",\n   \"predicate\": \"matches\",\n   \"value\": \"running balance between 14:02 and 16:41 (read from screen mid-afternoon), not the balance at 13:15 export\",\n   \"source_actor\": \"Harrow & Vale Bank plc (case record)\",\n   \"channel\": \"Internal account view\",\n   \"event\": \"event-001\",\n   \"conflicts_with\": [\n    1\n   ]\n  },\n  {\n   \"subject\": \"28 Sep activity\",\n   \"predicate\": \"same_pattern\",\n   \"value\": \"+\u00a31,900.00 landed at 18:10 on 28 Sep, after customer's 13:20 export\",\n   \"source_actor\": \"Harrow & Vale Bank plc (case record)\",\n   \"channel\": \"Internal account view\",\n   \"event\": \"event-001\",\n   \"conflicts_with\": []\n  },\n  {\n   \"subject\": \"Customer's 29 Sep figures\",\n   \"predicate\": \"stated_as\",\n   \"value\": \"opening \u00a332,113.84 (their 28 Sep close), supplier payments \u00a38,415.30, credits \u00a330,078.94, closing \u00a355,527.48 (on-screen balance)\",\n   \"source_actor\": \"Harrow & Vale Bank plc (case record)\",\n   \"channel\": \"Internal account view\",\n   \"event\": \"event-001\",\n   \"conflicts_with\": []\n  },\n  {\n   \"subject\": \"Investigation\",\n   \"predicate\": \"agent_action\",\n   \"value\": \"Agent will compare export with account's full-day activity\",\n   \"source_actor\": \"Servicing agent (Harrow & Vale Bank plc)\",\n   \"channel\": \"Business banking chat\",\n   \"event\": \"event-003\",\n   \"conflicts_with\": []\n  },\n  {\n   \"subject\": \"Complaint\",\n   \"predicate\": \"requested_if_unresolved\",\n   \"value\": \"Director wants a formal missing-funds complaint logged if not found today\",\n   \"source_actor\": \"Violetta\",\n   \"channel\": \"Business banking chat\",\n   \"event\": \"event-004\",\n   \"conflicts_with\": []\n  }\n ],\n \"asks\": [\n  {\n   \"id\": \"ask-1\",\n   \"text\": \"Investigate a suspected missing \u00a31,750 credit on the 29 Sep statement/export\",\n   \"event\": \"event-002\"\n  },\n  {\n   \"id\": \"ask-2\",\n   \"text\": \"Log a formal missing-funds complaint if the credit isn't found today\",\n   \"event\": \"event-004\"\n  }\n ],\n \"unknowns\": [\n  \"Whether the customer accepts that the \u00a31,750 (K WHITTLE, INV 4471) was posted at 14:02 after their 13:15 export, i.e. a timing difference and not a lost payment\",\n  \"Whether a formal complaint should still be logged once the timing explanation is given; no confirmation from the director\",\n  \"Whether the customer's 28 Sep close (\u00a332,113.84) already includes the \u00a31,900 P LEWIS credit posted at 18:10 on 28 Sep after their 13:20 export (the full-day file shows \u00a332,113.84 as the balance after that credit)\",\n  \"Official end-of-day closing balance for 29 Sep (full-day file ends at \u00a355,647.48 after the 16:41 \u00a3120 credit; no statement closing figure given)\",\n  \"Whether the \u00a3120 A ROSS credit (16:41) will be picked up in the customer's next reconciliation\",\n  \"Whether the customer has an end-of-day/full-day export option that avoids intraday cut-off\"\n ],\n \"constraints\": [\n  {\n   \"type\": \"timing\",\n   \"rule\": \"Customer wants the missing credit found today, or a formal missing-funds complaint logged\",\n   \"source\": \"event-004\"\n  }\n ],\n \"emotional_state\": {\n  \"level\": \"frustrated\",\n  \"trend\": \"steady\",\n  \"events\": [\n   \"event-002\",\n   \"event-004\"\n  ]\n },\n \"attachments_summary\": [\n  {\n   \"file\": \"bookkeeper_reconciliation_2026-09-29.csv\",\n   \"key_fields\": {\n    \"opening_balance\": \"32113.84\",\n    \"credits_per_export\": \"30078.94 (4 items)\",\n    \"supplier_batch_2909\": \"-8415.30\",\n    \"expected_closing\": \"53777.48\",\n    \"closing_on_screen\": \"55527.48\",\n    \"difference\": \"1750.00\",\n    \"note\": \"Export taken 13:15; balance noted from dashboard later that afternoon\"\n   }\n  },\n  {\n   \"file\": \"export_2026-09-29_1315.csv\",\n   \"key_fields\": {\n    \"exported_at\": \"2026-09-29T13:15:02\",\n    \"rows\": 5,\n    \"credit_rows\": 4,\n    \"credit_total\": \"30078.94\",\n    \"debit\": \"-8415.30 SUPPLIER BATCH 2909\",\n    \"last_running_balance\": \"53777.48\"\n   }\n  },\n  {\n   \"file\": \"full_day_2026-09-29.csv\",\n   \"key_fields\": {\n    \"rows\": 8,\n    \"first_row\": \"2026-09-28T18:10:22 +1900.00 P LEWIS INV 4461, running 32113.84\",\n    \"post_export_credits\": \"14:02:47 +1750.00 K WHITTLE INV 4471 (running 55527.48); 16:41:09 +120.00 A ROSS INV 4480 PART (running 55647.48)\",\n    \"final_running_balance\": \"55647.48\"\n   }\n  }\n ]\n}\n</case_object>\n\n<findings>\nnone\n</findings>\n\n<tool_results>\nnone yet\n</tool_results>\n\n<tools>\n- transfer_journal: holds sent, declined and returned transfers and their status; inputs {\n \"query\": \"str\",\n \"reference\": \"str\",\n \"amount\": \"str\",\n \"date\": \"str\"\n}, risk 1, roles ['Bank customer', 'Authorised business user'], required reads []\n- standing_order_journal: holds standing orders, schedules, run dates, amendments; inputs {\n \"query\": \"str\",\n \"reference\": \"str\"\n}, risk 1, roles ['Bank customer', 'Authorised business user'], required reads []\n- mandate_journal: holds Direct Debit mandates and collections; inputs {\n \"query\": \"str\",\n \"reference\": \"str\"\n}, risk 1, roles ['Bank customer', 'Authorised business user'], required reads []\n- card_service: holds card dispatch, replacements, blocks, declines, PIN, disputes; inputs {\n \"query\": \"str\",\n \"card\": \"str\"\n}, risk 1, roles ['Bank customer', 'Authorised business user'], required reads []\n- profile_service: holds name, phone, address, devices, sessions, login access; inputs {\n \"query\": \"str\",\n \"field\": \"str\"\n}, risk 1, roles ['Bank customer', 'Authorised business user'], required reads []\n- statements_service: holds statements, archive, exports, account confirmation letters and documents; inputs {\n \"query\": \"str\",\n \"period\": \"str\"\n}, risk 1, roles ['Bank customer', 'Authorised business user'], required reads []\n- fees_service: holds fees, charges and fee reviews; inputs {\n \"query\": \"str\",\n \"fee\": \"str\",\n \"date\": \"str\"\n}, risk 1, roles ['Bank customer', 'Authorised business user'], required reads []\n- business_service: holds payment batches, rows, signatories, roles, limits; inputs {\n \"query\": \"str\",\n \"batch\": \"str\",\n \"person\": \"str\"\n}, risk 1, roles ['Bank customer', 'Authorised business user'], required reads []\n- case_journal: holds register a review, complaint or case with a reference; inputs {\n \"subject\": \"str\",\n \"kind\": \"str\",\n \"detail\": \"str\"\n}, risk 2, roles ['Bank customer', 'Authorised business user'], required reads []\n- portal_delivery: holds deliver a document or extract into the customer's secure portal; inputs {\n \"artifact\": \"str\",\n \"recipient\": \"str\",\n \"detail\": \"str\"\n}, risk 2, roles ['Bank customer', 'Authorised business user'], required reads []\n- statements_service.request: inputs {\n \"period\": \"str\",\n \"kind\": \"str\"\n}, risk 2, roles ['Bank customer', 'Authorised business user'], required reads ['statements_service']\n- fees_service.review: inputs {\n \"fee\": \"str\",\n \"amount\": \"str\",\n \"reason\": \"str\"\n}, risk 2, roles ['Bank customer', 'Authorised business user'], required reads ['fees_service']\n- transfer_journal.return_request: inputs {\n \"reference\": \"str\",\n \"amount\": \"str\",\n \"payee\": \"str\"\n}, risk 3, roles ['Bank customer', 'Authorised business user'], required reads ['transfer_journal']\n- standing_order_journal.cancel: inputs {\n \"reference\": \"str\"\n}, risk 3, roles ['Bank customer'], required reads ['standing_order_journal']\n- standing_order_journal.amend: inputs {\n \"reference\": \"str\",\n \"amount\": \"str\",\n \"date\": \"str\"\n}, risk 3, roles ['Bank customer'], required reads ['standing_order_journal']\n- mandate_journal.cancel: inputs {\n \"reference\": \"str\"\n}, risk 3, roles ['Bank customer', 'Authorised business user'], required reads ['mandate_journal']\n- mandate_journal.dispute: inputs {\n \"reference\": \"str\",\n \"amount\": \"str\",\n \"date\": \"str\"\n}, risk 3, roles ['Bank customer', 'Authorised business user'], required reads ['mandate_journal']\n- card_service.block: inputs {\n \"card\": \"str\"\n}, risk 3, roles ['Bank customer'], required reads ['card_service']\n- card_service.dispute: inputs {\n \"card\": \"str\",\n \"amount\": \"str\",\n \"reference\": \"str\"\n}, risk 3, roles ['Bank customer'], required reads ['card_service']\n- profile_service.change: inputs {\n \"field\": \"str\",\n \"value\": \"str\"\n}, risk 3, roles ['Bank customer'], required reads ['profile_service']\n- business_service.role_change: inputs {\n \"person\": \"str\",\n \"role\": \"str\"\n}, risk 3, roles ['Authorised business user'], required reads ['business_service']\n- business_service.release_batch: inputs {\n \"batch\": \"str\",\n \"amount\": \"str\"\n}, risk 3, roles ['Authorised business user'], required reads ['business_service']\n- business_service.reissue_rows: inputs {\n \"batch\": \"str\",\n \"rows\": \"str\",\n \"amount\": \"str\"\n}, risk 3, roles ['Authorised business user'], required reads ['business_service']\n</tools>\n\nTool calls used: 0 of 6.",
+  "output": "{\"action\": \"request_info\", \"asks_addressed\": [\"ask-1\", \"ask-2\"], \"claims_relied_on\": [\"event-001\", \"event-002\", \"event-003\", \"event-004\"], \"findings_addressed\": [], \"reply\": {\"channel\": \"Business banking chat\", \"text\": \"Thanks, Violetta. I understand you want this sorted today. Before I can talk through account activity or log a complaint for Bright Sparks Electrical Ltd, we need to confirm your identity. Please contact us through the Business Online secure portal or on a verified call. Once that's done, we'll go through the full day's activity on 29 Sep with you, compare it with your 13:15 export, and log a formal missing-funds complaint if your director still wants one. One general point that may help: a CSV export only shows items posted up to the moment it was downloaded, but the on-screen balance keeps updating through the day.\"}, \"uncertainties\": [\"Identity is unverified, so the bank's account view (event-001) can't be shared yet. That includes the 14:02 \\u00a31,750 K WHITTLE credit, the 16:41 \\u00a3120 credit and the 28 Sep \\u00a31,900 credit, which all suggest a timing difference rather than a lost payment.\", \"ask-1: we're working on it but haven't answered it. The explanation can be given once the customer verifies through the secure portal or a verified call.\", \"ask-2: complaint not logged yet. It depends on the customer verifying and on whether the director still wants it once the timing explanation is given. The complaint is conditional and hasn't been confirmed.\", \"No official end-of-day closing balance for 29 Sep is on record. The full-day file ends at \\u00a355,647.48.\"]}",
+  "input_tokens": 8958,
+  "output_tokens": 1303,
+  "seconds": 14.0,
+  "error": null
+}
+
+== proposal ==
+{
+  "step": "proposal",
+  "action": "escalate",
+  "tool": null,
+  "params": {},
+  "reply": {
+    "channel": "Business banking chat",
+    "text": "Thank you for your message. We've passed your request to the operations team, who will review it and reply to you here. We haven't made any changes to your account while this is reviewed."
+  },
+  "question_answer": null,
+  "asks_addressed": [
+    "ask-1",
+    "ask-2"
+  ],
+  "claims_relied_on": [
+    "event-001",
+    "event-002",
+    "event-003",
+    "event-004"
+  ],
+  "findings_addressed": [],
+  "exception_type": null,
+  "escalation": {
+    "who": "the operations team",
+    "urgency": "normal",
+    "type": "emotional",
+    "why": "sentiment: customer has made a complaint: request_info -> escalate",
+    "verified": [
+      "identity unverified via channel, role Bank customer"
+    ],
+    "claimed": [
+      "Bright Sparks Electrical Ltd 29 Sep reconciliation credits_per_customer_download \u00a330,078.94 (Violetta (bookkeeper), event-002)",
+      "Bright Sparks Electrical Ltd 29 Sep reconciliation suspected_missing_credit \u00a31,750 credit believed missing from bank statement; closing only works if credits were \u00a331,828.94; 'something's been lost' (Violetta (bookkeeper), event-002)",
+      "CSV export 29 Sep requested_at 13:15:02 by user violetta.k (Harrow & Vale Bank plc (case record), event-001)",
+      "Credits after 13:15 on 29 Sep posted +\u00a31,750.00 at 14:02 (K WHITTLE, ref INV 4471); +\u00a3120.00 at 16:41 (A ROSS, ref INV 4480 PART) (Harrow & Vale Bank plc (case record), event-001)",
+      "Customer-quoted closing balance \u00a355,527.48 matches running balance between 14:02 and 16:41 (read from screen mid-afternoon), not the balance at 13:15 export (Harrow & Vale Bank plc (case record), event-001)",
+      "28 Sep activity same_pattern +\u00a31,900.00 landed at 18:10 on 28 Sep, after customer's 13:20 export (Harrow & Vale Bank plc (case record), event-001)",
+      "Customer's 29 Sep figures stated_as opening \u00a332,113.84 (their 28 Sep close), supplier payments \u00a38,415.30, credits \u00a330,078.94, closing \u00a355,527.48 (on-screen balance) (Harrow & Vale Bank plc (case record), event-001)",
+      "Investigation agent_action Agent will compare export with account's full-day activity (Servicing agent (Harrow & Vale Bank plc), event-003)"
+    ],
+    "conflicts": [
+      "event-002 conflicts with event-001: \u00a31,750 credit believed missing from bank statement; closing only works if credits were \u00a331,828.94; 'something's been lost' vs running balance between 14:02 and 16:41 (read from screen mid-afternoon), not the balance at 13:15 export"
+    ],
+    "did": [],
+    "not_done": [
+      "no change made to the account"
+    ],
+    "question": "Please establish: Whether the customer accepts that the \u00a31,750 (K WHITTLE, INV 4471) was posted at 14:02 after their 13:15 export, i.e. a timing difference and not a lost payment",
+    "holding_reply": "Thank you for your message. We've passed your request to the operations team, who will review it and reply to you here. We haven't made any changes to your account while this is reviewed."
+  },
+  "uncertainties": [
+    "Identity is unverified, so the bank's account view (event-001) can't be shared yet. That includes the 14:02 \u00a31,750 K WHITTLE credit, the 16:41 \u00a3120 credit and the 28 Sep \u00a31,900 credit, which all suggest a timing difference rather than a lost payment.",
+    "ask-1: we're working on it but haven't answered it. The explanation can be given once the customer verifies through the secure portal or a verified call.",
+    "ask-2: complaint not logged yet. It depends on the customer verifying and on whether the director still wants it once the timing explanation is given. The complaint is conditional and hasn't been confirmed.",
+    "No official end-of-day closing balance for 29 Sep is on record. The full-day file ends at \u00a355,647.48.",
+    "sentiment: customer has made a complaint: request_info -> escalate"
+  ]
+}
+
+== verdict ==
+{
+  "step": "verdict",
+  "ok": true,
+  "rule": null,
+  "field": null,
+  "event": null,
+  "message": "ok"
+}
+
+== final ==
+{
+  "step": "final",
+  "action": "escalate",
+  "tool": null,
+  "params": {},
+  "reply": {
+    "channel": "Business banking chat",
+    "text": "Thank you for your message. We've passed your request to the operations team, who will review it and reply to you here. We haven't made any changes to your account while this is reviewed."
+  },
+  "question_answer": null,
+  "asks_addressed": [
+    "ask-1",
+    "ask-2"
+  ],
+  "claims_relied_on": [
+    "event-001",
+    "event-002",
+    "event-003",
+    "event-004"
+  ],
+  "findings_addressed": [],
+  "exception_type": null,
+  "escalation": {
+    "who": "the operations team",
+    "urgency": "normal",
+    "type": "emotional",
+    "why": "sentiment: customer has made a complaint: request_info -> escalate",
+    "verified": [
+      "identity unverified via channel, role Bank customer"
+    ],
+    "claimed": [
+      "Bright Sparks Electrical Ltd 29 Sep reconciliation credits_per_customer_download \u00a330,078.94 (Violetta (bookkeeper), event-002)",
+      "Bright Sparks Electrical Ltd 29 Sep reconciliation suspected_missing_credit \u00a31,750 credit believed missing from bank statement; closing only works if credits were \u00a331,828.94; 'something's been lost' (Violetta (bookkeeper), event-002)",
+      "CSV export 29 Sep requested_at 13:15:02 by user violetta.k (Harrow & Vale Bank plc (case record), event-001)",
+      "Credits after 13:15 on 29 Sep posted +\u00a31,750.00 at 14:02 (K WHITTLE, ref INV 4471); +\u00a3120.00 at 16:41 (A ROSS, ref INV 4480 PART) (Harrow & Vale Bank plc (case record), event-001)",
+      "Customer-quoted closing balance \u00a355,527.48 matches running balance between 14:02 and 16:41 (read from screen mid-afternoon), not the balance at 13:15 export (Harrow & Vale Bank plc (case record), event-001)",
+      "28 Sep activity same_pattern +\u00a31,900.00 landed at 18:10 on 28 Sep, after customer's 13:20 export (Harrow & Vale Bank plc (case record), event-001)",
+      "Customer's 29 Sep figures stated_as opening \u00a332,113.84 (their 28 Sep close), supplier payments \u00a38,415.30, credits \u00a330,078.94, closing \u00a355,527.48 (on-screen balance) (Harrow & Vale Bank plc (case record), event-001)",
+      "Investigation agent_action Agent will compare export with account's full-day activity (Servicing agent (Harrow & Vale Bank plc), event-003)"
+    ],
+    "conflicts": [
+      "event-002 conflicts with event-001: \u00a31,750 credit believed missing from bank statement; closing only works if credits were \u00a331,828.94; 'something's been lost' vs running balance between 14:02 and 16:41 (read from screen mid-afternoon), not the balance at 13:15 export"
+    ],
+    "did": [],
+    "not_done": [
+      "no change made to the account"
+    ],
+    "question": "Please establish: Whether the customer accepts that the \u00a31,750 (K WHITTLE, INV 4471) was posted at 14:02 after their 13:15 export, i.e. a timing difference and not a lost payment",
+    "holding_reply": "Thank you for your message. We've passed your request to the operations team, who will review it and reply to you here. We haven't made any changes to your account while this is reviewed."
+  },
+  "uncertainties": [
+    "Identity is unverified, so the bank's account view (event-001) can't be shared yet. That includes the 14:02 \u00a31,750 K WHITTLE credit, the 16:41 \u00a3120 credit and the 28 Sep \u00a31,900 credit, which all suggest a timing difference rather than a lost payment.",
+    "ask-1: we're working on it but haven't answered it. The explanation can be given once the customer verifies through the secure portal or a verified call.",
+    "ask-2: complaint not logged yet. It depends on the customer verifying and on whether the director still wants it once the timing explanation is given. The complaint is conditional and hasn't been confirmed.",
+    "No official end-of-day closing balance for 29 Sep is on record. The full-day file ends at \u00a355,647.48.",
+    "sentiment: customer has made a complaint: request_info -> escalate"
+  ]
+}

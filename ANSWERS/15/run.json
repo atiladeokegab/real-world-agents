@@ -1,0 +1,16 @@
+{
+  "track": "Banking & Financial Services",
+  "case_id": "015",
+  "action": "escalate",
+  "escalated": true,
+  "exception_type": "missing_authority",
+  "outcome": "escalated",
+  "tool_calls": 0,
+  "fallback": false,
+  "model_calls": 2,
+  "input_tokens": 12839,
+  "output_tokens": 4618,
+  "seconds": 52.4,
+  "state": "escalated",
+  "summary": "handover to Personal banking \u2013 Direct Debit disputes / customer support (financial difficulty), today"
+}

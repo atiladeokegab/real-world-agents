@@ -1,0 +1,16 @@
+{
+  "track": "Banking & Financial Services",
+  "case_id": "003",
+  "action": "escalate",
+  "escalated": true,
+  "exception_type": "missing_authority",
+  "outcome": "escalated",
+  "tool_calls": 0,
+  "fallback": false,
+  "model_calls": 2,
+  "input_tokens": 15132,
+  "output_tokens": 7287,
+  "seconds": 64.6,
+  "state": "escalated",
+  "summary": "handover to Business Banking Fraud & Merchant Services (settlement changes) team, today"
+}

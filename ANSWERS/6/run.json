@@ -1,0 +1,16 @@
+{
+  "track": "Banking & Financial Services",
+  "case_id": "006",
+  "action": "escalate",
+  "escalated": true,
+  "exception_type": "conflicting_records",
+  "outcome": "escalated",
+  "tool_calls": 0,
+  "fallback": false,
+  "model_calls": 2,
+  "input_tokens": 11475,
+  "output_tokens": 3680,
+  "seconds": 35.3,
+  "state": "escalated",
+  "summary": "handover to Fraud & Financial Crime \u2013 Misdirected Payments / Funds Recovery team, today"
+}
