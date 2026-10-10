@@ -3,6 +3,7 @@
 import hashlib
 import json
 import os
+import time
 from contextvars import ContextVar
 from typing import Literal, TypeVar
 
@@ -39,12 +40,16 @@ def _constrainable(schema) -> bool:
     return True
 
 
-def _record(stage, model_id, system, user, run, path, output, error):
+def _record(stage, model_id, system, user, run, path, output, error, resp=None, started=None):
     trace = TRACE.get()
     if trace is not None:
+        usage = getattr(resp, "usage", None)
         trace.append({"step": "model_call", "stage": stage, "model": model_id, "path": path,
                       "prompt_version": hashlib.sha1(system.encode()).hexdigest()[:8],
                       "run": run, "user": user, "output": output,
+                      "input_tokens": getattr(usage, "input_tokens", None),
+                      "output_tokens": getattr(usage, "output_tokens", None),
+                      "seconds": round(time.monotonic() - started, 1) if started else None,
                       "error": str(error) if error else None})
 
 
@@ -62,16 +67,18 @@ def structured(stage: Literal["extraction", "decision"] | str, system: str, user
     """
     effort = {"effort": EFFORT.get(stage, "medium")}
     if _constrainable(model.model_json_schema()):
+        started = time.monotonic()
         try:
             resp = _client(stage).messages.parse(
                 model=model_id, max_tokens=16000, system=system, output_format=model,
                 messages=[{"role": "user", "content": user}], output_config=effort)
         except (anthropic.BadRequestError, TypeError) as e:
-            _record(stage, model_id, system, user, 1, "parse", None, e)
+            _record(stage, model_id, system, user, 1, "parse", None, e, started=started)
         else:
             _refused(resp, stage)
             _record(stage, model_id, system, user, 1, "parse",
-                    resp.parsed_output.model_dump_json() if resp.parsed_output else None, None)
+                    resp.parsed_output.model_dump_json() if resp.parsed_output else None, None,
+                    resp, started)
             if resp.parsed_output is not None:
                 return resp.parsed_output
 
@@ -82,6 +89,7 @@ def structured(stage: Literal["extraction", "decision"] | str, system: str, user
     system = f"{system}\n\nAnswer only by calling the {model.__name__} tool, exactly once."
     error = None
     for attempt in (1, 2):
+        started = time.monotonic()
         resp = _client(stage).messages.create(
             model=model_id, max_tokens=16000, system=system, tools=[tool],
             tool_choice={"type": "auto", "disable_parallel_tool_use": True},
@@ -97,7 +105,7 @@ def structured(stage: Literal["extraction", "decision"] | str, system: str, user
         except (ValidationError, ValueError) as e:
             error = e
         _record(stage, model_id, system, user, attempt, "tool",
-                json.dumps(block.input, default=str) if block else None, error)
+                json.dumps(block.input, default=str) if block else None, error, resp, started)
         if error is None:
             return out
     raise RuntimeError(f"{stage}: {error}")
