@@ -46,6 +46,45 @@ out.mkdir(parents=True)
     assert "fallback" in table and "HEAD" in table
 
 
+def test_workers_run_cases_at_the_same_time(tmp_path, monkeypatch):
+    root = cases(tmp_path, "001", "002")
+    sync = tmp_path / "sync"
+    sync.mkdir()
+    monkeypatch.setenv("FAKE_SYNC_DIR", str(sync))
+    fake_uv(tmp_path, monkeypatch, """import os, pathlib, sys, time
+case = pathlib.Path(sys.argv[5])
+sync = pathlib.Path(os.environ['FAKE_SYNC_DIR'])
+(sync / case.name).touch()
+end = time.monotonic() + 1
+while len(list(sync.iterdir())) < 2:
+    if time.monotonic() > end:
+        sys.exit(9)
+    time.sleep(0.01)
+out = pathlib.Path(sys.argv[7])
+out.mkdir(parents=True)
+(out / 'ANSWER.md').write_text('## Decision\\nno-op\\n')
+(out / 'REASONING.md').write_text('# Reasoning\\n')
+""")
+    out = tmp_path / "answers"
+
+    assert import_module("eval.submit").main([str(root), "--out", str(out), "--workers", "2"]) == 0
+    assert all((out / n / "ANSWER.md").read_text().endswith("no-op\n") for n in ("001", "002"))
+
+
+def test_malformed_answer_text_does_not_stop_other_cases(tmp_path, monkeypatch, capsys):
+    root = cases(tmp_path, "001", "002")
+    fake_uv(tmp_path, monkeypatch, """import pathlib, sys
+out = pathlib.Path(sys.argv[7])
+out.mkdir(parents=True)
+(out / 'ANSWER.md').write_bytes(b'\\xff\\n## Decision\\nno-op\\n')
+(out / 'REASONING.md').write_text('# Reasoning\\n')
+""")
+    out = tmp_path / "answers"
+
+    assert import_module("eval.submit").main([str(root), "--out", str(out)]) == 0
+    assert "total 2; fallback 0; missing 0" in capsys.readouterr().out
+
+
 def test_failed_case_gets_fallback_without_stopping_next_case(tmp_path, monkeypatch, capsys):
     root = cases(tmp_path, "001", "002")
     fake_uv(tmp_path, monkeypatch, """import pathlib, sys

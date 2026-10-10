@@ -52,7 +52,7 @@ def fill_missing(case: Path, out: Path, error: str) -> bool:
 
 
 def decision(answer: Path) -> str:
-    lines = answer.read_text(encoding="utf-8").splitlines()
+    lines = answer.read_text(encoding="utf-8", errors="replace").splitlines()
     for index, line in enumerate(lines):
         if line.strip() == "## Decision":
             return next((value.strip() for value in lines[index + 1:] if value.strip()), "missing")
