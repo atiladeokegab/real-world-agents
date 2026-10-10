@@ -145,7 +145,7 @@ def normalise(proposal, case, case_object, findings, results):
         entry = EXCEPTIONS[name]
         risky = action == "tool_call" and tool_risk(data.get("tool"), data.get("params")) >= 3
         read = action == "tool_call" and not risky
-        if action not in entry.allowed and not read and entry.fallback:
+        if action not in entry.allowed and not read and entry.fallback and action != "escalate":
             force(entry.fallback, f"exception '{name}' handling ({entry.handling})")
         elif risky and not entry.allow_change:
             force("escalate", f"exception '{name}' allows no change ({entry.handling})")
