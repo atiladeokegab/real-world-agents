@@ -1,42 +1,42 @@
-# Demo script, 60 seconds (draft for #7)
+# Demo script, 60 seconds
 
-Case: **044**, "One Line in the Supplier Batch" (`examples/044`). The portal says the batch is
-*Processed*; the customer asks about row SUP-17. This shows the evidence checker's status finding
-(batch status vs row status, AGENT_SPEC.md 4.2), the verifier verdict (4.6), the handover (4.8)
-and the trace (4.9).
+Shots below come from a real run on `origin/integration` at 50f6677 (2026-10-10 12:15 UTC),
+command and output unedited. Re-capture after the claim-linter false positive is fixed: the
+reply was rejected once for the word "I've" and the agent fixed it on the retry. That rejection
+is kept in the script as a feature (the verifier is real), but the fix may remove it.
 
-Demo output goes to `/tmp/demo/...`, outside the repo, and is never committed: `ANSWERS/` holds only the Reality Test answers (RULES.md section C).
+Case **044**, "One Line in the Supplier Batch" (`examples/044`): the portal says the batch is
+*Processed*; the customer asks about row SUP-17. Backup: case **006** (two similar transfers), run
+the same way (`--case examples/006`, 34 s, one `transfer_journal` read, reply approved first time).
 
-Rule for every shot: a real command and its real output. Anything not run yet is marked
-`TODO: capture from real run`. No output below is invented; the spoken lines only restate what
-the case files and the spec say.
+Demo output goes to `/tmp/demo/...`, outside the repo, and is never committed: `ANSWERS/` holds
+only the Reality Test answers (RULES.md section C). Nothing here is invented; the only open item
+is the eval number (`TODO`), which has not been run for the video.
 
-Spoken length: about 140 words at a calm pace. Time it with a stopwatch before recording.
+The live run takes 44.5 s. In the video, start it and cut to the finished output (say so in the
+caption: "sped up"), or run it beforehand and show the saved output.
 
 | Time | Shot (screen) | Say |
 |---|---|---|
-| 0:00-0:10 | `examples/044/history.md`, event 001 and 002 highlighted: "Batch ... status: Processed." and "I can't tell whether row SUP-17 was paid." | "A bank says the supplier batch is processed. The customer asks: was one payment, SUP-17, actually paid? The quiet mistake is saying yes because the batch looks fine." |
-| 0:10-0:20 | Terminal: `uv run agent run --case examples/044 --out /tmp/demo/044` then its printed result. `TODO: capture from real run` | "We hand the case to our agent. The model proposes. Plain code checks the evidence, the caller's authority and the bank's rules." |
-| 0:20-0:35 | `/tmp/demo/044/trace.log`, scroll to the evidence-checker finding. `TODO: capture from real run` (expected: a status finding, batch Processed vs row; confirm the exact text and event IDs on screen before speaking) | "Before the model reasons, code checks what it reads. Here it flags that the batch status and the row status are different things, with the event IDs." |
-| 0:35-0:45 | Same trace.log, the verifier verdict line and the one tool call (journal lookup of SUP-17). `TODO: capture from real run` | "The verifier accepts one read-only lookup, and only because the finding is addressed. The portal shows SUP-17 rejected: beneficiary details did not match." |
-| 0:45-0:50 | `/tmp/demo/044/ANSWER.md`: the decision, the reply to the customer, the "not done" list. `TODO: capture from real run` | "The customer gets the real answer, and the agent lists what it did not do: it did not re-check the other rows or change anything." |
-| 0:50-0:57 | Terminal: `uv run python -m eval` summary. `TODO: capture from real run` (placeholder numbers must not be spoken; read only what prints) | "We score ourselves on the 50 practice cases, with faults injected: <TODO: outcome number from the real run>." |
+| 0:00-0:10 | `examples/044/history.md`, events 001-002 highlighted: "Batch ... status: Processed." and "I can't tell whether row SUP-17 ... was paid." | "A bank portal says the supplier batch is processed. The customer asks: was one payment, SUP-17, actually paid? The quiet mistake is to say yes because the batch looks fine." |
+| 0:10-0:22 | Terminal: `uv run agent run --case examples/044 --cut 2 --out /tmp/demo/044`. Output, real: `ingest 2 events · 0 attachments · cut at event-002`, `identity authenticated Authorised business user · Secure chat`, then `evidence 1 finding · a collection-level status is asserted while a member line's status is unclear or contradicts it` | "We give the agent the case as it stood at the decision point. Before the model reasons, plain code checks the evidence, and it finds this: a batch-level status is being used to answer a question about one row." |
+| 0:22-0:34 | Same output, next lines: `decide tool_call business_service (...Line-level status of row SUP-17...)`, `verify ✓ approved`, `execute business_service → done` | "The model proposes one read-only lookup of that row. Code checks it against the caller's authority and the bank's rules, approves it, and runs it." |
+| 0:34-0:44 | Same output: `decide reply · Secure chat`, `verify ✗ claim_linter: name 'I've' in the reply is not in a claim or a tool result`, `decide reply`, `verify ✓ approved`. Then `● DONE  1 action · 0 escalations · 44.5s` | "The first draft reply is rejected: it said something the evidence doesn't support. The agent fixes exactly that, and the second draft passes." |
+| 0:44-0:52 | `/tmp/demo/044/ANSWER.md`: "Customer reply" section: "Row SUP-17 in the Alderwick supplier payments batch has the status Rejected. Reason: Beneficiary details did not match the receiving institution's records. Batch status Processed applies to the batch as a whole ... nothing has been changed on the batch or this row." Then `trace.log`, the `finding-1` and `== verdict ==` blocks. | "The customer gets the true answer: rejected, and why. Nothing was changed. And the trace shows the finding and each verdict, so a person can see why." |
+| 0:52-0:57 | Terminal: `uv run python -m eval` summary. `TODO: capture from real run` (read only the numbers that print) | "On the practice cases, with faults injected: TODO: real eval number." |
 | 0:57-1:00 | Title card: repo name | "A tricky case in. The agent catches what is wrong, acts safely or hands over, and the trace shows why." |
 
-## Optional 5 s voice moment (swap for the 0:50 shot only if time allows)
+Spoken length: about 190 words. That is too long for 60 s at a calm pace (about 150 words): cut
+the 0:10-0:22 and 0:34-0:44 lines to one sentence each, then time it with a stopwatch.
 
-Terminal: `uv run python -m agent.voice "Was row SUP-17 in our supplier batch paid?"`, showing the
-`Heard:` and `Reply:` lines it prints. `TODO: capture from real run` (voice is PR #36, not on
-integration yet; text mode works without a key, audio needs `ELEVENLABS_API_KEY`).
+## Optional 5 s voice moment
 
-## Backup case
-
-Case 006 (two similar transfers, one completed and one pending, nothing cancelled) if 044's
-finding does not read clearly in the real trace. Same shots, swap the case folder and the
-highlighted lines.
+Swap for the 0:44 shot only if time allows. Terminal: `uv run python -m agent.voice "Was row
+SUP-17 in our supplier batch paid?"`, showing the `Heard:` and `Reply:` lines. `TODO: capture from
+real run` (not run yet; audio needs `ELEVENLABS_API_KEY`, text mode works without).
 
 ## Before recording
 
-- [ ] Run the e2e on 044 after merge of core loop, brain and ingest; fill every TODO from that run.
-- [ ] Confirm the finding and verdict text on screen; edit the spoken lines to match them exactly.
-- [ ] Read aloud with a timer; cut words, not shots, to land on 60 s.
+- [ ] Re-run 044 after the claim-linter fix; update the 0:34 shot and line to match.
+- [ ] Run `uv run python -m eval`; fill the 0:52 shot with the printed numbers only.
+- [ ] Cut to 60 s with a stopwatch.
