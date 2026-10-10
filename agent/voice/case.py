@@ -8,8 +8,15 @@ from pathlib import Path
 BANK = "Harrow & Vale Bank plc"
 
 
+def _neutralise(text: str) -> str:
+    """Caller words must never parse as markup: no anchors, headings or field lines, so ingest sees one event."""
+    text = text.replace("<", "&lt;").replace(">", "&gt;")
+    return "\n".join(" " + l if l.lstrip().startswith(("#", "- **", "---")) else l for l in text.splitlines())
+
+
 def build_case(text: str, caller: str = "Caller", verified: bool = False, root: Path | None = None) -> Path:
     """Write index.md + history.md. Authority comes from the channel: only a platform-verified call is `Verified call`."""
+    text = _neutralise(text)
     now = datetime.now(timezone.utc)
     stamp = now.strftime("%Y-%m-%d %H:%M:%S UTC")
     path = Path(tempfile.mkdtemp(prefix="voice-", dir=root))
