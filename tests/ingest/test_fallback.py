@@ -126,6 +126,25 @@ def test_dotfiles_do_not_trigger_fallback(tmp_path, monkeypatch):
     assert [e.id for e in case.events] == ["event-001"]
 
 
+def test_fallback_prompt_strips_answer_sections_without_cut(tmp_path, monkeypatch):
+    # #129: a missing history.md fires the fallback even without a cut — the
+    # answer sections must be stripped there too, while the Initial request
+    # still reaches the model as the event-001 source
+    case_dir = tmp_path / "903"
+    case_dir.mkdir()
+    (case_dir / "index.md").write_text(
+        "# Case 903: T\n\n## Initial request\n\nhelp\n\n"
+        "## Overview\n\nthe agreed answer is XYZ\n\n## Outcome\n\nsecret outcome\n"
+    )
+    spy = _install(monkeypatch, _SpyLLM(events=[]))
+    load_case(case_dir)  # no cut
+
+    assert len(spy.calls) == 1
+    assert "secret outcome" not in spy.calls[0]["user"]
+    assert "the agreed answer is XYZ" not in spy.calls[0]["user"]
+    assert "help" in spy.calls[0]["user"]
+
+
 def test_fallback_prompt_strips_answer_sections_in_practice_mode(tmp_path, monkeypatch):
     case_dir = _empty_case(tmp_path)
     (case_dir / "index.md").write_text(
@@ -138,6 +157,29 @@ def test_fallback_prompt_strips_answer_sections_in_practice_mode(tmp_path, monke
     assert len(spy.calls) == 1
     assert "secret outcome" not in spy.calls[0]["user"]
     assert "the agreed answer is XYZ" not in spy.calls[0]["user"]
+
+
+def test_question_md_recognised_no_extra_fallback_call(tmp_path, monkeypatch):
+    # #129: question.md is a shipped file, not an unrecognised one — it must
+    # not trigger the unknown-file LLM call, and its text is the question
+    case_dir = _history_case(tmp_path)
+    (case_dir / "question.md").write_text("## Question\n\nShould this be released?\n")
+
+    spy = _install(monkeypatch, _SpyLLM())
+    case = load_case(case_dir)
+
+    assert spy.calls == []
+    assert "question.md" in case.raw_files
+    assert case.question == "Should this be released?"
+
+
+def test_question_md_flag_wins(tmp_path, monkeypatch):
+    case_dir = _history_case(tmp_path)
+    (case_dir / "question.md").write_text("File question?\n")
+    _install(monkeypatch, _SpyLLM())
+
+    case = load_case(case_dir, question="Flag question?")
+    assert case.question == "Flag question?"
 
 
 def test_no_fallback_on_normal_case(monkeypatch):

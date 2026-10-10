@@ -42,12 +42,19 @@ def load_case(path, cut: int | None = None, question: str | None = None) -> Case
     path = Path(path)
     index = _read(path / "index.md")
     history = _read(path / "history.md")
+    question_md = _read(path / "question.md")
 
     parsed = _parse_events(history)
     attachments = read_attachments(path)
     details = _details(index)
 
-    raw_files = {"index.md": index, "history.md": history}
+    # strip before any fallback prompt so the agreed answer can never leak
+    # in — a missing history.md triggers the fallback with or without a cut
+    raw_files = {"index.md": _strip_sections(index), "history.md": history}
+    if (path / "question.md").is_file():
+        # a shipped question file is known input, not an unrecognised file —
+        # outside `unknown` it costs no extra fallback call
+        raw_files["question.md"] = question_md
     unknown = [
         e.name
         for e in sorted(path.iterdir())
@@ -59,8 +66,6 @@ def load_case(path, cut: int | None = None, question: str | None = None) -> Case
         raw_files[f"attachments/{a.name}"] = a.text
 
     if cut is not None:
-        # strip before any fallback prompt so the agreed answer can't leak in
-        raw_files["index.md"] = _strip_sections(index)
         raw_files["history.md"] = _truncate_history(history, cut)
 
     if not parsed:
@@ -92,7 +97,7 @@ def load_case(path, cut: int | None = None, question: str | None = None) -> Case
         # authority reads only the regex-parsed events; the model can never raise it
         authority=_authority(_latest_requester(parsed), details.get("Source role", "")),
         raw_files=raw_files,
-        question=question,
+        question=question or _question_text(question_md) or None,
     )
 
 
@@ -169,6 +174,15 @@ def _section(text: str, name: str) -> str:
         re.S | re.M,
     )
     return m.group("body").strip() if m else ""
+
+
+def _question_text(text: str) -> str:
+    """question.md holds the case question — a '## Question' section when the
+    file is formatted, else the file text without heading lines."""
+    body = _section(text, "Question")
+    if body:
+        return body
+    return re.sub(r"^#.*\n?", "", text, flags=re.M).strip()
 
 
 def _strip_sections(index: str) -> str:
