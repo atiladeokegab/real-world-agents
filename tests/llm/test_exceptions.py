@@ -212,3 +212,24 @@ def test_escalation_labelled_ambiguous_keeps_its_handover_and_reply():
 def test_prompt_keeps_ambiguous_for_unclear_requests_only():
     from agent.llm import prompts
     assert "ambiguous_request and ambiguous_reference are only for when the customer's own words" in prompts.DECISION_SYSTEM
+
+
+WORSE = {"level": "frustrated", "trend": "worsening"}
+DONE_READ = [ToolResult(tool="transfer_journal", status="ok", data={"instructions": 2})]
+
+
+def test_worsening_frustration_never_overrides_the_first_read():
+    assert run(READ, obj(**WORSE)).action == "tool_call"
+
+
+def test_worsening_frustration_never_overrides_a_later_read():
+    assert run(READ, obj(**WORSE), results=DONE_READ).action == "tool_call"
+
+
+def test_worsening_frustration_escalates_a_reply_once_a_result_is_back():
+    out = run(REPLY, obj(**WORSE), results=DONE_READ)
+    assert out.action == "escalate" and out.escalation["type"] == "emotional"
+
+
+def test_distress_still_escalates_before_any_read():
+    assert run(READ, obj(level="distressed")).action == "escalate"
