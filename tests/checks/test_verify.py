@@ -242,6 +242,81 @@ def test_claim_linter_unseen_date_rejected():
     assert "19 July 2025" in verdict.message
 
 
+def test_claim_linter_dates_normalised_to_iso_ok():
+    # #141: '31 July 2025', '31/07/2025' and '2025-07-31' are the same date
+    case = _case([_ev(1, "help")])
+    obj = _object(claims=[_claim("payment sent 31/07/2025")])
+    for text in [
+        "The transfer is dated 31 July 2025.",
+        "The transfer is dated 2025-07-31.",
+        "The transfer is dated 31st July 2025.",
+        "The transfer is dated 31-07-2025.",
+    ]:
+        proposal = _proposal(reply=_reply(text))
+        assert verify(proposal, case, obj, [], []).ok, text
+
+
+def test_claim_linter_evidence_date_at_sentence_end_ok():
+    # #141: a claim ending "...sent 31/07/2025." must still evidence the date
+    case = _case([_ev(1, "help")])
+    obj = _object(claims=[_claim("the transfer went out 31/07/2025.")])
+    proposal = _proposal(reply=_reply("The transfer is dated 31 July 2025."))
+    assert verify(proposal, case, obj, [], []).ok
+
+
+def test_claim_linter_amounts_normalised_ok():
+    # #141: '£36', '36', '36.00' and 'GBP 36.00' are the same amount
+    case = _case([_ev(1, "help")])
+    obj = _object(claims=[_claim("fee GBP 36.00")])
+    for text in ["The fee is £36.", "The fee is £36.00."]:
+        proposal = _proposal(reply=_reply(text))
+        assert verify(proposal, case, obj, [], []).ok, text
+
+
+def test_claim_linter_payment_schemes_allowed_ok():
+    # #141: payment scheme/product names are not persons (023, 048)
+    case = _case([_ev(1, "help")])
+    for text in [
+        "It goes by Faster Payments.",
+        "Your Bacs transfer is booked.",
+        "The Sepa payment is booked.",
+        "It moves through CHAPS.",
+        "Your Direct Debit is untouched.",
+        "The Standing Order stays.",
+        "Never again, we promise.",
+    ]:
+        proposal = _proposal(reply=_reply(text))
+        assert verify(proposal, case, _object(), [], []).ok, text
+
+
+def test_claim_linter_references_separator_insensitive_ok():
+    # #141: 'HV-039', 'HV039' and 'hv 039' are the same reference
+    case = _case([_ev(1, "help")])
+    obj = _object(claims=[_claim("journal entry HV039")])
+    proposal = _proposal(reply=_reply("Reference HV-039."))
+    assert verify(proposal, case, obj, [], []).ok
+
+    obj = _object(claims=[_claim("journal entry hv 039")])
+    proposal = _proposal(reply=_reply("Reference HV039."))
+    assert verify(proposal, case, obj, [], []).ok
+
+
+def test_claim_linter_fabricated_values_still_rejected():
+    # #141: normalisation is not a leak — a value absent from the case fails
+    case = _case([_ev(1, "help")])
+    obj = _object(claims=[_claim("payment sent 31/07/2025, fee 36.00, ref HV039")])
+    for text in [
+        "It was sent on 30 July 2025.",
+        "The fee is £99.",
+        "Reference HV-999.",
+        "We spoke to Priya Nair.",
+    ]:
+        proposal = _proposal(reply=_reply(text))
+        verdict = verify(proposal, case, obj, [], [])
+        assert not verdict.ok, text
+        assert verdict.rule == "claim_linter", text
+
+
 # --- rule: no fabricated execution ---
 
 def test_fabricated_execution_ok():
