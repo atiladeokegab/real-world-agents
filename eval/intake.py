@@ -62,15 +62,12 @@ def _extract(archive: Path, dest: Path) -> Path:
 
 
 def _unwrap(p: Path) -> Path:
-    """Skip wrapping folders that hold one folder and nothing else."""
+    """Skip wrapping folders: one folder and nothing else, which is not itself a case."""
     while True:
         kids = _visible(p)
-        if len(kids) == 1 and kids[0].is_dir() and any(k.is_dir() for k in _visible(kids[0])):
+        if len(kids) == 1 and kids[0].is_dir() and _visible(kids[0]) \
+                and not any((kids[0] / n).exists() for n in ("index.md", "history.md", "question.md")):
             p = kids[0]
-        elif len(kids) == 1 and kids[0].is_dir() and not any(k.is_dir() for k in _visible(kids[0])) \
-                and len(_visible(kids[0])) > 1 and not (kids[0] / "index.md").exists() \
-                and not (kids[0] / "history.md").exists():
-            p = kids[0]  # a wrapper around loose files
         else:
             return p
 
@@ -199,6 +196,36 @@ def _shareable(files: list[Path]) -> list[Path]:
     return [f for f in files if not _is_doc(f)]
 
 
+CASE_FILES = {"index.md", "history.md", "question.md"}
+
+
+def _stray(case: Path) -> list[Path]:
+    """Files ingest would not show the model as text: extra top-level files (only via a fallback call)
+    and files in subfolders of attachments/ (skipped)."""
+    top = [f for f in case.iterdir() if f.is_file() and f.name not in CASE_FILES and not f.name.startswith(".")]
+    att = case / "attachments"
+    nested = [f for f in att.rglob("*") if f.is_file() and f.parent != att] if att.is_dir() else []
+    return top + nested
+
+
+def _needs_fixing(case: Path) -> bool:
+    return bool(_stray(case))
+
+
+def _surface_files(case: Path) -> int:
+    """Copy (never move) stray files into attachments/, so their content reaches the model as text."""
+    att = case / "attachments"
+    att.mkdir(exist_ok=True)
+    stray = _stray(case)
+    for f in stray:
+        name = f.name if f.parent == case else "_".join(f.relative_to(att).parts)
+        target = att / name
+        if target.exists():
+            target = att / f"{f.parent.name}_{name}"
+        shutil.copy2(f, target)
+    return len(stray)
+
+
 def _add_shared(cases: list[Path], shared: list[Path]) -> None:
     for case in cases:
         (case / "attachments").mkdir(exist_ok=True)
@@ -215,11 +242,13 @@ def _from_dir(src: Path, out: Path) -> tuple[str, list[Path]]:
     files = [k for k in kids if k.is_file()]
     if folders:  # shape 1, with any loose top-level data/tool files shared into every case
         shared = _shareable(files)
-        if not shared:
+        if not shared and not any(_needs_fixing(k) for k in folders):
             return "folder of case folders", folders
         cases = [Path(shutil.copytree(k, out / k.name)) for k in folders]
+        fixed = sum(_surface_files(c) for c in cases)
         _add_shared(cases, shared)
-        return f"folder of case folders + {len(shared)} shared file(s)", cases
+        return ("folder of case folders" + (f" + {len(shared)} shared file(s)" if shared else "")
+                + (f", {fixed} file(s) copied into attachments/" if fixed else "")), cases
     archives = [f for f in files if _is_archive(f)]
     if archives:
         inner = Path(tempfile.mkdtemp(prefix="intake-x-"))
