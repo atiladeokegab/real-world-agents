@@ -60,8 +60,11 @@ EXCEPTIONS: dict[str, Handling] = {
 UNKNOWN_HANDLING = "unknown exception type: escalate"
 
 
+_NO_EXCEPTION = {"", "none", "null", "n/a", "na", "nil"}
+
+
 def canonical(exception_type: str | None) -> str | None:
-    if not exception_type:
+    if not exception_type or exception_type.strip().lower() in _NO_EXCEPTION:
         return None
     return re.sub(r"[\s\-]+", "_", exception_type.strip().lower())
 
@@ -135,9 +138,7 @@ def normalise(proposal, case, case_object, findings, results):
     notes: list[str] = []
     kind = "technical"
     action = data["action"]
-    name = canonical(data.get("exception_type"))
-    if name is not None:
-        data["exception_type"] = name
+    name = data["exception_type"] = canonical(data.get("exception_type"))
 
     def force(to: str, why: str) -> None:
         nonlocal action
