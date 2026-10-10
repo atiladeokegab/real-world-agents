@@ -284,3 +284,16 @@ def test_distress_still_escalates_a_resolving_reply():
 def test_prompt_acknowledges_worsening_frustration_in_a_resolving_reply():
     from agent.llm.prompts import DECISION_SYSTEM
     assert "acknowledging the frustration in one sentence" in DECISION_SYSTEM
+
+
+
+@pytest.mark.parametrize("label", ["None", "null", "N/A", "na", "nil", " ", ""])
+@pytest.mark.parametrize("proposal", [{"action": "no_op"}, REPLY])
+def test_null_ish_exception_strings_mean_no_exception(label, proposal):
+    out = run({**proposal, "exception_type": label})
+    assert out.action == proposal["action"]
+    assert out.exception_type is None
+
+
+def test_a_real_unknown_exception_type_still_escalates():
+    assert run({**REPLY, "exception_type": "foo"}).action == "escalate"
