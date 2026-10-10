@@ -185,6 +185,53 @@ def test_claim_linter_greeting_to_requester_ok():
     assert verify(proposal, case, obj, [], []).ok
 
 
+def test_claim_linter_wrong_greeting_name_rejected():
+    # a greeting to a name that is not the requester's still fails
+    obj = _object(requester="Ms Shah")
+    proposal = _proposal(reply=_reply("Dear Ms Nobody, please confirm."))
+    verdict = verify(proposal, _case([_ev(1, "help")]), obj, [], [])
+    assert not verdict.ok
+    assert verdict.rule == "claim_linter"
+
+
+def test_claim_linter_eval_false_positives_clean():
+    # every false positive the real eval produced (#89 / #69 review)
+    case = _case([_ev(1, "the transfer to Alder & Reed Workshop went out"),
+                  _ev(2, "Please pass it to Ms Mercer in Payments.")])
+    obj = _object(
+        claims=[_claim("Northmere Studio Ltd"),
+                _claim("Owen Bell's Payroll Approver"),
+                _claim("batch-041.csv arrived")],
+        requester="Ms Ellery",
+    )
+    results = [_result("transfer_journal", data={"status": "ok"})]
+    for text in [
+        "Hello Mara, please confirm which transfer you mean.",
+        "Hi Mara, we are on it.",
+        "Hello Rowan, we are on it.",
+        "Hello Leona, we are on it.",
+        "Hello Ms Mercer, we are on it.",
+        "Dear Ms Ellery, please confirm which transfer you mean.",
+        "I'm on it now.",
+        "I've asked and will come back.",
+        "I'll confirm once the journal answers.",
+        "Once I have the reference I will reply.",
+        "H&V. We are looking into it.",
+        "H&V. Our team is on it.",
+        "SENT. You will hear from us.",
+        "PIN. That stays with you.",
+        "Vale Bank holds the record.",
+        "The Direct Debit stays untouched.",
+        "The Profile page shows it.",
+        "The supplier is Northmere Studio Ltd's account.",
+        "Owen Bell's Payroll Approver was named.",
+        "We have written to Alder Reed.",   # tokens from the event text alone
+        "The file batch-041 is in the portal.",  # prefix of batch-041.csv
+    ]:
+        proposal = _proposal(reply=_reply(text))
+        assert verify(proposal, case, obj, [], results).ok, text
+
+
 def test_claim_linter_unseen_date_rejected():
     case = _case([_ev(1, "help")])
     obj = _object(claims=[_claim("statement covers 1 July 2025")])
@@ -534,3 +581,84 @@ def test_disclosure_device_id_rejected():
     assert not verdict.ok
     assert verdict.rule == "disclosure"
     assert verdict.field == "reply.text"
+
+
+# --- claim linter false positives (FLAG on #14: the real eval's top rejector) ---
+
+def test_linter_greeting_plus_name_ok():
+    case = _case([_ev(1, "help", sender="Mara Ellison")])
+    for text in ["Hello Mara, which transfer do you mean?",
+                 "Hi Mara, can you confirm the batch?",
+                 "Dear Ms Ellison, please check the reference."]:
+        proposal = _proposal(reply=_reply(text))
+        assert verify(proposal, case, _object(), [], []).ok, text
+
+
+def test_linter_pronoun_sentence_start_ok():
+    case = _case([_ev(1, "help")])
+    for text in ["I'm not sure which payment you mean.",
+                 "I've looked and I'll come back shortly.",
+                 "Once I have the reference I will act on it."]:
+        proposal = _proposal(reply=_reply(text))
+        assert verify(proposal, case, _object(), [], []).ok, text
+
+
+def test_linter_capital_after_full_stop_ok():
+    # a name span must never cross a sentence boundary
+    case = _case([_ev(1, "help")])
+    for text in ["Contact H&V. We will confirm on the portal.",
+                 "Use your PIN. That is all we need.",
+                 "It was logged as SENT. You can check in the morning."]:
+        results = [_result("transfer_journal")] if "SENT" in text else []
+        proposal = _proposal(reply=_reply(text))
+        assert verify(proposal, case, _object(), [], results).ok, text
+
+
+def test_linter_bank_and_product_words_ok():
+    case = _case([_ev(1, "help", sender="Mara Ellison")])
+    for text in ["Your Direct Debit is unchanged.",
+                 "The Standing Order stays in place.",
+                 "Check the Secure Portal for the update.",
+                 "Your Profile shows the change.",
+                 "Vale Bank will confirm shortly."]:
+        proposal = _proposal(reply=_reply(text))
+        assert verify(proposal, case, _object(), [], []).ok, text
+
+
+def test_linter_possessive_name_in_case_ok():
+    case = _case([_ev(1, "The batch for Northmere Studio Ltd needs the "
+                         "Payroll Approver.", sender="Owen Bell")])
+    for text in ["Northmere Studio Ltd's batch is awaiting approval.",
+                 "Owen Bell's Payroll Approver can release it."]:
+        proposal = _proposal(reply=_reply(text))
+        assert verify(proposal, case, _object(), [], []).ok, text
+
+
+def test_linter_name_tokenwise_in_case_text_ok():
+    # a name whose tokens all appear in the case (not just in claims) is evidenced
+    case = _case([_ev(1, "Please review the payroll file.",
+                      sender="Owen Bell", recipient="H&V agent")])
+    proposal = _proposal(reply=_reply("Owen Bell, which row do you mean?"))
+    assert verify(proposal, case, _object(), [], []).ok
+
+
+def test_linter_reference_prefix_of_case_ref_ok():
+    case = _case([_ev(1, "I uploaded batch-041.csv this morning.")])
+    proposal = _proposal(reply=_reply("I can see batch-041 in the queue."))
+    assert verify(proposal, case, _object(), [], []).ok
+
+
+def test_linter_reference_case_insensitive_ok():
+    case = _case([_ev(1, "The row is SUP-17 in the batch.")])
+    proposal = _proposal(reply=_reply("I can see sup-17 in the batch."))
+    assert verify(proposal, case, _object(), [], []).ok
+
+
+def test_linter_unseen_name_still_rejected():
+    # the safety value stays: a name nowhere in the case is still refused
+    case = _case([_ev(1, "help", sender="Mara Ellison")])
+    proposal = _proposal(reply=_reply("The payment to Elena Marlow is noted."))
+    verdict = verify(proposal, case, _object(), [], [])
+    assert not verdict.ok
+    assert verdict.rule == "claim_linter"
+    assert "Elena Marlow" in verdict.message
