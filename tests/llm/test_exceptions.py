@@ -5,7 +5,8 @@ import pytest
 
 from agent.llm import handover
 from agent.llm.contracts import CaseObject, Proposal, ToolResult
-from agent.llm.exceptions import EXCEPTIONS, WORSENING as WORSENING_REASON, handling_for, normalise, sentiment_escalation, tool_risk
+from agent.llm.exceptions import EXCEPTIONS, handling_for, normalise, sentiment_escalation, tool_risk
+from agent.llm.exceptions import WORSENING as WORSENING_REASON
 
 from .cases import FINDING_DUP, case_006
 
