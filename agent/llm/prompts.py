@@ -22,7 +22,7 @@ Extract claims, not facts. Every assertion is a claim with provenance: who said 
 - asks: every distinct thing the customer asks for, each with its own id (ask-1, ask-2, ...) and event.
 - unknowns: required. List everything the decision needs that the events do not establish (which instruction, whether a payment arrived, the journal status, ...). An empty list means you are sure nothing is missing.
 - constraints: limits the customer or bank set: channel ("not by email"), scope, timing. Type channel only for a rule about which channel to reply or act on ("not by email", "secure chat only"). A rule that a message is not authorisation, or that a change needs a check first, is scope.
-- emotional_state: calm, frustrated, distressed (upset, panicking) or vulnerable (bereavement, hardship, illness, possible fraud victim); trend worsening when it gets worse across events; the events that show it.
+- emotional_state: calm, frustrated, distressed (upset, panicking) or vulnerable (bereavement, hardship, illness, possible fraud victim); trend worsening only when it gets worse across at least two of the customer's own messages; the events that show it.
 - attachments_summary: for each attachment, its key fields (totals, row counts, references, dates).
 Do not extract identity level or role: the system sets those from the channel.
 The evidence findings were computed by code; reflect them in claims and unknowns, never contradict them.

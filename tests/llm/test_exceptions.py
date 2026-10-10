@@ -5,7 +5,7 @@ import pytest
 
 from agent.llm import handover
 from agent.llm.contracts import CaseObject, Proposal, ToolResult
-from agent.llm.exceptions import EXCEPTIONS, handling_for, normalise, sentiment_escalation, tool_risk
+from agent.llm.exceptions import EXCEPTIONS, WORSENING as WORSENING_REASON, handling_for, normalise, sentiment_escalation, tool_risk
 
 from .cases import FINDING_DUP, case_006
 
@@ -297,3 +297,29 @@ def test_null_ish_exception_strings_mean_no_exception(label, proposal):
 
 def test_a_real_unknown_exception_type_still_escalates():
     assert run({**REPLY, "exception_type": "foo"}).action == "escalate"
+
+
+def _who(out):
+    esc = out.escalation
+    return esc["who"] if isinstance(esc, dict) else esc.who
+
+
+def test_worsening_frustration_on_a_single_customer_message_does_not_escalate():
+    one = case_006().model_copy(update={"events": case_006().events[:1]})
+    assert sentiment_escalation(obj(**WORSE), one) is None
+    assert sentiment_escalation(obj(**WORSE), case_006()) == WORSENING_REASON
+
+
+def test_frustration_handover_goes_to_the_case_team_not_vulnerable_care():
+    out = run(REPLY, obj(**WORSE), results=DONE_READ)
+    assert out.action == "escalate" and _who(out) != handover.EMOTIONAL_TEAM
+
+
+def test_distress_handover_still_goes_to_vulnerable_care():
+    out = run(REPLY, obj(level="distressed"))
+    assert out.action == "escalate" and _who(out) == handover.EMOTIONAL_TEAM
+
+
+def test_prompt_needs_two_customer_messages_for_worsening():
+    from agent.llm.prompts import EXTRACTION_SYSTEM
+    assert "at least two of the customer's own messages" in EXTRACTION_SYSTEM
