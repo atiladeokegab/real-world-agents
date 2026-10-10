@@ -14,6 +14,19 @@ SERVICES = [
     "case_journal", "portal_delivery",
 ]
 
+HOLDS = {
+    "transfer_journal": "sent, declined and returned transfers and their status",
+    "standing_order_journal": "standing orders, schedules, run dates, amendments",
+    "mandate_journal": "Direct Debit mandates and collections",
+    "card_service": "card dispatch, replacements, blocks, declines, PIN, disputes",
+    "profile_service": "name, phone, address, devices, sessions, login access",
+    "statements_service": "statements, archive, exports, account confirmation letters and documents",
+    "fees_service": "fees, charges and fee reviews",
+    "business_service": "payment batches, rows, signatories, roles, limits",
+    "case_journal": "register a review, complaint or case with a reference",
+    "portal_delivery": "deliver a document or extract into the customer's secure portal",
+}
+
 
 def _read(name: str, **inputs: str) -> ToolSpec:
     return ToolSpec(name=name, inputs={"query": "str", **inputs}, roles=ANYONE, risk=1)

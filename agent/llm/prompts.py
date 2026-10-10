@@ -113,10 +113,15 @@ def catalogue_summary() -> str:
             "transfer_journal, standing_order_journal, mandate_journal, card_service, profile_service, "
             "statements_service, fees_service, business_service, case_journal, portal_delivery"
         )
+    try:
+        from agent.tools.catalogue import HOLDS
+    except ImportError:
+        HOLDS = {}
     rows = []
     for name, spec in CATALOGUE.items():
+        holds = f"holds {HOLDS[name]}; " if name in HOLDS else ""
         rows.append(
-            f"- {name}: inputs {_json(getattr(spec, 'inputs', {}))}, risk {getattr(spec, 'risk', '?')}, "
+            f"- {name}: {holds}inputs {_json(getattr(spec, 'inputs', {}))}, risk {getattr(spec, 'risk', '?')}, "
             f"roles {getattr(spec, 'roles', [])}, required reads {getattr(spec, 'required_reads', [])}"
         )
     return "\n".join(rows)
