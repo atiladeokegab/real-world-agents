@@ -42,6 +42,8 @@ def test_registry_has_the_ten_types_of_section_4_8():
     ("conflicting_records", WRITE, "escalate"),
     ("conflicting_records", READ, "tool_call"),
     ("missing_authority", WRITE, "request_info"),
+    ("missing_authority", READ, "tool_call"),
+    ("ambiguous_reference", READ, "tool_call"),
     ("read_failure", READ, "tool_call"),
     ("write_failure", REPLY, "escalate"),
     ("quiet_wrong_value", REPLY, "escalate"),
@@ -74,6 +76,11 @@ def test_tool_risk_counts_write_words_on_read_named_tools(monkeypatch):
     proposal = {"action": "tool_call", "tool": "transfer_journal",
                 "params": {"action": "cancel", "ref": "T2"}, "exception_type": "conflicting_records"}
     assert run(proposal).action == "escalate"
+
+
+def test_missing_authority_question_fits_an_authenticated_channel():
+    out = run({**WRITE, "exception_type": "missing_authority"})
+    assert "role this request needs" in out.reply.text and "verified call" not in out.reply.text
 
 
 def test_read_failure_retries_once_then_escalates():
