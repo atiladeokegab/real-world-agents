@@ -64,14 +64,11 @@ def test_authority_identity_from_channel(case_dir, identity):
     assert load_case(EXAMPLES / case_dir).authority.identity == identity
 
 
-def test_authority_role_from_record_on_business_portal():
-    case = load_case(EXAMPLES / "041")
-    # event-001: "From: Mara Ellison, authorised file uploader" on Business portal
-    assert case.authority.role == "authorised file uploader"
-
-    case = load_case(EXAMPLES / "047")
-    # plain sender name on Business portal -> role falls back to the record's Source role
-    assert case.authority.role == "Authorised business user"
+def test_authority_role_from_the_record():
+    # "role from the record" (§4.1) — index.md's Source role, never the model.
+    for case_dir in ("041", "047"):
+        assert load_case(EXAMPLES / case_dir).authority.role == "Authorised business user"
+    assert load_case(EXAMPLES / "001").authority.role == "Bank customer"
 
 
 def test_authority_never_model_derived():
