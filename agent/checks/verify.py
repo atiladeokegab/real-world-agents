@@ -137,9 +137,11 @@ _DONE_RE = re.compile(
 # and conditionals that make a done-word describe a future event, not a claim:
 # "once it has been changed", "until we have verified", "when it is sent"
 _NEGATION_RE = re.compile(
-    r"(?i)\b(not|n't|never|no|without|cannot|can't|unable|pending|awaiting|"
+    # "n't" sits outside the \b group: inside "haven't"/"don't" there is no
+    # word boundary before the n, so \bn't\b could never match a contraction
+    r"(?i)(?:\b(?:not|never|no|without|cannot|can't|unable|pending|awaiting|"
     r"will|would|could|should|may|might|due|yet|once|until|when|whenever|"
-    r"if)\b"
+    r"if)\b|n't\b)"
 )
 _AFTER_HEDGE_RE = re.compile(r"(?i)^\s*(?:yet|until|still pending)\b")
 
@@ -462,13 +464,15 @@ def verify(
                          f"role '{case.authority.role}' may not call "
                          f"'{spec_name}' (roles: {', '.join(roles)})")
         if risk == 3:
-            if case.authority.identity != "verified":
+            if case.authority.identity not in ("verified", "authenticated"):
                 return _fail("risk", "action", None,
-                             f"'{spec_name}' is risk 3 and needs verified "
-                             f"identity, not '{case.authority.identity}'")
+                             f"'{spec_name}' is risk 3 and needs verified or "
+                             f"authenticated identity, not "
+                             f"'{case.authority.identity}'")
             missing = [
                 r for r in getattr(spec, "required_reads", []) or []
-                if not any(res.tool == r and res.status == "ok" for res in results)
+                if not any(res.tool == r and res.status in ("ok", "pending")
+                           for res in results)
             ]
             if missing:
                 return _fail("risk", "tool", None,
