@@ -209,7 +209,10 @@ def main(argv=None) -> int:
         head = ""
     if head:
         print(f"HEAD {head}")
-    write_index(args.out, head, {numbers[case]: secs for case, _, secs, _ in results})
+    try:  # the index is a convenience: it must never cost the run its answers or its exit code
+        write_index(args.out, head, {numbers[case]: secs for case, _, secs, _ in results})
+    except Exception as exc:
+        print(f"WARNING: could not write {args.out / 'README.md'}: {type(exc).__name__}: {exc}", file=sys.stderr)
     return 1 if missing else 0
 
 

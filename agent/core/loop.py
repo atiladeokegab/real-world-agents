@@ -90,11 +90,11 @@ def _pipeline(path: Path, question: str | None, cut: int | None, trace: list, st
         stage("verify")
         v = checks.verify(p, case, case_object, findings, results)
         trace.append(_dump("verdict", v))
-        emit("verify", "✓ approved" if v.ok else f"✗ {v.rule}: {v.message}")
+        emit("verify", "✓ approved" if v.ok else f"✗ {writer.verdict_text(v)}")
         if not v.ok:
             rejected.append((p, v))
             if retry_used:
-                p = _escalate(case, f"verifier rejected twice: {v.rule} on {v.field} ({v.event})",
+                p = _escalate(case, f"verifier rejected twice: {writer.verdict_text(v)}",
                               "incomplete_answer", results, findings)
                 break
             retry_used = True
